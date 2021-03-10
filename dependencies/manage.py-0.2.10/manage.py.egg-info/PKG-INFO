@@ -1,0 +1,18 @@
+Metadata-Version: 1.1
+Name: manage.py
+Version: 0.2.10
+Summary: Human friendly CLI builder
+Home-page: https://github.com/Birdback/manage.py
+Author: jean-philippe serafin
+Author-email: jps@birdback.com
+License: UNKNOWN
+Description-Content-Type: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Python Modules

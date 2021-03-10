@@ -1,0 +1,12 @@
+#!/bin/bash
+
+source /hpc/home/hpcsw/.bashrc
+
+module load hpcdev/proxy
+module load anaconda3
+
+cd /hpc/shared/services/hpda-support/
+
+source activate env/
+
+python run.py $1

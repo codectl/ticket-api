@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+
+# IDE configurations
+.idea/
+
+# Environments
+env/
+.env
+.env.*
+
+# Database files
+:memory
+*.db
+*.db-journal
+
+# Logs
+*.log*
