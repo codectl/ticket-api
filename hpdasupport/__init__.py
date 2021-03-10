@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 import __main__ as main
-from hpdasupport.config import Config
+from src.settings.config import Config
 from manager import Manager
 
 

@@ -3,6 +3,3 @@ mistune
 O365
 SQLAlchemy
 requests
-
-# Local dependencies
-file:../hpda-support/dependencies/manage.py-0.2.10/dist/manage.py-0.2.10.tar.gz#egg=manage.py
