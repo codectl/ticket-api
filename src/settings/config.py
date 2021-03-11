@@ -1,10 +1,30 @@
 import os
 
 
-class Config:
+class BaseConfig:
+
+    DEBUG = False
+    TESTING = False
+
+    # Name of the host
+    HOST = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
+
+    # Application root context
+    APPLICATION_ROOT = os.getenv('APPLICATION_ROOT', '/')
+
+    # Database settings
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    DATABASE_CONNECT_OPTIONS = {}
+
+    # Application threads. A common general assumption is
+    # using 2 per available processor cores - to handle
+    # incoming requests using one and performing background
+    # operations using the other.
+    THREADS_PER_PAGE = 2
 
     # The application providing info about the ticket
-    TICKET_APP_HOST = os.getenv('TICKET_APP_HOST', 'localhost')
+    TICKET_CLIENT_APP = os.getenv('TICKET_CLIENT_APP', 'localhost')
 
     # The mailbox to manage
     MAILBOX = os.getenv('MAILBOX')
@@ -44,3 +64,30 @@ class Config:
     # Filter settings
     EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split(',')
     EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split(',')
+
+
+class ProductionConfig(BaseConfig):
+    ENV = 'production'
+    PORT = os.getenv('FLASK_RUN_PORT', 5000)
+    LOG_LEVEL = 'INFO'
+
+
+class DevelopmentConfig(BaseConfig):
+    ENV = 'development'
+    PORT = os.getenv('FLASK_RUN_PORT', 5001)
+    DEBUG = True
+    LOG_LEVEL = 'DEBUG'
+
+
+class TestingConfig(BaseConfig):
+    ENV = 'test'
+    PORT = os.getenv('FLASK_RUN_PORT', 5002)
+    TESTING = True
+    LOG_LEVEL = 'DEBUG'
+
+
+config_by_name = dict(
+    production=ProductionConfig,
+    development=DevelopmentConfig,
+    testing=TestingConfig
+)

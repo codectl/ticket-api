@@ -1,5 +1,7 @@
+Flask
+Flask-SQLAlchemy
 jira
 mistune
 O365
-SQLAlchemy
+python-dotenv
 requests

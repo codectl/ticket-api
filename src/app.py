@@ -3,6 +3,9 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, redirect, url_for
 
+from src import db
+from src.settings.config import config_by_name
+
 
 def create_app(config_name=None):
     """
@@ -32,20 +35,9 @@ def setup_app(app):
     # Link db to app
     db.init_app(app)
 
-    # LoginManager setup
-    login_manager.login_view = 'auth.login_route'
-    login_manager.init_app(app)
-
     # Create tables if they do not exist already
     with app.app_context():
         db.create_all()
-        seed()
-
-    # Redirect root point to app context root
-    app.add_url_rule('/', 'index', lambda: redirect(url_for('auth.login_route')))
-
-    # Initialize and configure OAuth2
-    config_oauth(app)
 
     # Register blueprints
     app.register_blueprint(restful_api, url_prefix=app.config['APP_ROOT'])
