@@ -10,7 +10,7 @@ class BaseConfig:
     HOST = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
 
     # Application root context
-    APPLICATION_ROOT = os.getenv('APPLICATION_ROOT', '/')
+    APPLICATION_CONTEXT = os.getenv('APPLICATION_CONTEXT', '/')
 
     # Database settings
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')

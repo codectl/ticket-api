@@ -1,7 +1,9 @@
 Flask
+flask-restplus
 Flask-SQLAlchemy
 jira
 mistune
 O365
 python-dotenv
 requests
+Werkzeug==0.16.1

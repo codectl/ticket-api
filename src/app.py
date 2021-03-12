@@ -1,9 +1,10 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, redirect, url_for
+from flask import Flask, Blueprint
 
-from src import db
+from src import api, db
+from src.namespaces.service.index import service
 from src.settings.config import config_by_name
 
 
@@ -39,16 +40,14 @@ def setup_app(app):
     with app.app_context():
         db.create_all()
 
+    # Initialize root blueprint
+    root = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])
+
+    # Link api to blueprint
+    api.init_app(root)
+
     # Register blueprints
-    app.register_blueprint(restful_api, url_prefix=app.config['APP_ROOT'])
-    app.register_blueprint(admin, url_prefix='/admin')
-    app.register_blueprint(auth, url_prefix='/auth')
-    app.register_blueprint(developer, url_prefix='/developers')
-    app.register_blueprint(user, url_prefix='/users')
+    app.register_blueprint(root)
 
-    # ... and namespaces
-    api.add_namespace(oauth2_namespace, path='/oauth2')
-    api.add_namespace(support_namespace, path='/support')
-
-    # Additional configurations
-    app.before_request_funcs[None] = [resource_authorization]
+    # Register namespaces
+    api.add_namespace(service)
