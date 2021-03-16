@@ -1,10 +1,24 @@
+import base64
+import datetime
+import itertools
+import json
+import re
+
+import jira
+import mistune
+import O365.mailbox
+import requests
+from flask import current_app
+
+from src.models.Ticket import Ticket
+from src.services.jira import ProxyJIRA as Jira
+from src.services.notifications.handlers.JiraNotificationHandler import JiraNotificationHandler
+from src.services.ticket import TicketService
 
 
-
-class MessageManager:
+class O365MailboxManager:
     """
-    HPDA Support class that handles that holds the operations
-    to handle the Jira ticketing system.
+    Manager for O365 events.
     """
 
     def __init__(self, mailbox):
@@ -40,19 +54,19 @@ class MessageManager:
         # build query for O365
         daytime = datetime.datetime.now() - datetime.timedelta(days=days)
         query = self._mailbox.new_query().on_attribute('receivedDateTime').greater_equal(daytime)
-        messages = list(chain(inbox_folder.get_messages(limit=None, query=query),
-                              sent_folder.get_messages(limit=None, query=query)))
+        messages = list(itertools.chain(inbox_folder.get_messages(limit=None, query=query),
+                                        sent_folder.get_messages(limit=None, query=query)))
 
         # sort messages by age (older first)
         messages.sort(key=lambda e: e.received)
 
-        logger.info('Found {0} messages to process.'. format(str(len(messages))))
+        current_app.logger.info('Found {0} messages to process.'.format(str(len(messages))))
 
         # process each individual message
         for message in messages:
             self.process_message(message_id=message.object_id)
 
-    def listen_to_notifications(self, **kwargs):
+    def notification_manager(self, **kwargs):
         handler = JiraNotificationHandler(hpda_support=self)
 
         # set inbox/sent folder
@@ -64,9 +78,9 @@ class MessageManager:
         sent_subscription_id = self._subscriber.subscribe(resource=sent_folder)
         subscriptions = [inbox_subscription_id, sent_subscription_id]
 
-        self._subscriber.listen_to_notifications(subscriptions=subscriptions,
-                                                 notification_handler=handler,
-                                                 **kwargs)
+        self._subscriber.create_event_channel(subscriptions=subscriptions,
+                                              notification_handler=handler,
+                                              **kwargs)
 
     def process_message(self, message_id):
         """
@@ -76,8 +90,8 @@ class MessageManager:
         # reading message from the corresponding folder
         # and create Jira ticket for it.
         message = self._get_message(message_id=message_id)
-        logger.info('*** Processing new message ***')
-        logger.info(json.dumps({
+        current_app.logger.info('*** Processing new message ***')
+        current_app.logger.info(json.dumps({
             'outlook id': message.object_id,
             'created': message.created.strftime('%d/%m/%Y %H:%M:%S'),
             'subject': message.subject,
@@ -86,122 +100,121 @@ class MessageManager:
 
         # skip message processing if message is filtered
         if any(not e for e in list(map(lambda filter_: filter_.apply(message), self._filters))):
-            logger.info('Message \'{0}\' filtered.'.format(message.subject))
+            current_app.logger.info('Message \'{0}\' filtered.'.format(message.subject))
             return
 
         owner_email = message.sender.address
 
-        with session_scope() as session:
+        # check for existing ticket
+        existing_ticket = TicketService.find_by(
+            outlook_conversation_id=message.conversation_id,
+            fetch_one=True
+        )
 
-            # check for existing ticket
-            existing_ticket = session.query(Ticket).filter_by(outlook_conversation_id=message.conversation_id).first()
+        # add new comment if ticket already exists.
+        # create new ticket otherwise.
+        if existing_ticket:
 
-            # add new comment if ticket already exists.
-            # create new ticket otherwise.
-            if existing_ticket:
-
-                # check whether the ticket exists in Jira
-                # if so, the ticket has been deleted
-                try:
-                    self._jira.find('issue/{0}', ids=existing_ticket.jira_ticket_key)
-                except JIRAError as e:
-                    if e.status_code == requests.codes.not_found:
-                        session.delete(existing_ticket)
-                        logger.warning('Ticket \'{0}\' has been deleted from Jira.'.format(existing_ticket.jira_ticket_key))
-                        return
-                    else:
-                        raise e
-
-                # only add comment if not added yet.
-                # happens in case checking for missing tickets.
-                if message.object_id not in existing_ticket.outlook_messages_id:
-                    self._jira.add_comment(issue=existing_ticket.jira_ticket_key,
-                                           body=self._create_comment(message),
-                                           is_internal=True)
-
-                    # append message to history
-                    HPDASupport.add_message_to_history(message, existing_ticket)
-
-                    logger.info(
-                        'New comment added to Jira ticket \'{0}\'. '.format(existing_ticket.jira_ticket_key))
+            # check whether the ticket exists in Jira
+            # if so, the ticket has been deleted
+            try:
+                self._jira.find('issue/{0}', ids=existing_ticket.jira_ticket_key)
+            except jira.exceptions.JIRAError as e:
+                if e.status_code == requests.codes.not_found:
+                    TicketService.delete(ticket_id=existing_ticket.id)
+                    return
                 else:
-                    logger.info(
-                        'Skip comment to Jira ticket \'{0}\' since it has already been added.'.format(
-                            existing_ticket.jira_ticket_key))
-            else:
-                # creation of new ticket:
-                # 1. Adding ticket to Jira
-                # 2. Create ticket entry in local database
-                users = self._jira.search_users(user=owner_email)
+                    raise e
 
-                # set reporter. If user is invalid, reporter
-                # is set to 'Anonymous'.
-                reporter_id = getattr(next(iter(users), None), 'accountId', None)
-
-                # set priority between 'high' and 'low', if requested.
-                # otherwise unset it.
-                priority = message.importance.value.capitalize() \
-                    if message.importance.value in ['high', 'low'] else 'None'
-
-                issue = self._jira.create_issue(summary=message.subject,
-                                                description=self._create_comment(message),
-                                                reporter=dict(id=reporter_id),
-                                                project=dict(key=config['JIRA_TICKET_BOARD_KEY']),
-                                                issuetype=dict(name=config['JIRA_TICKET_TYPE']),
-                                                labels=config['JIRA_TICKET_LABELS'],
-                                                priority=dict(name=priority))
-
-                # adding attachments
-                for attachment in message.attachments:
-                    if attachment.content is not None:
-                        self._jira.add_attachment(issue=issue.key,
-                                                  attachment=base64.b64decode(attachment.content),
-                                                  filename=attachment.name)
-                        logger.debug('Added attachment \'{0}\' to ticket \'{1}\'.'
-                                     .format(attachment.name, issue.key))
-
-                # adding watchers
-                emails = chain((e.address for e in message.cc),
-                               (e.address for e in message.bcc),
-                               (e.address for e in message.to))
-
-                # add watchers iff has permission
-                if self._jira.has_permissions(permissions=['MANAGE_WATCHERS'],
-                                              issueKey=issue.key):
-                    for email in emails:
-                        user = next(iter(self._jira.search_users(user=email)), None)
-                        if user is not None:
-
-                            # check whether watcher has permissions to watch the issue
-                            try:
-                                self._jira.add_watcher(issue=issue.key,
-                                                       watcher=user.accountId)
-                            except JIRAError as e:
-                                if e.status_code == requests.codes.unauthorized:
-                                    logger.warning('Watcher \'{0}\' has no permission to watch issue \'{1}\'.'
-                                                   .format(user.displayName, issue.key))
-                                else:
-                                    raise e
-
-                ticket = Ticket(jira_ticket_key=issue.key,
-                                jira_ticket_url='{0}/browse/{1}'.format(config['ATLASSIAN_URL'], issue.key),
-                                outlook_message_id=message.object_id,
-                                outlook_message_url=message.resource_namespace,
-                                outlook_conversation_id=message.conversation_id,
-                                outlook_messages_id=message.object_id,
-                                owner_email=owner_email)
-
-                # send email to ticket owner about created ticket
-                notification = self._notify_ticket_owner(received_message=message,
-                                                         ticket=ticket)
+            # only add comment if not added yet.
+            # happens in case checking for missing tickets.
+            if message.object_id not in existing_ticket.outlook_messages_id:
+                self._jira.add_comment(issue=existing_ticket.jira_ticket_key,
+                                       body=self._create_comment(message),
+                                       is_internal=True)
 
                 # append message to history
-                HPDASupport.add_message_to_history(notification, ticket)
+                self.add_message_to_history(message, existing_ticket)
 
-                session.add(ticket)
-                session.commit()  # Only needed to get ticket.id
-                logger.info('New ticket created with Jira key \'{0}\'. (internal id: \'{1}\').'.format(
-                    issue.key, ticket.id))
+                current_app.logger.info("New comment added to Jira ticket '{0}'."
+                                        .format(existing_ticket.jira_ticket_key))
+            else:
+                current_app.logger.info("Skip comment to Jira ticket '{0}' since it has already been added."
+                                        .format(existing_ticket.jira_ticket_key))
+        else:
+            # creation of new ticket:
+            # 1. Adding ticket to Jira
+            # 2. Create ticket entry in local database
+            users = self._jira.search_users(user=owner_email)
+
+            # set reporter. If user is invalid, reporter
+            # is set to 'Anonymous'.
+            reporter_id = getattr(next(iter(users), None), 'accountId', None)
+
+            # set priority between 'high' and 'low', if requested.
+            # otherwise unset it.
+            priority = message.importance.value.capitalize() \
+                if message.importance.value in ['high', 'low'] else 'None'
+
+            issue = self._jira.create_issue(summary=message.subject,
+                                            description=self._create_comment(message),
+                                            reporter=dict(id=reporter_id),
+                                            project=dict(key=current_app.config['JIRA_TICKET_BOARD_KEY']),
+                                            issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
+                                            labels=current_app.config['JIRA_TICKET_LABELS'],
+                                            priority=dict(name=priority))
+
+            # adding attachments
+            for attachment in message.attachments:
+                if attachment.content is not None:
+                    self._jira.add_attachment(issue=issue.key,
+                                              attachment=base64.b64decode(attachment.content),
+                                              filename=attachment.name)
+                    current_app.logger.debug('Added attachment \'{0}\' to ticket \'{1}\'.'
+                                             .format(attachment.name, issue.key))
+
+            # adding watchers
+            emails = itertools.chain((e.address for e in message.cc),
+                                     (e.address for e in message.bcc),
+                                     (e.address for e in message.to))
+
+            # add watchers iff has permission
+            if self._jira.has_permissions(permissions=['MANAGE_WATCHERS'],
+                                          issueKey=issue.key):
+                for email in emails:
+                    user = next(iter(self._jira.search_users(user=email)), None)
+                    if user is not None:
+
+                        # check whether watcher has permissions to watch the issue
+                        try:
+                            self._jira.add_watcher(issue=issue.key,
+                                                   watcher=user.accountId)
+                        except jira.exceptions.JIRAError as e:
+                            if e.status_code == requests.codes.unauthorized:
+                                current_app.logger.warning('Watcher \'{0}\' has no permission to watch issue \'{1}\'.'
+                                                           .format(user.displayName, issue.key))
+                            else:
+                                raise e
+
+            ticket = TicketService.create(
+                jira_ticket_key=issue.key,
+                jira_ticket_url='{0}/browse/{1}'.format(current_app.config['ATLASSIAN_URL'], issue.key),
+                outlook_message_id=message.object_id,
+                outlook_message_url=message.resource_namespace,
+                outlook_conversation_id=message.conversation_id,
+                outlook_messages_id=message.object_id,
+                owner_email=owner_email
+            )
+
+            # send email to ticket owner about created ticket
+            notification = self._notify_ticket_owner(received_message=message,
+                                                     ticket=ticket)
+
+            # append message to history
+            self.add_message_to_history(notification, ticket)
+
+            current_app.logger.info("New ticket created with Jira key '{0}'. (internal id: '{1}')."
+                                    .format(issue.key, ticket.id))
 
     def _get_message(self, message_id):
         """
@@ -275,8 +288,8 @@ class MessageManager:
         """
 
         def email_template():
-            hpda_jira_ticket = '{0}/jira/tickets?board=mailbox-tickets&q={1}'.format(
-                config['HPDA_PORTAL'],
+            hpda_jira_ticket = "{0}/jira/tickets?board=mailbox-tickets&q={1}".format(
+                current_app.config['HPDA_PORTAL'],
                 ticket.jira_ticket_key)
             return \
                 'Dear HPDA user,\n' \
