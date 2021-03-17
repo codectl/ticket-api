@@ -17,3 +17,6 @@ env/
 
 # Logs
 *.log*
+
+# O365 auth
+o365_token.txt
