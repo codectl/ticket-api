@@ -67,7 +67,7 @@ class O365MailboxManager:
             self.process_message(message_id=message.object_id)
 
     def notification_manager(self, **kwargs):
-        handler = JiraNotificationHandler(hpda_support=self)
+        handler = JiraNotificationHandler(manager=self)
 
         # set inbox/sent folder
         inbox_folder = self._mailbox.inbox_folder()
@@ -288,8 +288,8 @@ class O365MailboxManager:
         """
 
         def email_template():
-            hpda_jira_ticket = "{0}/jira/tickets?board=mailbox-tickets&q={1}".format(
-                current_app.config['HPDA_PORTAL'],
+            client_app_ticket = "{0}/jira/tickets?board=mailbox-tickets&q={1}".format(
+                current_app.config['TICKET_CLIENT_APP'],
                 ticket.jira_ticket_key)
             return \
                 'Dear HPDA user,\n' \
@@ -301,8 +301,8 @@ class O365MailboxManager:
                 'HPDA Support Team'.format(
                     received_message.subject,
                     ticket.jira_ticket_key,
-                    hpda_jira_ticket,
-                    hpda_jira_ticket)
+                    client_app_ticket,
+                    client_app_ticket)
 
         # creating notification message to be sent to all recipients
         body = mistune.markdown(email_template(), escape=False).strip()

@@ -20,48 +20,9 @@ o365_cli = AppGroup(
 )
 
 
-def create_mailbox_manager(mailbox=None, retries=0):
+def authenticate_account(mailbox=None, retries=0):
     """
-    Create the mailbox manager.
-    """
-
-    account = authenticate(mailbox=mailbox, retries=retries)
-    o365_mailbox = account.mailbox()
-
-    mailbox_notifications = O365MailBoxStreamingNotifications(
-        parent=o365_mailbox,
-        change_type=O365Notification.ChangeType.CREATED.value
-    )
-
-    # Change Id alias to the real id for the 'RecipientsFilter' object
-    sent_folder = o365_mailbox.sent_folder()
-    sent_folder = sent_folder.get_folder(folder_id=sent_folder.folder_id)
-
-    # the O365 mailbox manager
-    manager = O365MailboxManager(mailbox=mailbox) \
-        .subscriber(mailbox_notifications) \
-        .jira(url=current_app.config['ATLASSIAN_URL'],
-              user=current_app.config['ATLASSIAN_USER'],
-              token=current_app.config['ATLASSIAN_API_TOKEN']) \
-        .filters(
-        [
-            JiraCommentNotificationFilter(mailbox=mailbox),
-            RecipientsFilter(recipient_reference=current_app.config['MAILBOX'], sent_folder=sent_folder),
-            SenderEmailBlacklistFilter(blacklist=current_app.config['EMAIL_BLACKLIST']),
-            SenderEmailDomainWhitelistedFilter(whitelisted_domains=current_app.config['EMAIL_WHITELISTED_DOMAINS']),
-            ValidateMetadataFilter()
-        ]
-    )
-
-    return manager
-
-
-@o365_cli.command()
-@click.option('--mailbox', '-m', type=str, help='the mailbox to manage events')
-@click.option('--retries', '-r', type=int, help='number of retries when request fails')
-def authenticate(mailbox=None, retries=0):
-    """
-    Set authorization code used for OAuth2 authentication.
+    Authenticate an O365 account.
     """
 
     credentials = (current_app.config['O365_CLIENT_ID'], None)
@@ -80,6 +41,53 @@ def authenticate(mailbox=None, retries=0):
                              scopes=current_app.config['O365_SCOPES'])
         current_app.logger.info('Authenticated successfully.')
     return account
+
+
+def create_mailbox_manager(**kwargs):
+    """
+    Create the mailbox manager.
+    """
+
+    account = authenticate_account(**kwargs)
+    o365_mailbox = account.mailbox()
+
+    mailbox_notifications = O365MailBoxStreamingNotifications(
+        parent=o365_mailbox,
+        change_type=O365Notification.ChangeType.CREATED.value
+    )
+
+    # Change Id alias to the real id for the 'RecipientsFilter' object
+    sent_folder = o365_mailbox.sent_folder()
+    sent_folder = sent_folder.get_folder(folder_id=sent_folder.folder_id)
+
+    # the O365 mailbox manager
+    manager = O365MailboxManager(mailbox=o365_mailbox) \
+        .subscriber(mailbox_notifications) \
+        .jira(url=current_app.config['ATLASSIAN_URL'],
+              user=current_app.config['ATLASSIAN_USER'],
+              token=current_app.config['ATLASSIAN_API_TOKEN']) \
+        .filters(
+        [
+            JiraCommentNotificationFilter(mailbox=o365_mailbox),
+            RecipientsFilter(recipient_reference=current_app.config['MAILBOX'], sent_folder=sent_folder),
+            SenderEmailBlacklistFilter(blacklist=current_app.config['EMAIL_BLACKLIST']),
+            SenderEmailDomainWhitelistedFilter(whitelisted_domains=current_app.config['EMAIL_WHITELISTED_DOMAINS']),
+            ValidateMetadataFilter()
+        ]
+    )
+
+    return manager
+
+
+@o365_cli.command()
+@click.option('--mailbox', '-m', type=str, help='the mailbox to manage events')
+@click.option('--retries', '-r', type=int, help='number of retries when request fails')
+def authenticate(mailbox=None, retries=0):
+    """
+    Set code used for OAuth2 authentication.
+    """
+
+    return authenticate_account(mailbox=mailbox, retries=retries)
 
 
 @o365_cli.command()

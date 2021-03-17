@@ -8,8 +8,8 @@ from o365_notifications.base import (
 class JiraNotificationHandler(O365NotificationsHandler):
     """ Handler for Jira """
 
-    def __init__(self, hpda_support):
-        self._hpda_support = hpda_support
+    def __init__(self, manager):
+        self.manager = manager
         super().__init__()
 
     def process(self, notification):
@@ -34,4 +34,4 @@ class JiraNotificationHandler(O365NotificationsHandler):
             elif notification.resource_data.get('@odata.type') == O365Notification.ResourceType.MESSAGE.value:
 
                 # folder represents any folder from subscriptions list (inbox)
-                self._hpda_support.process_message(message_id=notification.resource_data.get('Id'))
+                self.manager.process_message(message_id=notification.resource_data.get('Id'))

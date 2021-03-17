@@ -43,9 +43,9 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
             else:
 
                 # send out the comment message has a reply to the last sent message
-                reply = HPDASupport.create_reply(message=last_message,
-                                                 data=data,
-                                                 metadata=[dict(name='message', content='relay jira comment')])
+                reply = O365MailboxManager.create_reply(message=last_message,
+                                                        data=data,
+                                                        metadata=[dict(name='message', content='relay jira comment')])
                 reply.send()
 
             # delete Jira message since it serves no further purpose
