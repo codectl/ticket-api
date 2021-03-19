@@ -1,4 +1,4 @@
-from flask import redirect, request, url_for
+from flask import current_app, redirect, request, url_for
 from flask_restplus import Namespace, Resource
 
 
@@ -15,7 +15,8 @@ class Service(Resource):
         """
         Get service tickets based on search criteria.
         """
-        return redirect(url_for('auth.authorize_route', **request.args))
+        current_app.logger.info('1111111')
+        return { 'status': 200 }
 
     # def post(self):
     #     confirmed = request.form['confirm']

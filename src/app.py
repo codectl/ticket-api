@@ -1,3 +1,4 @@
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -33,6 +34,9 @@ def setup_app(app):
     """
     Setup the app
     """
+
+    # Set app default logging to INFO
+    app.logger.setLevel(logging.INFO)
 
     # Link db to app
     db.init_app(app)
