@@ -1,6 +1,8 @@
 import datetime
 
-from src import db
+from flask_restplus import fields
+
+from src import api, db
 
 
 class Ticket(db.Model):
@@ -15,4 +17,14 @@ class Ticket(db.Model):
     outlook_messages_id = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    owner_email = db.Column(db.String, nullable=False)
+    reporter = db.Column(db.String, nullable=False)
+
+
+class TicketDTO:
+    ticket = api.model('ticket', {
+        'jira_key': fields.String(attribute='jira_ticket_key', description='Jira ticket key'),
+        'jira_url': fields.String(attribute='jira_ticket_url', description='Jira ticket url'),
+        'created_at': fields.String(description='created at'),
+        'updated_at': fields.String(description='updated at'),
+        'reporter': fields.String(description='user reporter')
+    })
