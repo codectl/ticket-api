@@ -30,7 +30,7 @@ class TicketService:
         Search for a single ticket based on several criteria.
         """
 
-        return next(cls.find_by(limit=1, **filters))
+        return next(iter(cls.find_by(limit=1, **filters)), None)
 
     @classmethod
     def find_by(cls, limit=20, jira=True, **filters) -> Union[List[Ticket], Optional[Ticket]]:
@@ -50,10 +50,12 @@ class TicketService:
             tickets = []
             for jira_ticket in jira_tickets:
                 ticket = cls.find_one(jira_ticket_key=jira_ticket.key, jira=False)
-                ticket.jira = jira_ticket.raw
+                import pprint
+                pprint.pprint(jira_ticket.raw)
+                ticket.jira = jira_ticket['raw']
             return tickets
         else:
-            return Ticket.query.filter_by(**filters)
+            return Ticket.query.filter_by(**filters).all()
 
     @classmethod
     def update(cls, ticket_id, **kwargs):
