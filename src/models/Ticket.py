@@ -24,6 +24,7 @@ class TicketDTO:
     ticket = api.model('ticket', {
         'jira_key': fields.String(attribute='jira_ticket_key', description='Jira ticket key'),
         'jira_url': fields.String(attribute='jira_ticket_url', description='Jira ticket url'),
+        'category': fields.String(description='category'),
         'created_at': fields.String(description='created at'),
         'updated_at': fields.String(description='updated at'),
         'reporter': fields.String(description='user reporter')

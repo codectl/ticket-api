@@ -1,13 +1,13 @@
 from flask import current_app
 from jira import JIRA
-from jira.resources import User
+from jira.resources import Dashboard, User
 
 __all__ = ['JiraService']
 
 
 class ProxyJIRA(JIRA):
     """
-        Proxy class for Jira
+    Proxy class for Jira
     """
 
     def __init__(self, **kwargs):
@@ -20,15 +20,15 @@ class ProxyJIRA(JIRA):
 
     def has_permissions(self, permissions, **kwargs):
         """
-            Check whether the signed user has the given permissions.
+        Check whether the signed user has the given permissions.
         """
         jira_permissions = self.my_permissions(permissions=','.join(permissions), **kwargs)
         return all(jira_permissions['permissions'][permission]['havePermission'] for permission in permissions)
 
     def my_permissions(self, project_key=None, project_id=None, issue_key=None, issue_id=None, permissions=None):
         """
-            Introduced param permissions.
-            Overridden method.
+        Introduced param permissions.
+        Overridden method.
 
         :param project_key: see overridden method
         :param project_id: see overridden method
@@ -53,9 +53,9 @@ class ProxyJIRA(JIRA):
     def search_users(self, user, start_at=0, limit=50,
                      include_active=True, include_inactive=False):
         """
-            Change from 'username' to 'query' after some Jira API update:
-            "The query parameter 'username' is not supported in GDPR strict mode."
-            Overridden method.
+        Change from 'username' to 'query' after some Jira API update:
+        "The query parameter 'username' is not supported in GDPR strict mode."
+        Overridden method.
         """
         params = {
             'query': user,
@@ -65,16 +65,45 @@ class ProxyJIRA(JIRA):
         return self._fetch_pages(User, None, 'user/search',
                                  startAt=start_at, maxResults=limit, params=params)
 
+    def search_boards(self, name=None, limit=5):
+        """
+        Search for dashboards.
+        """
+        params = {
+            'dashboardName': 'HPC',
+        }
+        return self._fetch_pages(Dashboard, 'values', 'dashboard/search', startAt=0, maxResults=limit, params=params)
+
+    def get_board_configuration(self, board_id) -> dict:
+        """
+        Get the configuration from a given board
+
+        :param board_id: the id of the board
+        :return: the board configuration
+        """
+        url = self._get_url("board/{0}/configuration".format(board_id), base=self.AGILE_BASE_URL)
+        return self._session.get(url).json()
+
+    def get_board_filter(self, board_id):
+        """
+        Get the filter from a board's configuration
+
+        :param board_id: the id of the board
+        :return: the board filter
+        """
+        configuration = self.get_board_configuration(board_id=board_id)
+        return self.filter(configuration.get('filter', {}).get('id'))
+
     @staticmethod
-    def create_jql_query(q=None, key=None, filters=None, assignee=None,
+    def create_jql_query(boards=None, q=None, key=None, assignee=None,
                          status=None, watcher=None, expand=None,
                          sort=None):
         """
             Build jql query based on a provided searching parameters.
 
+        :param boards: the boards to get tickets from.
         :param q: the text search.
         :param key: the Jira ticket key
-        :param filters: the query filters. Comma separated values.
         :param assignee: the key assignee.
         :param status: the status key.
         :param watcher: the watcher key.
@@ -83,12 +112,12 @@ class ProxyJIRA(JIRA):
         """
         jql = ''
 
+        if boards:
+            jql += '&filter in ({0})'.format(boards)
         if q:
             jql += '&summary ~ \'' + q + '\''
         if key:
             jql += '&key = ' + q
-        if filters:
-            jql += '&filter in ({0})'.format(filters)
         if assignee:
             jql += '&assignee=' + assignee
         if status:

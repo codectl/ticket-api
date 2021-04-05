@@ -37,22 +37,42 @@ class TicketService:
         """
         Search for tickets based on several criteria.
         Jira filters are also supported.
+
         :param limit: the max number of results retrieved
         :param jira: whether to query Jira api to get results from
         """
 
+        # filter validation
+        cls._validate_filters(**filters)
+
+        # the Jira service instance
+        jira_service = JiraService()
+
         if jira:
+
+            # If any of the filter is not a Jira filter, then the
+            # result limit applied locally
+            max_results = limit if all(cls.is_jira_filter(filter_) for filter_ in filters) else None
+
             # fetch ticket from Jira
-            jira = JiraService()
-            query = jira.create_jql_query(**filters)
-            jira_tickets = jira.search_issues(jql_str=query, maxResults=limit)
+            query = jira_service.create_jql_query({k: v for k, v in filters.items() if cls.is_jira_filter(k)})
+            print({k: v for k, v in filters.items() if cls.is_jira_filter(k)})
+            print(filters)
+            print(query)
+            print(jira_service.search_boards())
+            # jira_tickets = jira_service.search_issues(jql_str=query, maxResults=max_results)
+
+            # print(len(jira_tickets))
 
             tickets = []
-            for jira_ticket in jira_tickets:
-                ticket = cls.find_one(jira_ticket_key=jira_ticket.key, jira=False)
-                import pprint
-                pprint.pprint(jira_ticket.raw)
-                ticket.jira = jira_ticket['raw']
+            # for jira_ticket in jira_tickets:
+            #     if len(tickets) < limit:
+            #         ticket = cls.find_one(jira_ticket_key=jira_ticket.key, jira=False)
+            #         if ticket:
+            #             ticket.jira = jira_ticket.raw
+            #             tickets.append(ticket)
+            #     else:
+            #         break
             return tickets
         else:
             return Ticket.query.filter_by(**filters).all()
@@ -76,3 +96,33 @@ class TicketService:
             db.session.commit()
 
             current_app.logger.info("Deleted ticket_id '{0}'.".format(ticket_id.jira_ticket_key))
+
+    @staticmethod
+    def _validate_filters(**filters):
+        """
+        Validate query filters.
+
+        The following fields are managed locally, therefore they
+        have no relationship with Jira ticket data. Such fields
+        cannot be used in combination with other fields.
+        - reporter: represents the owner of the ticket.
+        """
+
+        invalid_combinations_fields = {
+            'reporter': ['limit', 'q', 'key', 'assignee', 'status', 'watcher']
+        }
+        matches = [field for field, values in invalid_combinations_fields.items() if
+                   field in filters and any(f in values for f in filters)]
+        if matches:
+            raise ValueError(' '.join(("Field {0} cannot be used in combination with fields {1}."
+                                      .format(match, invalid_combinations_fields[match]) for match in matches)))
+        return True
+
+    @staticmethod
+    def is_jira_filter(filter_):
+        """
+        Check whether given filter is a Jira only filter.
+        """
+
+        return filter_ in ['q', 'key', 'assignee', 'status', 'watcher', 'sort']
+
