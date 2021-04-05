@@ -59,10 +59,10 @@ class TicketService:
             print({k: v for k, v in filters.items() if cls.is_jira_filter(k)})
             print(filters)
             print(query)
-            print(jira_service.search_boards())
-            # jira_tickets = jira_service.search_issues(jql_str=query, maxResults=max_results)
+            # print(jira_service.find_board('sprint').id)
+            jira_tickets = jira_service.search_issues(jql_str=query, maxResults=999)
 
-            # print(len(jira_tickets))
+            print(len(jira_tickets))
 
             tickets = []
             # for jira_ticket in jira_tickets:

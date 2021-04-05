@@ -26,6 +26,7 @@ class ServiceTickets(Resource):
     @service.param('sort', description='order to sort tickets by. default: created')
     @service.marshal_list_with(ticket_fields)
     @service.response(200, 'Success')
+    @service.response(400, 'Bad Request')
     def get(self):
         """
         Get service tickets based on search criteria.

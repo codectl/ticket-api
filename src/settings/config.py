@@ -61,6 +61,12 @@ class BaseConfig:
     JIRA_TICKET_LABELS = os.getenv('JIRA_TICKET_LABELS', []).split(',')
     JIRA_DEFAULT_REPORTER = os.getenv('JIRA_DEFAULT_REPORTER')
 
+    # Jira boards to fetch tickets from
+    JIRA_BOARDS = [{
+        'key': board.lower().replace('jira_', '').replace('_board', ''),
+        'jira_name': os.getenv(board)
+    } for board in os.getenv('JIRA_BOARDS').split()]
+
     # Filter settings
     EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split(',')
     EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split(',')

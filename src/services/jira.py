@@ -1,6 +1,9 @@
+import operator
+from typing import List, Optional
+
+import jira.resources
 from flask import current_app
 from jira import JIRA
-from jira.resources import Dashboard, User
 
 __all__ = ['JiraService']
 
@@ -16,6 +19,10 @@ class ProxyJIRA(JIRA):
         token = kwargs.pop('token')
         super().__init__(server=url,
                          basic_auth=(user, token),
+                         options={
+                             'agile_rest_path': jira.resources.GreenHopperResource.AGILE_BASE_REST_PATH,
+                             'agile_rest_api_version': 'latest'
+                         },
                          **kwargs)
 
     def has_permissions(self, permissions, **kwargs):
@@ -62,23 +69,35 @@ class ProxyJIRA(JIRA):
             'includeActive': include_active,
             'includeInactive': include_inactive
         }
-        return self._fetch_pages(User, None, 'user/search',
+        return self._fetch_pages(jira.resources.User, None, 'user/search',
                                  startAt=start_at, maxResults=limit, params=params)
 
-    def search_boards(self, name=None, limit=5):
+    def search_boards(self, jira_name=None) -> List[jira.resources.Board]:
         """
-        Search for dashboards.
+        Search for boards.
+
+        :param jira_name: the Jira board name
         """
-        params = {
-            'dashboardName': 'HPC',
-        }
-        return self._fetch_pages(Dashboard, 'values', 'dashboard/search', startAt=0, maxResults=limit, params=params)
+        params = {'name': jira_name}
+        return self._fetch_pages(jira.resources.Board, 'values', 'board', params=params, base=self.AGILE_BASE_URL)
+
+    def find_board(self, key=None) -> Optional[jira.resources.Board]:
+        """
+        Get single board.
+
+        :param key: the board key
+        """
+        jira_board_name = next(
+            (board['jira_name'] for board in current_app.config['JIRA_BOARDS'] if board['key'] == key), None)
+        if jira_board_name is None:
+            raise None
+        return next((board for board in self.search_boards(jira_name=jira_board_name) if board.name == jira_board_name), None)
 
     def get_board_configuration(self, board_id) -> dict:
         """
         Get the configuration from a given board
 
-        :param board_id: the id of the board
+        :param board_id: the Jira id of the board
         :return: the board configuration
         """
         url = self._get_url("board/{0}/configuration".format(board_id), base=self.AGILE_BASE_URL)
@@ -88,18 +107,17 @@ class ProxyJIRA(JIRA):
         """
         Get the filter from a board's configuration
 
-        :param board_id: the id of the board
+        :param board_id: the Jira id of the board
         :return: the board filter
         """
         configuration = self.get_board_configuration(board_id=board_id)
         return self.filter(configuration.get('filter', {}).get('id'))
 
-    @staticmethod
-    def create_jql_query(boards=None, q=None, key=None, assignee=None,
+    def create_jql_query(self, boards=None, q=None, key=None, assignee=None,
                          status=None, watcher=None, expand=None,
                          sort=None):
         """
-            Build jql query based on a provided searching parameters.
+        Build jql query based on a provided searching parameters.
 
         :param boards: the boards to get tickets from.
         :param q: the text search.
@@ -110,10 +128,14 @@ class ProxyJIRA(JIRA):
         :param expand: the expand field.
         :param sort: the sort criteria. Could have the value 'created'.
         """
-        jql = ''
 
-        if boards:
-            jql += '&filter in ({0})'.format(boards)
+        # search from all boards if none provided
+        board_keys = boards if boards else list(map(operator.itemgetter('key'), current_app.config['JIRA_BOARDS']))
+
+        # search for issues under the right boards
+        filters = [self.get_board_filter(board_id=self.find_board(key=key).id) for key in board_keys]
+        jql = "filter in ({0})".format(', '.join([filter_.id for filter_ in filters]))
+
         if q:
             jql += '&summary ~ \'' + q + '\''
         if key:
@@ -129,14 +151,13 @@ class ProxyJIRA(JIRA):
         if sort:
             jql += ' ORDER BY ' + sort
 
-        return jql.lstrip('&')
+        return jql
 
 
 class JiraService(ProxyJIRA):
     """
-        Service to handle Jira operations
+    Service to handle Jira operations
     """
-
     def __init__(self, **kwargs):
         super().__init__(url=current_app.config['ATLASSIAN_URL'],
                          user=current_app.config['ATLASSIAN_USER'],
