@@ -50,29 +50,25 @@ class TicketService:
 
         if jira:
 
-            # If any of the filter is not a Jira filter, then the
-            # result limit applied locally
-            max_results = limit if all(cls.is_jira_filter(filter_) for filter_ in filters) else None
+            # If any of the filter is not a Jira filter, then
+            # apply local filter and pass on results to jql
+            if any(not cls.is_jira_filter(filter_) for filter_ in filters):
+                tickets = Ticket.query.filter_by(**filters).all()
+                filters['key'] = filters.get('key', [ticket.jira_ticket_key for ticket in tickets])
 
-            # fetch ticket from Jira
-            query = jira_service.create_jql_query({k: v for k, v in filters.items() if cls.is_jira_filter(k)})
-            print({k: v for k, v in filters.items() if cls.is_jira_filter(k)})
-            print(filters)
-            print(query)
-            # print(jira_service.find_board('sprint').id)
-            jira_tickets = jira_service.search_issues(jql_str=query, maxResults=999)
-
-            print(len(jira_tickets))
+            # fetch tickets from Jira using jql while skipping jql
+            # validation since local db might not be synched with Jira
+            query = jira_service.create_jql_query(**{k: v for k, v in filters.items() if cls.is_jira_filter(k)})
+            jira_tickets = jira_service.search_issues(jql_str=query, maxResults=limit, validate_query=False)
 
             tickets = []
-            # for jira_ticket in jira_tickets:
-            #     if len(tickets) < limit:
-            #         ticket = cls.find_one(jira_ticket_key=jira_ticket.key, jira=False)
-            #         if ticket:
-            #             ticket.jira = jira_ticket.raw
-            #             tickets.append(ticket)
-            #     else:
-            #         break
+            for jira_ticket in jira_tickets:
+                ticket = cls.find_one(jira_ticket_key=jira_ticket.key, jira=False)
+                # prevent cases where local db is not synched with Jira
+                # for cases where Jira tickets are not yet locally present
+                if ticket:
+                    ticket.jira = jira_ticket.raw
+                    tickets.append(ticket)
             return tickets
         else:
             return Ticket.query.filter_by(**filters).all()
@@ -95,7 +91,21 @@ class TicketService:
             db.session.delete(ticket)
             db.session.commit()
 
-            current_app.logger.info("Deleted ticket_id '{0}'.".format(ticket_id.jira_ticket_key))
+            current_app.logger.info("Deleted ticket '{0}'.".format(ticket.jira_ticket_key))
+
+    @classmethod
+    def remove_deleted(cls, tickets):
+        """
+        Remove tickets deleted from Jira.
+        """
+        jira_service = JiraService()
+        result = []
+        for ticket in tickets:
+            if not jira_service.exists_issue(issue_id=ticket.jira_ticket_key):
+                cls.delete(ticket.id)
+            else:
+                result.append(ticket)
+        return result
 
     @staticmethod
     def _validate_filters(**filters):
@@ -124,5 +134,5 @@ class TicketService:
         Check whether given filter is a Jira only filter.
         """
 
-        return filter_ in ['q', 'key', 'assignee', 'status', 'watcher', 'sort']
+        return filter_ in ['boards', 'q', 'key', 'assignee', 'status', 'watcher', 'sort']
 

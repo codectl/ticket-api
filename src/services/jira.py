@@ -1,7 +1,7 @@
-import operator
 from typing import List, Optional
 
 import jira.resources
+import requests
 from flask import current_app
 from jira import JIRA
 
@@ -24,6 +24,20 @@ class ProxyJIRA(JIRA):
                              'agile_rest_api_version': 'latest'
                          },
                          **kwargs)
+
+    def exists_issue(self, issue_id):
+        """
+        Check if issue exists.
+
+        :param issue_id: the ticket id or key
+        """
+        try:
+            self.issue(id=issue_id)
+        except jira.exceptions.JIRAError as ex:
+            if ex.status_code == requests.codes.not_found:
+                return False
+        else:
+            return True
 
     def has_permissions(self, permissions, **kwargs):
         """
@@ -90,7 +104,7 @@ class ProxyJIRA(JIRA):
         jira_board_name = next(
             (board['jira_name'] for board in current_app.config['JIRA_BOARDS'] if board['key'] == key), None)
         if jira_board_name is None:
-            raise None
+            return None
         return next((board for board in self.search_boards(jira_name=jira_board_name) if board.name == jira_board_name), None)
 
     def get_board_configuration(self, board_id) -> dict:
@@ -130,7 +144,7 @@ class ProxyJIRA(JIRA):
         """
 
         # search from all boards if none provided
-        board_keys = boards if boards else list(map(operator.itemgetter('key'), current_app.config['JIRA_BOARDS']))
+        board_keys = boards if boards else [board['key'] for board in current_app.config['JIRA_BOARDS']]
 
         # search for issues under the right boards
         filters = [self.get_board_filter(board_id=self.find_board(key=key).id) for key in board_keys]
@@ -139,7 +153,7 @@ class ProxyJIRA(JIRA):
         if q:
             jql += '&summary ~ \'' + q + '\''
         if key:
-            jql += '&key = ' + q
+            jql += "&key in ({0})".format(', '.join(key))
         if assignee:
             jql += '&assignee=' + assignee
         if status:
