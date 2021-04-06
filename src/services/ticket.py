@@ -93,20 +93,6 @@ class TicketService:
 
             current_app.logger.info("Deleted ticket '{0}'.".format(ticket.jira_ticket_key))
 
-    @classmethod
-    def remove_deleted(cls, tickets):
-        """
-        Remove tickets deleted from Jira.
-        """
-        jira_service = JiraService()
-        result = []
-        for ticket in tickets:
-            if not jira_service.exists_issue(issue_id=ticket.jira_ticket_key):
-                cls.delete(ticket.id)
-            else:
-                result.append(ticket)
-        return result
-
     @staticmethod
     def _validate_filters(**filters):
         """
