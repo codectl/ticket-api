@@ -9,7 +9,7 @@ class Ticket(db.Model):
     __tablename__ = 'tickets'
     id = db.Column(db.Integer, primary_key=True)
     category = db.Column(db.String, nullable=False)
-    jira_ticket_key = db.Column(db.String, unique=True, nullable=False)
+    jira_ticket_key = db.Column(db.String, unique=True, nullable=False, index=True)
     jira_ticket_url = db.Column(db.String, unique=True, nullable=False)
     outlook_message_id = db.Column(db.String, unique=True, nullable=False)
     outlook_message_url = db.Column(db.String, unique=True, nullable=False)
