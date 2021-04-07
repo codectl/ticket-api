@@ -1,4 +1,4 @@
-from flask import abort, request
+from flask import request
 from flask_restplus import Namespace, Resource
 
 from src.dto.ticket import ticket as ticket_fields
@@ -35,7 +35,7 @@ class ServiceTickets(Resource):
         limit = params.pop('limit', 20)
 
         if not TicketService.validate_search_filters(**params):
-            abort(400, 'Invalid search parameters')
+            service.abort(400, 'Invalid search parameters')
 
         return TicketService.find_by(limit=limit, **params)
 
@@ -52,7 +52,7 @@ class ServiceTicket(Resource):
         Get a ticket given its identifier
         """
 
-        ticket = TicketService.find_by(jira_ticket_key=key, fetch_one=True)
+        ticket = next(TicketService.find_by(key=key, limit=1), None)
         if not ticket:
             service.abort(404)
         else:
