@@ -42,9 +42,6 @@ class TicketService:
         :param jira: whether to query Jira api to get results from
         """
 
-        # filter validation
-        cls._validate_filters(**filters)
-
         # the Jira service instance
         jira_service = JiraService()
 
@@ -92,27 +89,6 @@ class TicketService:
             db.session.commit()
 
             current_app.logger.info("Deleted ticket '{0}'.".format(ticket.jira_ticket_key))
-
-    @staticmethod
-    def _validate_filters(**filters):
-        """
-        Validate query filters.
-
-        The following fields are managed locally, therefore they
-        have no relationship with Jira ticket data. Such fields
-        cannot be used in combination with other fields.
-        - reporter: represents the owner of the ticket.
-        """
-
-        invalid_combinations_fields = {
-            'reporter': ['limit', 'q', 'key', 'assignee', 'status', 'watcher']
-        }
-        matches = [field for field, values in invalid_combinations_fields.items() if
-                   field in filters and any(f in values for f in filters)]
-        if matches:
-            raise ValueError(' '.join(("Field {0} cannot be used in combination with fields {1}."
-                                      .format(match, invalid_combinations_fields[match]) for match in matches)))
-        return True
 
     @staticmethod
     def is_jira_filter(filter_):
