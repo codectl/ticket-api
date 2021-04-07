@@ -1,7 +1,7 @@
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from src.models.Ticket import TicketDTO
+from src.dto.ticket import ticket as ticket_fields
 from src.services.ticket import TicketService
 
 service = Namespace(
@@ -9,7 +9,6 @@ service = Namespace(
     description='Manage service tickets.'
 )
 
-ticket_fields = TicketDTO.ticket
 ticket_mask = 'jira_key,jira_url'
 
 

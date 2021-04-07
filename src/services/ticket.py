@@ -40,6 +40,7 @@ class TicketService:
 
         :param limit: the max number of results retrieved
         :param jira: whether to query Jira api to get results from
+        :param filters: the query filters
         """
 
         # the Jira service instance
@@ -64,7 +65,7 @@ class TicketService:
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
                 if ticket:
-                    ticket.jira = jira_ticket.raw
+                    ticket.jira = jira_ticket
                     tickets.append(ticket)
             return tickets
         else:
