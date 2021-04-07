@@ -99,3 +99,13 @@ class TicketService:
 
         return filter_ in ['boards', 'q', 'key', 'assignee', 'status', 'watcher', 'sort']
 
+    @staticmethod
+    def validate_search_filters(**filters):
+        """
+        Validate query search filters.
+        """
+
+        # guarantee that board filter is part of supported boards
+        if filters.get('board') not in current_app.config['JIRA_BOARDS']:
+            return False
+        return True
