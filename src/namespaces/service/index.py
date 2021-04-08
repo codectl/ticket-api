@@ -51,7 +51,6 @@ class ServiceTicket(Resource):
         """
         Get a ticket given its identifier
         """
-
         ticket = next(TicketService.find_by(key=key, limit=1), None)
         if not ticket:
             service.abort(404)

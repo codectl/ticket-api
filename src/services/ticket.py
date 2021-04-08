@@ -67,6 +67,8 @@ class TicketService:
                 if ticket:
                     ticket.jira = jira_ticket
                     tickets.append(ticket)
+            import pprint
+            pprint.pprint(vars(jira_tickets[0]))
             return tickets
         else:
             return Ticket.query.filter_by(**filters).all()
@@ -106,6 +108,6 @@ class TicketService:
         """
 
         # guarantee that board filter is part of supported boards
-        if filters.get('board') not in current_app.config['JIRA_BOARDS']:
+        if filters.get('board') and filters['board'] not in current_app.config['JIRA_BOARDS']:
             return False
         return True
