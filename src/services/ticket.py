@@ -63,7 +63,6 @@ class TicketService:
             query = jira_service.create_jql_query(**jira_filters)
             jira_tickets = jira_service.search_issues(jql_str=query, maxResults=limit, validate_query=False)
 
-            print(query)
             tickets = []
             for jira_ticket in jira_tickets:
                 ticket = cls.find_one(jira_ticket_key=jira_ticket.key, jira=False)
