@@ -6,7 +6,7 @@ from flask import Flask, Blueprint
 
 from src import api, db
 from src.cli.o365 import o365_cli
-from src.namespaces.service.index import service
+from src.namespaces.tickets.index import tickets
 from src.settings.config import config_by_name
 
 
@@ -55,7 +55,7 @@ def setup_app(app):
     app.register_blueprint(root)
 
     # Register namespaces
-    api.add_namespace(service)
+    api.add_namespace(tickets)
 
     # Register cli commands
     app.cli.add_command(o365_cli)
