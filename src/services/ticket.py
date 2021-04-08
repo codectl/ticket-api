@@ -66,6 +66,7 @@ class TicketService:
                 # for cases where Jira tickets are not yet locally present
                 if ticket:
                     ticket.jira = jira_ticket
+                    ticket.jira.url = ticket.jira_ticket_url
                     tickets.append(ticket)
             import pprint
             pprint.pprint(vars(jira_tickets[0]))

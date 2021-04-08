@@ -1,10 +1,10 @@
 from flask_restplus import fields
 
-from src.dto.jira.user import user
+from src import api
 
 
-status = {
-    'name': fields.String(user, attribute=lambda x: x['statusCategory']['name']),
-    'key': fields.String(user, attribute=lambda x: x['statusCategory']['key']),
-    'color-name': fields.String(user, attribute=lambda x: x['statusCategory']['colorName'])
-}
+status = api.model('jira-status', {
+    'name': fields.String(attribute=lambda x: x['statusCategory']['name']),
+    'key': fields.String(attribute=lambda x: x['statusCategory']['key']),
+    'color-name': fields.String(attribute=lambda x: x['statusCategory']['colorName'])
+})

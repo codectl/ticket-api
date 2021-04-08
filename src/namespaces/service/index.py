@@ -1,5 +1,5 @@
 from flask import request
-from flask_restplus import Namespace, Resource
+from flask_restplus import marshal, Namespace, Resource
 
 from src.dto.ticket import ticket as ticket_fields
 from src.services.ticket import TicketService
