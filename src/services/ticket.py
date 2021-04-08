@@ -46,17 +46,21 @@ class TicketService:
         # the Jira service instance
         jira_service = JiraService()
 
+        # split filters
+        local_filters = {k: v for k, v in filters.items() if not cls.is_jira_filter(k)}
+        jira_filters = {k: v for k, v in filters.items() if cls.is_jira_filter(k)}
+
         if jira:
 
-            # If any of the filter is not a Jira filter, then
+            # if any of the filter is not a Jira filter, then
             # apply local filter and pass on results to jql
-            if any(not cls.is_jira_filter(filter_) for filter_ in filters):
-                tickets = Ticket.query.filter_by(**filters).all()
-                filters['key'] = filters.get('key', [ticket.jira_ticket_key for ticket in tickets])
+            if local_filters:
+                tickets = Ticket.query.filter_by(**local_filters).all()
+                jira_filters['key'] = [ticket.jira_ticket_key for ticket in tickets]
 
             # fetch tickets from Jira using jql while skipping jql
             # validation since local db might not be synched with Jira
-            query = jira_service.create_jql_query(**{k: v for k, v in filters.items() if cls.is_jira_filter(k)})
+            query = jira_service.create_jql_query(**jira_filters)
             jira_tickets = jira_service.search_issues(jql_str=query, maxResults=limit, validate_query=False)
 
             tickets = []
@@ -68,8 +72,6 @@ class TicketService:
                     ticket.jira = jira_ticket
                     ticket.jira.url = ticket.jira_ticket_url
                     tickets.append(ticket)
-            import pprint
-            pprint.pprint(vars(jira_tickets[0]))
             return tickets
         else:
             return Ticket.query.filter_by(**filters).all()
