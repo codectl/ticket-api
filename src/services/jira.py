@@ -153,7 +153,7 @@ class ProxyJIRA(JIRA):
         if q:
             jql += '&summary ~ \'' + q + '\''
         if key:
-            jql += "&key in ({0})".format(', '.join(key))
+            jql += "&key in ({0})".format(', '.join(key) if isinstance(key, list) else key)
         if assignee:
             jql += '&assignee=' + assignee
         if status:
