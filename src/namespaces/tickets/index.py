@@ -49,7 +49,7 @@ class Tickets(Resource):
 
 
 @tickets.param('key', description='the ticket identifier')
-@tickets.route('/<key>', endpoint='abc')
+@tickets.route('/<key>')
 class Ticket(Resource):
 
     @tickets.response(200, 'Success')

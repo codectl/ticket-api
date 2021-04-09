@@ -167,9 +167,6 @@ class ProxyJIRA(JIRA):
 
         return jql
 
-    def format_body(self, commenter=None):
-        self.markdown.mention(email=commenter)
-
     @property
     def markdown(self):
         return JiraMarkdown(parent=self)

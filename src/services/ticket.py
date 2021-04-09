@@ -1,5 +1,7 @@
+import os
 from typing import List, Optional, Union
 
+import jinja2
 from flask import current_app
 
 from src import db
@@ -15,7 +17,11 @@ class TicketService:
         # the Jira service instance
         jira_service = JiraService()
 
-        print(jira_service.markdown)
+        body = cls.create_ticket_body(
+            author=jira_service.markdown.mention(email=kwargs.get('reporter')),
+            body=kwargs.get('description')
+        )
+        print(body)
 
         # issue = jira_service.create_issue(summary=message.subject,
         #                                   description=self._create_comment(message),
@@ -29,9 +35,10 @@ class TicketService:
         # db.session.add(ticket)
         # db.session.commit()
 
-        current_app.logger.info("Created ticket '{0}'.".format(ticket.jira_ticket_key))
-
-        return ticket
+        # current_app.logger.info("Created ticket '{0}'.".format(ticket.jira_ticket_key))
+        #
+        # return ticket
+        return None
 
     @staticmethod
     def get(ticket_id) -> Optional[Ticket]:
@@ -126,3 +133,24 @@ class TicketService:
         if filters.get('board') and filters['board'] not in current_app.config['JIRA_BOARDS']:
             return False
         return True
+
+    @staticmethod
+    def create_ticket_body(template='default.j2', **kwargs):
+        """
+        Create the body of the ticket.
+
+        :param template: the template to build ticket body from
+        :param kwargs: values for template interpolation
+        """
+        if not template:
+            return None
+
+        template_path = os.path.join(current_app.root_path, 'templates', 'ticket', 'format')
+        template_filepath = os.path.join(template_path, template)
+        if not os.path.exists(template_filepath):
+            raise ValueError('Invalid template provided')
+
+        with open(template_filepath) as file:
+            content = file.read()
+
+        return jinja2.Template(content).render(**kwargs)
