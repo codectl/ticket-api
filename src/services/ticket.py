@@ -11,10 +11,23 @@ class TicketService:
 
     @classmethod
     def create(cls, **kwargs) -> Ticket:
-        ticket = Ticket(**kwargs)
 
-        db.session.add(ticket)
-        db.session.commit()
+        # the Jira service instance
+        jira_service = JiraService()
+
+        print(jira_service.markdown)
+
+        # issue = jira_service.create_issue(summary=message.subject,
+        #                                   description=self._create_comment(message),
+        #                                   reporter=dict(id=reporter_id),
+        #                                   project=dict(key=current_app.config['JIRA_TICKET_BOARD_KEY']),
+        #                                   issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
+        #                                   labels=current_app.config['JIRA_TICKET_LABELS'],
+        #                                   priority=dict(name=priority))
+        # ticket = Ticket(**kwargs)
+        #
+        # db.session.add(ticket)
+        # db.session.commit()
 
         current_app.logger.info("Created ticket '{0}'.".format(ticket.jira_ticket_key))
 
@@ -29,7 +42,6 @@ class TicketService:
         """
         Search for a single ticket based on several criteria.
         """
-
         return next(iter(cls.find_by(limit=1, **filters)), None)
 
     @classmethod

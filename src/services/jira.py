@@ -167,6 +167,32 @@ class ProxyJIRA(JIRA):
 
         return jql
 
+    def format_body(self, commenter=None):
+        self.markdown.mention(email=commenter)
+
+    @property
+    def markdown(self):
+        return JiraMarkdown(parent=self)
+
+
+class JiraMarkdown(ProxyJIRA):
+    def __init__(self, parent=None, **kwargs):
+        if parent and isinstance(parent, ProxyJIRA):
+            self.__dict__.update(parent.__dict__)
+        else:
+            super().__init__(**kwargs)
+
+    def mention(self, email):
+        """
+        Create Jira markdown mention out of a user email.
+        If user does not exist, create email markdown.
+        """
+
+        user = next(iter(self.search_users(user=email)), None)
+        if user:
+            return '[~accountid:{0}]'.format(user.accountId)
+        return ''.join(('[', email, ';|', 'mailto:', email, ']'))
+
 
 class JiraService(ProxyJIRA):
     """

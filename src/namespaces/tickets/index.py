@@ -1,7 +1,7 @@
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from src.dto.ticket import ticket as ticket_fields
+from src.dto.ticket import ro_fields, rw_fields
 from src.services.ticket import TicketService
 
 tickets = Namespace(
@@ -21,7 +21,7 @@ class Tickets(Resource):
     @tickets.param('status', description='the ticket status')
     @tickets.param('watcher', description='tickets user has subscribed to')
     @tickets.param('sort', description='sort tickets by', default='created', enum=['created'])
-    @tickets.marshal_list_with(ticket_fields)
+    @tickets.marshal_list_with(ro_fields)
     @tickets.response(200, 'Success')
     @tickets.response(400, 'Bad request')
     def get(self):
@@ -36,6 +36,17 @@ class Tickets(Resource):
 
         return TicketService.find_by(limit=limit, **params)
 
+    # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
+    @tickets.response(201, 'Created')
+    @tickets.expect(rw_fields, validate=True)
+    @tickets.marshal_with(ro_fields, code=201)
+    def post(self):
+        """
+        Create a new ticket.
+        """
+        TicketService.create()
+        return None, 201
+
 
 @tickets.param('key', description='the ticket identifier')
 @tickets.route('/<key>', endpoint='abc')
@@ -43,7 +54,7 @@ class Ticket(Resource):
 
     @tickets.response(200, 'Success')
     @tickets.response(404, 'Not found')
-    @tickets.marshal_with(ticket_fields)
+    @tickets.marshal_with(ro_fields)
     def get(self, key):
         """
         Get a ticket given its identifier

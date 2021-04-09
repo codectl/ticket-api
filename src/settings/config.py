@@ -2,7 +2,6 @@ import os
 
 
 class BaseConfig:
-
     DEBUG = False
     TESTING = False
 
@@ -70,6 +69,9 @@ class BaseConfig:
     # Filter settings
     EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split(',')
     EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split(',')
+
+    # Disable X-Fields
+    RESTPLUS_MASK_SWAGGER = os.getenv('RESTPLUS_MASK_SWAGGER', False)
 
 
 class ProductionConfig(BaseConfig):
