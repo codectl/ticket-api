@@ -7,7 +7,7 @@ ro_fields = api.model('ticket-ro', {
     'category': fields.String(description='category'),
     'created-at': fields.String(attribute='created_at', description='created at', readonly=True),
     'updated-at': fields.String(attribute='updated_at', description='updated at', readonly=True),
-    'reporter': fields.String(description='user reporter'),
+    'reporter': fields.String(description='user reporter', required=True),
     'jira': fields.Nested(issue, readonly=True)
 })
 

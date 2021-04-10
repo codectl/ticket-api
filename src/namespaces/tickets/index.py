@@ -44,7 +44,7 @@ class Tickets(Resource):
         """
         Create a new ticket.
         """
-        TicketService.create()
+        TicketService.create(**request.get_json())
         return None, 201
 
 

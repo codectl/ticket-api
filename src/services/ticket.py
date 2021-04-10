@@ -17,23 +17,30 @@ class TicketService:
         # the Jira service instance
         jira_service = JiraService()
 
+        # translate reporter into a Jira account
+        reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'))), None)
+
+        # create ticket body with Jira markdown format
         body = cls.create_ticket_body(
-            author=jira_service.markdown.mention(email=kwargs.get('reporter')),
+            author=jira_service.markdown.mention(email=reporter or kwargs.get('reporter')),
             body=kwargs.get('description')
         )
-        print(body)
 
-        # issue = jira_service.create_issue(summary=message.subject,
-        #                                   description=self._create_comment(message),
-        #                                   reporter=dict(id=reporter_id),
-        #                                   project=dict(key=current_app.config['JIRA_TICKET_BOARD_KEY']),
-        #                                   issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
-        #                                   labels=current_app.config['JIRA_TICKET_LABELS'],
-        #                                   priority=dict(name=priority))
-        # ticket = Ticket(**kwargs)
-        #
-        # db.session.add(ticket)
-        # db.session.commit()
+        # if reporter is not a Jira account,
+        # reporter is set to 'Anonymous'
+        reporter_id = getattr(reporter, 'accountId', None)
+
+        issue = jira_service.create_issue(summary=kwargs.get('title'),
+                                          description=body,
+                                          reporter=dict(id=reporter_id),
+                                          project=dict(key=current_app.config['JIRA_TICKET_BOARD_KEY']),
+                                          issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
+                                          labels=current_app.config['JIRA_TICKET_LABELS'],
+                                          priority=dict(name=priority))
+        ticket = Ticket(**kwargs)
+
+        db.session.add(ticket)
+        db.session.commit()
 
         # current_app.logger.info("Created ticket '{0}'.".format(ticket.jira_ticket_key))
         #
