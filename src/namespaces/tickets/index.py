@@ -1,4 +1,4 @@
-from flask import request
+from flask import current_app, request
 from flask_restplus import Namespace, Resource
 
 from src.dto.ticket import ro_fields, rw_fields
@@ -14,7 +14,7 @@ tickets = Namespace(
 class Tickets(Resource):
 
     @tickets.param('limit', description='results limit', default=20)
-    @tickets.param('boards', description='boards to fetch tickets from', enum=['support', 'sprint'])
+    @tickets.param('boards', description='boards to fetch tickets from', enum=current_app.config['JIRA_BOARDS'])
     @tickets.param('q', description='searching for text occurrences')
     @tickets.param('reporter', description='the ticket reporter email')
     @tickets.param('assignee', description='the person email whose ticket is assigned to')

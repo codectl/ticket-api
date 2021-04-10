@@ -105,7 +105,8 @@ class ProxyJIRA(JIRA):
             (board['jira_name'] for board in current_app.config['JIRA_BOARDS'] if board['key'] == key), None)
         if jira_board_name is None:
             return None
-        return next((board for board in self.search_boards(jira_name=jira_board_name) if board.name == jira_board_name), None)
+        return next((board for board in self.search_boards(jira_name=jira_board_name) if board.name == jira_board_name),
+                    None)
 
     def get_board_configuration(self, board_id) -> dict:
         """
@@ -193,6 +194,7 @@ class JiraService(ProxyJIRA):
     """
     Service to handle Jira operations
     """
+
     def __init__(self, **kwargs):
         super().__init__(url=current_app.config['ATLASSIAN_URL'],
                          user=current_app.config['ATLASSIAN_USER'],

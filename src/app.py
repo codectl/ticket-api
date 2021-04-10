@@ -6,7 +6,6 @@ from flask import Flask, Blueprint
 
 from src import api, db
 from src.cli.o365 import o365_cli
-from src.namespaces.tickets.index import tickets
 from src.settings.config import config_by_name
 
 
@@ -15,16 +14,17 @@ def create_app(config_name=None):
     Create a new app.
     """
 
-    # Define the WSGI application object
+    # define the WSGI application object
     app = Flask(__name__)
 
-    # Load .env and variables
+    # load .env and variables
     load_dotenv()
 
-    # Load object-based default configuration
+    # load object-based default configuration
     env = os.getenv('FLASK_ENV', config_name)
     app.config.from_object(config_by_name[env])
 
+    # finalize app setups
     setup_app(app)
 
     return app
@@ -35,27 +35,31 @@ def setup_app(app):
     Setup the app
     """
 
-    # Set app default logging to INFO
+    # set app default logging to INFO
     app.logger.setLevel(logging.INFO)
 
-    # Link db to app
+    # link db to app
     db.init_app(app)
 
-    # Create tables if they do not exist already
     with app.app_context():
+
+        # create tables if they do not exist already
         db.create_all()
 
-    # Initialize root blueprint
+        # use app context to load namespaces and blueprints
+        from src.namespaces.tickets.index import tickets
+
+    # initialize root blueprint
     root = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])
 
-    # Link api to blueprint
+    # link api to blueprint
     api.init_app(root)
 
-    # Register blueprints
+    # register blueprints
     app.register_blueprint(root)
 
-    # Register namespaces
+    # register namespaces
     api.add_namespace(tickets)
 
-    # Register cli commands
+    # register cli commands
     app.cli.add_command(o365_cli)

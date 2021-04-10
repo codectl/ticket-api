@@ -22,7 +22,7 @@ class TicketService:
 
         # create ticket body with Jira markdown format
         body = cls.create_ticket_body(
-            author=jira_service.markdown.mention(email=reporter or kwargs.get('reporter')),
+            author=jira_service.markdown.mention(reporter=reporter or kwargs.get('reporter')),
             body=kwargs.get('description')
         )
 
@@ -30,17 +30,21 @@ class TicketService:
         # reporter is set to 'Anonymous'
         reporter_id = getattr(reporter, 'accountId', None)
 
+        # get board to find its project
+        board = jira_service.find_board('support')
+
         issue = jira_service.create_issue(summary=kwargs.get('title'),
                                           description=body,
                                           reporter=dict(id=reporter_id),
-                                          project=dict(key=current_app.config['JIRA_TICKET_BOARD_KEY']),
+                                          project=dict(key=project),
                                           issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
                                           labels=current_app.config['JIRA_TICKET_LABELS'],
-                                          priority=dict(name=priority))
-        ticket = Ticket(**kwargs)
-
-        db.session.add(ticket)
-        db.session.commit()
+                                          priority=dict(name=kwargs.get('priority')))
+        print(issue)
+        # ticket = Ticket(**kwargs)
+        #
+        # db.session.add(ticket)
+        # db.session.commit()
 
         # current_app.logger.info("Created ticket '{0}'.".format(ticket.jira_ticket_key))
         #
