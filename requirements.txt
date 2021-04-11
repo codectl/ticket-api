@@ -1,7 +1,9 @@
 click
 Flask
+Flask-Caching
 flask-restplus
 Flask-SQLAlchemy
+jinja2
 jira
 mistune
 O365
