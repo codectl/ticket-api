@@ -5,6 +5,7 @@ flask-restplus
 Flask-SQLAlchemy
 jinja2
 jira
+jsonschema
 mistune
 O365
 python-dotenv
