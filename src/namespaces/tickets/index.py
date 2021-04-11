@@ -1,3 +1,4 @@
+import jira
 from flask import request
 from flask_restplus import Namespace, Resource
 
@@ -36,6 +37,7 @@ class Tickets(Resource):
 
     # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
     @tickets.response(201, 'Created')
+    @tickets.response(400, 'Bad request')
     @tickets.expect(rw_fields, validate=True)
     @tickets.marshal_with(ro_fields, code=201)
     def post(self):
@@ -44,8 +46,8 @@ class Tickets(Resource):
         """
         try:
             return TicketService.create(**request.get_json()), 201
-        except Exception as ex:
-            tickets.abort(400, ex)
+        except jira.exceptions.JIRAError as ex:
+            tickets.abort(400, ex.text)
 
 
 @tickets.param('key', description='the ticket identifier')

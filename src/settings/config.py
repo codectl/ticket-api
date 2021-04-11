@@ -61,7 +61,7 @@ class BaseConfig:
     JIRA_TICKET_BOARD_ID = os.getenv('JIRA_TICKET_BOARD_ID')
     JIRA_TICKET_BOARD_KEY = os.getenv('JIRA_TICKET_BOARD_KEY')
     JIRA_TICKET_TYPE = os.getenv('JIRA_TICKET_TYPE')
-    JIRA_TICKET_LABELS = os.getenv('JIRA_TICKET_LABELS', []).split(',')
+    JIRA_TICKET_LABELS = os.getenv('JIRA_TICKET_LABELS', []).split()
     JIRA_DEFAULT_REPORTER = os.getenv('JIRA_DEFAULT_REPORTER')
 
     # Jira boards to fetch tickets from

@@ -14,10 +14,7 @@ class TicketService:
     @classmethod
     def create(cls, **kwargs) -> Ticket:
 
-        # the Jira service instance
         jira_service = JiraService()
-
-        print(kwargs)
 
         # translate reporter into a Jira account
         reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'))), None)
@@ -34,24 +31,30 @@ class TicketService:
         # get board to find its project
         board = jira_service.find_board(key=kwargs.get('board'))
         project_key = board.project['projectKey']
+        priority = dict(name=kwargs.get('priority').capitalize() if kwargs.get('priority') else 'None')
 
+        # create ticket in Jira
         issue = jira_service.create_issue(summary=kwargs.get('title'),
                                           description=body,
                                           reporter=dict(id=reporter_id),
                                           project=dict(key=project_key),
                                           issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
                                           labels=current_app.config['JIRA_TICKET_LABELS'],
-                                          priority=dict(name=kwargs.get('priority')))
-        print(issue)
-        # ticket = Ticket(**kwargs)
-        #
-        # db.session.add(ticket)
-        # db.session.commit()
+                                          priority=priority)
 
-        # current_app.logger.info("Created ticket '{0}'.".format(ticket.jira_ticket_key))
-        #
-        # return ticket
-        return None
+        # add new entry to the db
+        ticket = Ticket(
+            jira_ticket_key=issue.key,
+            jira_ticket_url='{0}/browse/{1}'.format(current_app.config['ATLASSIAN_URL'], issue.key),
+            **kwargs
+        )
+
+        db.session.add(ticket)
+        db.session.commit()
+
+        current_app.logger.info("Created ticket '{0}'.".format(ticket.jira_ticket_key))
+
+        return ticket
 
     @staticmethod
     def get(ticket_id) -> Optional[Ticket]:
@@ -74,8 +77,6 @@ class TicketService:
         :param jira: whether to query Jira api to get results from
         :param filters: the query filters
         """
-
-        # the Jira service instance
         jira_service = JiraService()
 
         # split filters
