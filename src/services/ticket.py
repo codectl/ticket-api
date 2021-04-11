@@ -18,6 +18,8 @@ class TicketService:
         # the Jira service instance
         jira_service = JiraService()
 
+        print(kwargs)
+
         # translate reporter into a Jira account
         reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'))), None)
 
