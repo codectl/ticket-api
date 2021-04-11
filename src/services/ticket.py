@@ -17,6 +17,10 @@ class TicketService:
         # the Jira service instance
         jira_service = JiraService()
 
+        print(111)
+        # raise exception for invalid fields
+        cls.validate_create_fields(**kwargs)
+
         # translate reporter into a Jira account
         reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'))), None)
 
@@ -26,17 +30,17 @@ class TicketService:
             body=kwargs.get('description')
         )
 
-        # if reporter is not a Jira account,
-        # reporter is set to 'Anonymous'
+        # if reporter is not a Jira account, reporter is set to 'Anonymous'
         reporter_id = getattr(reporter, 'accountId', None)
 
         # get board to find its project
         board = jira_service.find_board(key=kwargs.get('board'))
+        project_key = board.project['projectKey']
 
         issue = jira_service.create_issue(summary=kwargs.get('title'),
                                           description=body,
                                           reporter=dict(id=reporter_id),
-                                          project=dict(key=project),
+                                          project=dict(key=project_key),
                                           issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
                                           labels=current_app.config['JIRA_TICKET_LABELS'],
                                           priority=dict(name=kwargs.get('priority')))
@@ -154,7 +158,6 @@ class TicketService:
         # guarantee that board field is part of supported boards
         if fields.get('board') and fields['board'] not in JiraService.supported_board_keys():
             raise ValueError("Board '{0}' is not supported".format(fields.get('board')))
-        return True
 
     @staticmethod
     def create_ticket_body(template='default.j2', **kwargs):

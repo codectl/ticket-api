@@ -45,8 +45,10 @@ class Tickets(Resource):
         """
         Create a new ticket.
         """
-        TicketService.create(**request.get_json())
-        return None, 201
+        try:
+            return TicketService.create(**request.get_json()), 201
+        except Exception as ex:
+            tickets.abort(400, ex)
 
 
 @tickets.param('key', description='the ticket identifier')

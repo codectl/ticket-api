@@ -218,7 +218,7 @@ class JiraService(ProxyJIRA):
         raw = board.raw
         raw.pop('self')
 
-        return Board(**raw)
+        return Board(key=key, **raw)
 
     @staticmethod
     def supported_board_keys():

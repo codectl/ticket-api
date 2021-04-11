@@ -69,6 +69,9 @@ class BaseConfig:
         'key': board.lower().replace('jira_', '').replace('_board', ''),
         'jira_name': os.getenv(board)
     } for board in os.getenv('JIRA_BOARDS').split()]
+    JIRA_DEFAULT_BOARD = next(
+        board for board in JIRA_BOARDS if board['jira_name'] == os.getenv(os.getenv('JIRA_DEFAULT_BOARD'))
+    )
 
     # Filter settings
     EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split(',')
