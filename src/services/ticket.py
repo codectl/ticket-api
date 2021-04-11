@@ -7,7 +7,6 @@ from flask import current_app
 from src import db
 from src.models.Ticket import Ticket
 from src.services.jira import JiraService
-from src.utils import validation
 
 
 class TicketService:
