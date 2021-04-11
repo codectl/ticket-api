@@ -7,6 +7,7 @@ from flask import current_app
 from src import db
 from src.models.Ticket import Ticket
 from src.services.jira import JiraService
+from src.utils import validation
 
 
 class TicketService:
@@ -16,10 +17,6 @@ class TicketService:
 
         # the Jira service instance
         jira_service = JiraService()
-
-        print(111)
-        # raise exception for invalid fields
-        cls.validate_create_fields(**kwargs)
 
         # translate reporter into a Jira account
         reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'))), None)
@@ -137,27 +134,6 @@ class TicketService:
         """
 
         return filter_ in ['boards', 'q', 'key', 'assignee', 'status', 'watcher', 'sort']
-
-    @staticmethod
-    def validate_search_filters(**filters):
-        """
-        Validate query search filters.
-        """
-
-        # guarantee that board filter is part of supported boards
-        if filters.get('board') and filters['board'] not in JiraService.supported_board_keys():
-            return False
-        return True
-
-    @staticmethod
-    def validate_create_fields(**fields):
-        """
-        Validate query search filters.
-        """
-
-        # guarantee that board field is part of supported boards
-        if fields.get('board') and fields['board'] not in JiraService.supported_board_keys():
-            raise ValueError("Board '{0}' is not supported".format(fields.get('board')))
 
     @staticmethod
     def create_ticket_body(template='default.j2', **kwargs):

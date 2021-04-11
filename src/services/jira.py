@@ -8,7 +8,7 @@ from jira import JIRA
 from src import cache
 from src.models.jira.Board import Board
 
-__all__ = ['JiraService']
+__all__ = ('JiraService',)
 
 
 class ProxyJIRA(JIRA):

@@ -32,9 +32,6 @@ class Tickets(Resource):
         params = request.args.copy()
         limit = params.pop('limit', 20)
 
-        if not TicketService.validate_search_filters(**params):
-            tickets.abort(400, 'Invalid search parameters')
-
         return TicketService.find_by(limit=limit, **params)
 
     # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
