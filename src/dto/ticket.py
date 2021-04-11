@@ -1,8 +1,8 @@
-from flask import current_app
 from flask_restplus import fields
 
 from src import api
 from src.dto.jira.issue import issue
+from src.services.jira import JiraService
 
 ro_fields = api.model('ticket-ro', {
     'category': fields.String,
@@ -15,6 +15,6 @@ ro_fields = api.model('ticket-ro', {
 rw_fields = api.inherit('ticket-rw', ro_fields, {
     'title': fields.String,
     'description': fields.String,
-    'board': fields.String(enum=current_app.config['JIRA_BOARDS']),
+    'board': fields.String(enum=JiraService.supported_board_keys()),
     'priority': fields.String(enum=['low', 'high'], default='low'),
 })

@@ -32,6 +32,7 @@ class TicketService:
 
         # get board to find its project
         board = jira_service.find_board('support')
+        print(board)
 
         issue = jira_service.create_issue(summary=kwargs.get('title'),
                                           description=body,
@@ -141,7 +142,7 @@ class TicketService:
         """
 
         # guarantee that board filter is part of supported boards
-        if filters.get('board') and filters['board'] not in current_app.config['JIRA_BOARDS']:
+        if filters.get('board') and filters['board'] not in JiraService.supported_board_keys():
             return False
         return True
 

@@ -5,6 +5,9 @@ import requests
 from flask import current_app
 from jira import JIRA
 
+from src import cache
+from src.models.jira.Board import Board
+
 __all__ = ['JiraService']
 
 
@@ -145,10 +148,11 @@ class ProxyJIRA(JIRA):
         """
 
         # search from all boards if none provided
-        board_keys = boards if boards else [board['key'] for board in current_app.config['JIRA_BOARDS']]
+        board_keys = boards if boards else JiraService.supported_board_keys()
 
+        print(board_keys)
         # search for issues under the right boards
-        filters = [self.get_board_filter(board_id=self.find_board(key=key).id) for key in board_keys]
+        filters = [self.find_board(key=key).filter for key in board_keys]
         jql = "filter in ({0})".format(', '.join([filter_.id for filter_ in filters]))
 
         if q:
@@ -180,7 +184,8 @@ class JiraMarkdown(ProxyJIRA):
         else:
             super().__init__(**kwargs)
 
-    def mention(self, reporter):
+    @staticmethod
+    def mention(reporter):
         """
         Create Jira markdown mention out of a user.
         If user does not exist, create email markdown.
@@ -200,3 +205,23 @@ class JiraService(ProxyJIRA):
                          user=current_app.config['ATLASSIAN_USER'],
                          token=current_app.config['ATLASSIAN_API_TOKEN'],
                          **kwargs)
+
+    @cache.cached(key_prefix='_boards')
+    def boards(self):
+        print(__name__)
+        return [self.find_board(key=key) for key in self.supported_board_keys()]
+
+    @cache.memoize(timeout=7200)
+    def find_board(self, key=None):
+        board = super().find_board(key=key)
+        if not board:
+            return None
+
+        raw = board.raw
+        raw.pop('self')
+
+        return Board(**raw)
+
+    @staticmethod
+    def supported_board_keys():
+        return [board['key'] for board in current_app.config['JIRA_BOARDS']]

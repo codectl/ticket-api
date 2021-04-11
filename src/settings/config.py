@@ -16,6 +16,10 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DATABASE_CONNECT_OPTIONS = {}
 
+    # Cache settings
+    CACHE_TYPE = 'SimpleCache'
+    CACHE_DEFAULT_TIMEOUT: 300
+
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle
     # incoming requests using one and performing background
@@ -70,7 +74,9 @@ class BaseConfig:
     EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split(',')
     EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split(',')
 
-    # Disable X-Fields
+    # additional configuration settings below ...
+
+    # disable X-Fields
     RESTPLUS_MASK_SWAGGER = os.getenv('RESTPLUS_MASK_SWAGGER', False)
 
 

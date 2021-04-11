@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, Blueprint
 
-from src import api, db
+from src import api, cache, db
 from src.cli.o365 import o365_cli
 from src.settings.config import config_by_name
 
@@ -40,6 +40,9 @@ def setup_app(app):
 
     # link db to app
     db.init_app(app)
+
+    # link cache to app
+    cache.init_app(app)
 
     with app.app_context():
 

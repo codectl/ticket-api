@@ -1,8 +1,9 @@
-from flask import current_app, request
+from flask import request
 from flask_restplus import Namespace, Resource
 
 from src.dto.ticket import ro_fields, rw_fields
 from src.services.ticket import TicketService
+from src.services.jira import JiraService
 
 tickets = Namespace(
     'tickets',
@@ -14,7 +15,7 @@ tickets = Namespace(
 class Tickets(Resource):
 
     @tickets.param('limit', description='results limit', default=20)
-    @tickets.param('boards', description='boards to fetch tickets from', enum=current_app.config['JIRA_BOARDS'])
+    @tickets.param('boards', description='boards to fetch tickets from', enum=JiraService.supported_board_keys())
     @tickets.param('q', description='searching for text occurrences')
     @tickets.param('reporter', description='the ticket reporter email')
     @tickets.param('assignee', description='the person email whose ticket is assigned to')
