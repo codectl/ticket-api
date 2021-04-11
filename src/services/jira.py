@@ -150,7 +150,6 @@ class ProxyJIRA(JIRA):
         # search from all boards if none provided
         board_keys = boards if boards else JiraService.supported_board_keys()
 
-        print(board_keys)
         # search for issues under the right boards
         filters = [self.find_board(key=key).filter for key in board_keys]
         jql = "filter in ({0})".format(', '.join([filter_.id for filter_ in filters]))
@@ -208,7 +207,6 @@ class JiraService(ProxyJIRA):
 
     @cache.cached(key_prefix='_boards')
     def boards(self):
-        print(__name__)
         return [self.find_board(key=key) for key in self.supported_board_keys()]
 
     @cache.memoize(timeout=7200)

@@ -13,8 +13,8 @@ ro_fields = api.model('ticket-ro', {
 })
 
 rw_fields = api.inherit('ticket-rw', ro_fields, {
-    'title': fields.String,
-    'description': fields.String,
-    'board': fields.String(enum=JiraService.supported_board_keys()),
+    'title': fields.String(required=True),
+    'description': fields.String(required=True),
+    'board': fields.String(enum=JiraService.supported_board_keys(), required=True),
     'priority': fields.String(enum=['low', 'high'], default='low'),
 })

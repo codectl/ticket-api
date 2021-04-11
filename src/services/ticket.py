@@ -31,8 +31,7 @@ class TicketService:
         reporter_id = getattr(reporter, 'accountId', None)
 
         # get board to find its project
-        board = jira_service.find_board('support')
-        print(board)
+        board = jira_service.find_board(key=kwargs.get('board'))
 
         issue = jira_service.create_issue(summary=kwargs.get('title'),
                                           description=body,
@@ -144,6 +143,17 @@ class TicketService:
         # guarantee that board filter is part of supported boards
         if filters.get('board') and filters['board'] not in JiraService.supported_board_keys():
             return False
+        return True
+
+    @staticmethod
+    def validate_create_fields(**fields):
+        """
+        Validate query search filters.
+        """
+
+        # guarantee that board field is part of supported boards
+        if fields.get('board') and fields['board'] not in JiraService.supported_board_keys():
+            raise ValueError("Board '{0}' is not supported".format(fields.get('board')))
         return True
 
     @staticmethod
