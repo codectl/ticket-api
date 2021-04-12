@@ -1,5 +1,5 @@
 import jira
-from flask import request
+from flask import current_app, request
 from flask_restplus import Namespace, Resource
 
 from src.dto.ticket import ro_fields, rw_fields
@@ -15,8 +15,14 @@ tickets = Namespace(
 @tickets.route('/')
 class Tickets(Resource):
 
-    @tickets.param('limit', description='results limit', default=20)
-    @tickets.param('boards', description='boards to fetch tickets from', enum=JiraService.supported_board_keys())
+    @tickets.param('limit', description='results limit', default=20, required=True)
+    @tickets.param('boards', description='boards to fetch tickets from',
+                   enum=JiraService.supported_board_keys(),
+                   default=current_app.config['JIRA_DEFAULT_BOARD']['key'])
+    @tickets.param('category', description='category that the ticket belongs to',
+                   enum=JiraService.supported_categories(),
+                   default=current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'],
+                   required=True)
     @tickets.param('q', description='searching for text occurrences')
     @tickets.param('reporter', description='the ticket reporter email')
     @tickets.param('assignee', description='the person email whose ticket is assigned to')
@@ -32,8 +38,9 @@ class Tickets(Resource):
         """
         params = request.args.copy()
         limit = params.pop('limit', 20)
+        boards = params.pop('boards', '').split(',')
 
-        return TicketService.find_by(limit=limit, **params)
+        return TicketService.find_by(limit=limit, boards=boards, **params)
 
     # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
     @tickets.response(201, 'Created')

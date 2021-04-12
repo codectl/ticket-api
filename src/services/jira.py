@@ -131,37 +131,44 @@ class ProxyJIRA(JIRA):
         configuration = self.get_board_configuration(board_id=board_id)
         return self.filter(configuration.get('filter', {}).get('id'))
 
-    def create_jql_query(self, boards=None, q=None, key=None, assignee=None,
-                         status=None, watcher=None, expand=None,
-                         sort=None):
+    def create_jql_query(self, assignee=None, boards=None, expand=None,
+                         key=None, labels=None, sort=None,
+                         status=None, summary=None, watcher=None,
+                         **_):
         """
         Build jql query based on a provided searching parameters.
 
-        :param boards: the boards to get tickets from.
-        :param q: the text search.
+        :param assignee: the key assignee
+        :param boards: the boards to get tickets from
         :param key: the Jira ticket key
-        :param assignee: the key assignee.
-        :param status: the status key.
-        :param watcher: the watcher key.
-        :param expand: the expand field.
+        :param labels: the labels to search for
+        :param summary: the text search
+        :param status: the status key
+        :param watcher: the watcher key
+        :param expand: the expand field
         :param sort: the sort criteria. Could have the value 'created'.
         """
 
         # search from all boards if none provided
-        board_keys = boards if boards else JiraService.supported_board_keys()
+        board_keys = boards or JiraService.supported_board_keys()
+        boards_ = (self.find_board(key=board_key) for board_key in board_keys)
+        board_ids = [getattr(board, 'id', getattr(board, 'board_id', None)) for board in boards_]
 
         # search for issues under the right boards
-        filters = [self.find_board(key=key).filter for key in board_keys]
+        filters = [self.get_board_filter(board_id=board_id) for board_id in board_ids]
         jql = "filter in ({0})".format(', '.join([filter_.id for filter_ in filters]))
 
-        if q:
-            jql += '&summary ~ \'' + q + '\''
+        if summary:
+            jql += '&summary ~ \'' + summary + '\''
         if key:
             jql += "&key in ({0})".format(', '.join(key) if isinstance(key, list) else key)
         if assignee:
             jql += '&assignee=' + assignee
         if status:
             jql += '&status=\'' + status + '\''
+        if labels:
+            for label in labels:
+                jql += "&labels={0}".format(label)
         if watcher:
             jql += '&watcher=' + watcher
         if expand:
@@ -169,6 +176,7 @@ class ProxyJIRA(JIRA):
         if sort:
             jql += ' ORDER BY ' + sort
 
+        print(jql)
         return jql
 
     @property
@@ -223,3 +231,7 @@ class JiraService(ProxyJIRA):
     @staticmethod
     def supported_board_keys():
         return [board['key'] for board in current_app.config['JIRA_BOARDS']]
+
+    @staticmethod
+    def supported_categories():
+        return current_app.config['JIRA_TICKET_LABEL_CATEGORIES']

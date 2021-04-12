@@ -62,6 +62,8 @@ class BaseConfig:
     JIRA_TICKET_BOARD_KEY = os.getenv('JIRA_TICKET_BOARD_KEY')
     JIRA_TICKET_TYPE = os.getenv('JIRA_TICKET_TYPE')
     JIRA_TICKET_LABELS = os.getenv('JIRA_TICKET_LABELS', []).split()
+    JIRA_TICKET_LABEL_CATEGORIES = os.getenv('JIRA_TICKET_LABEL_CATEGORIES', []).split()
+    JIRA_TICKET_LABEL_DEFAULT_CATEGORY = os.getenv('JIRA_TICKET_LABEL_DEFAULT_CATEGORY')
     JIRA_DEFAULT_REPORTER = os.getenv('JIRA_DEFAULT_REPORTER')
 
     # Jira boards to fetch tickets from
@@ -74,8 +76,8 @@ class BaseConfig:
     )
 
     # Filter settings
-    EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split(',')
-    EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split(',')
+    EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split()
+    EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split()
 
     # additional configuration settings below ...
 

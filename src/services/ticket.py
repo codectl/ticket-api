@@ -2,6 +2,8 @@ import os
 from typing import List, Optional, Union
 
 import jinja2
+import jira
+import requests
 from flask import current_app
 
 from src import db
@@ -17,7 +19,7 @@ class TicketService:
         jira_service = JiraService()
 
         # translate reporter into a Jira account
-        reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'))), None)
+        reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'), limit=1)), None)
 
         # create ticket body with Jira markdown format
         body = cls.create_ticket_body(
@@ -42,11 +44,30 @@ class TicketService:
                                           labels=current_app.config['JIRA_TICKET_LABELS'],
                                           priority=priority)
 
+        # add watchers iff has permission
+        if kwargs.get('watchers') and jira_service.has_permissions(permissions=['MANAGE_WATCHERS'],
+                                                                   issue_key=issue.key):
+            # check whether watcher has permissions to watch the issue
+            for email in kwargs.get('watchers'):
+                user = next(iter(jira_service.search_users(user=email, limit=1)), None)
+                if user is not None:
+                    # check whether watcher has permissions to watch the issue
+                    try:
+                        jira_service.add_watcher(issue=issue.key,
+                                                 watcher=user.accountId)
+                    except jira.exceptions.JIRAError as e:
+                        if e.status_code == requests.codes.unauthorized:
+                            current_app.logger.warning("Watcher '{0}' has no permission to watch issue '{1}'."
+                                                       .format(user.displayName, issue.key))
+                        else:
+                            raise e
+
         # add new entry to the db
+        local_fields = {k: v for k, v in kwargs.items() if k in Ticket.__dict__}
         ticket = Ticket(
             jira_ticket_key=issue.key,
             jira_ticket_url='{0}/browse/{1}'.format(current_app.config['ATLASSIAN_URL'], issue.key),
-            **kwargs
+            **local_fields
         )
 
         db.session.add(ticket)
@@ -68,13 +89,13 @@ class TicketService:
         return next(iter(cls.find_by(limit=1, **filters)), None)
 
     @classmethod
-    def find_by(cls, limit=20, jira=True, **filters) -> Union[List[Ticket], Optional[Ticket]]:
+    def find_by(cls, limit=20, expand='jira', **filters) -> Union[List[Ticket], Optional[Ticket]]:
         """
         Search for tickets based on several criteria.
         Jira filters are also supported.
 
         :param limit: the max number of results retrieved
-        :param jira: whether to query Jira api to get results from
+        :param expand: fields to include together with results. values: 'jira'
         :param filters: the query filters
         """
         jira_service = JiraService()
@@ -83,7 +104,7 @@ class TicketService:
         local_filters = {k: v for k, v in filters.items() if not cls.is_jira_filter(k)}
         jira_filters = {k: v for k, v in filters.items() if cls.is_jira_filter(k)}
 
-        if jira:
+        if expand and 'jira' in expand.split(','):
 
             # if any of the filter is not a Jira filter, then
             # apply local filter and pass on results to jql
@@ -91,14 +112,21 @@ class TicketService:
                 tickets = Ticket.query.filter_by(**local_filters).all()
                 jira_filters['key'] = [ticket.jira_ticket_key for ticket in tickets]
 
+            # set Jira default values
+            category = filters.pop('category', current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'])
+            categories = category.split(',') + current_app.config['JIRA_TICKET_LABELS']
+
             # fetch tickets from Jira using jql while skipping jql
             # validation since local db might not be synched with Jira
-            query = jira_service.create_jql_query(**jira_filters)
+            query = jira_service.create_jql_query(
+                labels=categories,
+                summary=filters.pop('q', None),
+                **jira_filters
+            )
             jira_tickets = jira_service.search_issues(jql_str=query, maxResults=limit, validate_query=False)
-
             tickets = []
             for jira_ticket in jira_tickets:
-                ticket = cls.find_one(jira_ticket_key=jira_ticket.key, jira=False)
+                ticket = cls.find_one(jira_ticket_key=jira_ticket.key, expand=None)
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
                 if ticket:
@@ -135,7 +163,7 @@ class TicketService:
         Check whether given filter is a Jira only filter.
         """
 
-        return filter_ in ['boards', 'q', 'key', 'assignee', 'status', 'watcher', 'sort']
+        return filter_ in ['assignee', 'boards', 'category', 'key', 'q', 'sort', 'status', 'watcher']
 
     @staticmethod
     def create_ticket_body(template='default.j2', **kwargs):
