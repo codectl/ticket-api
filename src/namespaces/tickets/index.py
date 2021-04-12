@@ -30,7 +30,7 @@ class Tickets(Resource):
     @tickets.param('watcher', description='tickets user has subscribed to')
     @tickets.param('sort', description='sort tickets by', default='created', enum=['created'])
     @tickets.marshal_list_with(ro_fields)
-    @tickets.response(200, 'Success')
+    @tickets.response(200, 'Ok')
     @tickets.response(400, 'Bad request')
     def get(self):
         """
@@ -61,15 +61,15 @@ class Tickets(Resource):
 @tickets.route('/<key>')
 class Ticket(Resource):
 
-    @tickets.response(200, 'Success')
+    @tickets.response(200, 'Ok')
     @tickets.response(404, 'Not found')
-    @tickets.marshal_with(ro_fields)
+    @tickets.marshal_with(ro_fields, skip_none=True)
     def get(self, key):
         """
         Get a ticket given its identifier
         """
-        ticket = next(iter(TicketService.find_by(key=key, limit=1)), None)
+        ticket = next(iter(TicketService.find_by(jira_ticket_key=key, limit=1, expand=None)), None)
         if not ticket:
-            tickets.abort(404)
+            tickets.abort(404, 'Ticket not found')
         else:
             return ticket

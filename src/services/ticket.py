@@ -8,6 +8,7 @@ from flask import current_app
 
 from src import db
 from src.models.Ticket import Ticket
+from src.models.jira.Board import Board
 from src.services.jira import JiraService
 
 
@@ -30,10 +31,13 @@ class TicketService:
         # if reporter is not a Jira account, reporter is set to 'Anonymous'
         reporter_id = getattr(reporter, 'accountId', None)
 
-        # get board to find its project
-        board = jira_service.find_board(key=kwargs.get('board'))
-        project_key = board.project['projectKey']
+        # set defaults
+        board_key = kwargs.get('board', Board.default().key)
+        project_key = jira_service.find_board(key=board_key).project['projectKey']
         priority = dict(name=kwargs.get('priority').capitalize() if kwargs.get('priority') else 'None')
+
+        category = kwargs.pop('category', current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'])
+        categories = category.split(',') + current_app.config['JIRA_TICKET_LABELS']
 
         # create ticket in Jira
         issue = jira_service.create_issue(summary=kwargs.get('title'),
@@ -41,7 +45,7 @@ class TicketService:
                                           reporter=dict(id=reporter_id),
                                           project=dict(key=project_key),
                                           issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
-                                          labels=current_app.config['JIRA_TICKET_LABELS'],
+                                          labels=categories,
                                           priority=priority)
 
         # add watchers iff has permission

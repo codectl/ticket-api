@@ -176,7 +176,6 @@ class ProxyJIRA(JIRA):
         if sort:
             jql += ' ORDER BY ' + sort
 
-        print(jql)
         return jql
 
     @property

@@ -17,6 +17,6 @@ issue = api.model('jira-issue', {
     'reporter': fields.Nested(user, attribute=lambda x: x.raw['fields']['reporter'], allow_null=True),
     'status': fields.Nested(status, attribute=lambda x: x.raw['fields']['status']),
     'labels': fields.List(fields.String, attribute=lambda x: x.raw['fields']['labels']),
-    'type': fields.Nested(issue_type, attribute=lambda x: x.raw['fields']['labels']),
+    'type': fields.Nested(issue_type, attribute=lambda x: x.raw['fields']['issuetype']),
     'project': fields.Nested(project, attribute=lambda x: x.raw['fields']['project'])
 })
