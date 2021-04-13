@@ -68,7 +68,7 @@ class Ticket(Resource):
         """
         Get a ticket given its identifier
         """
-        ticket = next(iter(TicketService.find_by(jira_ticket_key=key, limit=1, expand=None)), None)
+        ticket = next(iter(TicketService.find_by(key=key, limit=1)), None)
         if not ticket:
             tickets.abort(404, 'Ticket not found')
         else:

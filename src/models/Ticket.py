@@ -6,8 +6,7 @@ from src import db
 class Ticket(db.Model):
     __tablename__ = 'tickets'
     id = db.Column(db.Integer, primary_key=True)
-    jira_ticket_key = db.Column(db.String, unique=True, nullable=False, index=True)
-    jira_ticket_url = db.Column(db.String, unique=True, nullable=False)
+    key = db.Column(db.String, unique=True, nullable=False, index=True)
     outlook_message_id = db.Column(db.String, unique=True)
     outlook_message_url = db.Column(db.String, unique=True)
     outlook_conversation_id = db.Column(db.String, unique=True)

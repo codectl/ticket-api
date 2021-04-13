@@ -68,18 +68,14 @@ class TicketService:
 
         # add new entry to the db
         local_fields = {k: v for k, v in kwargs.items() if k in Ticket.__dict__}
-        ticket = Ticket(
-            jira_ticket_key=issue.key,
-            jira_ticket_url='{0}/browse/{1}'.format(current_app.config['ATLASSIAN_URL'], issue.key),
-            **local_fields
-        )
+        ticket = Ticket(key=issue.key, **local_fields)
 
         db.session.add(ticket)
         db.session.commit()
 
-        current_app.logger.info("Created ticket '{0}'.".format(ticket.jira_ticket_key))
+        current_app.logger.info("Created ticket '{0}'.".format(ticket.key))
 
-        return ticket
+        return TicketService.find_by(key=ticket.key, limit=1)
 
     @staticmethod
     def get(ticket_id) -> Optional[Ticket]:
@@ -105,7 +101,7 @@ class TicketService:
         jira_service = JiraService()
 
         # split filters
-        local_filters = {k: v for k, v in filters.items() if not cls.is_jira_filter(k)}
+        local_filters = {k: v for k, v in filters.items() if k in Ticket.__dict__}
         jira_filters = {k: v for k, v in filters.items() if cls.is_jira_filter(k)}
 
         if expand and 'jira' in expand.split(','):
@@ -114,7 +110,7 @@ class TicketService:
             # apply local filter and pass on results to jql
             if local_filters:
                 tickets = Ticket.query.filter_by(**local_filters).all()
-                jira_filters['key'] = [ticket.jira_ticket_key for ticket in tickets]
+                jira_filters['key'] = [ticket.key for ticket in tickets]
 
             # set Jira default values
             category = filters.pop('category', current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'])
@@ -127,19 +123,19 @@ class TicketService:
                 summary=filters.pop('q', None),
                 **jira_filters
             )
-            jira_tickets = jira_service.search_issues(jql_str=query, maxResults=limit, validate_query=False)
+            issues = jira_service.search_issues(jql_str=query, maxResults=limit, validate_query=False)
             tickets = []
-            for jira_ticket in jira_tickets:
-                ticket = cls.find_one(jira_ticket_key=jira_ticket.key, expand=None)
+            for issue in issues:
+                ticket = cls.find_one(key=issue.key, expand=None)
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
                 if ticket:
-                    ticket.jira = jira_ticket
-                    ticket.jira.url = ticket.jira_ticket_url
+                    ticket.jira = issue
+                    ticket.jira.url = "{0}/browse/{1}".format(current_app.config['ATLASSIAN_URL'], issue.key),
                     tickets.append(ticket)
             return tickets
         else:
-            return Ticket.query.filter_by(**filters).all()
+            return Ticket.query.filter_by(**local_filters).all()
 
     @classmethod
     def update(cls, ticket_id, **kwargs):
@@ -150,7 +146,7 @@ class TicketService:
         db.session.commit()
 
         current_app.logger.info("Updated ticket_id '{0}' with the following attributes: '{1}'."
-                                .format(ticket_id.jira_ticket_key, kwargs))
+                                .format(ticket_id.key, kwargs))
 
     @classmethod
     def delete(cls, ticket_id):
@@ -159,7 +155,7 @@ class TicketService:
             db.session.delete(ticket)
             db.session.commit()
 
-            current_app.logger.info("Deleted ticket '{0}'.".format(ticket.jira_ticket_key))
+            current_app.logger.info("Deleted ticket '{0}'.".format(ticket.key))
 
     @staticmethod
     def is_jira_filter(filter_):
