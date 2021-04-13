@@ -36,7 +36,7 @@ class Tickets(Resource):
         """
         Get service tickets based on search criteria.
         """
-        params = request.args.copy()
+        params = request.args.to_dict()
         limit = params.pop('limit', 20)
         boards = params.pop('boards', '').split(',')
 
