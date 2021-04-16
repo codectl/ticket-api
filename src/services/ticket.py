@@ -144,8 +144,8 @@ class TicketService:
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
                 if ticket:
-                    ticket.jira = issue
-                    ticket.jira.url = "{0}/browse/{1}".format(current_app.config['ATLASSIAN_URL'], issue.key),
+                    ticket = issue.raw['fields']
+                    ticket['url'] = "{0}/browse/{1}".format(current_app.config['ATLASSIAN_URL'], issue.key),
                     tickets.append(ticket)
             return tickets
         else:

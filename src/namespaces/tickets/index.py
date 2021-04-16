@@ -2,7 +2,8 @@ import jira
 from flask import current_app, request
 from flask_restplus import Namespace, Resource
 
-from src.dto.ticket import ro_fields, rw_fields
+from src.dto.jira.issue import issue
+from src.dto.ticket import ticket
 from src.services.ticket import TicketService
 from src.services.jira import JiraService
 
@@ -29,7 +30,7 @@ class Tickets(Resource):
     @tickets.param('status', description='the ticket status')
     @tickets.param('watcher', description='tickets user has subscribed to')
     @tickets.param('sort', description='sort tickets by', default='created', enum=['created'])
-    @tickets.marshal_list_with(ro_fields)
+    @tickets.marshal_list_with(issue)
     @tickets.response(200, 'Ok')
     @tickets.response(400, 'Bad request')
     def get(self):
@@ -45,8 +46,8 @@ class Tickets(Resource):
     # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
     @tickets.response(201, 'Created')
     @tickets.response(400, 'Bad request')
-    @tickets.expect(rw_fields, validate=True)
-    @tickets.marshal_with(ro_fields, code=201)
+    @tickets.expect(ticket, validate=True)
+    @tickets.marshal_with(issue, code=201)
     def post(self):
         """
         Create a new ticket.
@@ -63,7 +64,7 @@ class Ticket(Resource):
 
     @tickets.response(200, 'Ok')
     @tickets.response(404, 'Not found')
-    @tickets.marshal_with(ro_fields, skip_none=True)
+    @tickets.marshal_with(issue, skip_none=True)
     def get(self, key):
         """
         Get a ticket given its identifier
