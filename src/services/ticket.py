@@ -48,6 +48,8 @@ class TicketService:
                                           labels=categories,
                                           priority=priority)
 
+        print(issue)
+
         # add watchers iff has permission
         if kwargs.get('watchers') and jira_service.has_permissions(permissions=['MANAGE_WATCHERS'],
                                                                    issue_key=issue.key):
@@ -123,9 +125,21 @@ class TicketService:
                 summary=filters.pop('q', None),
                 **jira_filters
             )
-            issues = jira_service.search_issues(jql_str=query, maxResults=limit, validate_query=False)
+
+            # include additional fields together with ticket
+            fields = '*all, watcher, comments, attachments'
+
+            issues = jira_service.search_issues(
+                jql_str=query,
+                maxResults=limit,
+                validate_query=False,
+                fields=fields
+            )
+
             tickets = []
             for issue in issues:
+                import pprint
+                pprint.pprint(vars(issue))
                 ticket = cls.find_one(key=issue.key, expand=None)
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present

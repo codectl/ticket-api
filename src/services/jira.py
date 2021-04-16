@@ -23,6 +23,8 @@ class ProxyJIRA(JIRA):
         super().__init__(server=url,
                          basic_auth=(user, token),
                          options={
+                             'rest_path': 'api',
+                             'rest_api_version': 2,
                              'agile_rest_path': jira.resources.GreenHopperResource.AGILE_BASE_REST_PATH,
                              'agile_rest_api_version': 'latest'
                          },
