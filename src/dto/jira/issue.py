@@ -7,7 +7,6 @@ from src.dto.jira.issueType import issue_type
 from src.dto.jira.user import user
 from src.dto.jira.status import status
 
-
 issue = api.model('jira-issue', {
     'id': fields.Integer,
     'key': fields.String,

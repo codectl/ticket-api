@@ -2,6 +2,7 @@ import jira
 from flask import current_app, request
 from flask_restplus import Namespace, Resource
 
+from src.dto.test import Fields
 from src.dto.jira.issue import issue
 from src.dto.ticket import ticket
 from src.services.ticket import TicketService
@@ -30,6 +31,7 @@ class Tickets(Resource):
     @tickets.param('status', description='the ticket status')
     @tickets.param('watcher', description='tickets user has subscribed to')
     @tickets.param('sort', description='sort tickets by', default='created', enum=['created'])
+    @tickets.param('fields', type='array', items={'type': 'string', 'enum': ['a', 'b']}, default=['a'])
     @tickets.marshal_list_with(issue)
     @tickets.response(200, 'Ok')
     @tickets.response(400, 'Bad request')
