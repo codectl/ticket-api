@@ -95,7 +95,7 @@ class TicketService:
             cls,
             limit: int = 20,
             fields: list = None,
-            model: bool = False,
+            _model: bool = False,
             **filters
     ) -> Union[List[Ticket], Optional[Ticket]]:
         """
@@ -104,7 +104,7 @@ class TicketService:
 
         :param limit: the max number of results retrieved
         :param fields: additional fields to include in results schema
-        :param model: whether to return a ticket model or cross results Jira data
+        :param _model: whether to return a ticket model or cross results Jira data
         :param filters: the query filters
         """
 
@@ -112,7 +112,7 @@ class TicketService:
         local_filters = {k: v for k, v in filters.items() if k in Ticket.__dict__}
         jira_filters = {k: v for k, v in filters.items() if cls.is_jira_filter(k)}
 
-        if model:
+        if _model:
             return Ticket.query.filter_by(**local_filters).all()
         else:
             jira_service = JiraService()
@@ -150,22 +150,22 @@ class TicketService:
 
             tickets = []
             for issue in issues:
-                import pprint
-                pprint.pprint(vars(issue))
-                ticket = cls.find_one(key=issue.key, model=True)
+                model = cls.find_one(key=issue.key, _model=True)
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
-                if ticket:
+                if model:
                     ticket = issue.raw['fields']
                     ticket['id'] = issue.id
                     ticket['key'] = issue.key
-                    ticket['url'] = "{0}/browse/{1}".format(current_app.config['ATLASSIAN_URL'], issue.key),
+                    ticket['url'] = "{0}/browse/{1}".format(current_app.config['ATLASSIAN_URL'], issue.key)
+                    ticket['reporter'] = {
+                        'emailAddress': model.reporter
+                    }
 
                     # add watchers if requested
                     if 'watchers' in fields:
                         watchers = jira_service.watchers(issue.key).raw['watchers']
                         ticket['watchers'] = watchers
-                        pprint.pprint(type(watchers[0]))
 
                     tickets.append(ticket)
             return tickets
