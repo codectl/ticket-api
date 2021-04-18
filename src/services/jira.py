@@ -236,3 +236,7 @@ class JiraService(ProxyJIRA):
     @staticmethod
     def supported_categories():
         return current_app.config['JIRA_TICKET_LABEL_CATEGORIES']
+
+    @staticmethod
+    def supported_fields():
+        return ['watchers', 'comments', 'attachments']

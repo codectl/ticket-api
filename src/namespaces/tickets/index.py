@@ -2,7 +2,6 @@ import jira
 from flask import current_app, request
 from flask_restplus import Namespace, Resource
 
-from src.dto.test import Fields
 from src.dto.jira.issue import issue
 from src.dto.ticket import ticket
 from src.services.ticket import TicketService
@@ -19,8 +18,10 @@ class Tickets(Resource):
 
     @tickets.param('limit', description='results limit', default=20, required=True)
     @tickets.param('boards', description='boards to fetch tickets from',
-                   enum=JiraService.supported_board_keys(),
-                   default=current_app.config['JIRA_DEFAULT_BOARD']['key'])
+                   type='array',
+                   items={'type': 'string', 'enum': JiraService.supported_board_keys()},
+                   default=[current_app.config['JIRA_DEFAULT_BOARD']['key']],
+                   required=True)
     @tickets.param('category', description='category that the ticket belongs to',
                    enum=JiraService.supported_categories(),
                    default=current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'],
@@ -30,8 +31,10 @@ class Tickets(Resource):
     @tickets.param('assignee', description='the person email whose ticket is assigned to')
     @tickets.param('status', description='the ticket status')
     @tickets.param('watcher', description='tickets user has subscribed to')
+    @tickets.param('fields', description='additional fields to include in the results',
+                   type='array',
+                   items={'type': 'string', 'enum': JiraService.supported_fields()})
     @tickets.param('sort', description='sort tickets by', default='created', enum=['created'])
-    @tickets.param('fields', type='array', items={'type': 'string', 'enum': ['a', 'b']}, default=['a'])
     @tickets.marshal_list_with(issue)
     @tickets.response(200, 'Ok')
     @tickets.response(400, 'Bad request')
@@ -42,8 +45,9 @@ class Tickets(Resource):
         params = request.args.to_dict()
         limit = params.pop('limit', 20)
         boards = params.pop('boards', '').split(',')
+        fields = params.pop('fields', '').split(',')
 
-        return TicketService.find_by(limit=limit, boards=boards, **params)
+        return TicketService.find_by(limit=limit, boards=boards, fields=fields, **params)
 
     # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
     @tickets.response(201, 'Created')
@@ -71,8 +75,8 @@ class Ticket(Resource):
         """
         Get a ticket given its identifier
         """
-        ticket = next(iter(TicketService.find_by(key=key, limit=1)), None)
-        if not ticket:
+        result = next(iter(TicketService.find_by(key=key, limit=1)), None)
+        if not result:
             tickets.abort(404, 'Ticket not found')
         else:
             return ticket

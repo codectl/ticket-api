@@ -91,22 +91,31 @@ class TicketService:
         return next(iter(cls.find_by(limit=1, **filters)), None)
 
     @classmethod
-    def find_by(cls, limit=20, expand='jira', **filters) -> Union[List[Ticket], Optional[Ticket]]:
+    def find_by(
+            cls,
+            limit: int = 20,
+            fields: list = None,
+            model: bool = False,
+            **filters
+    ) -> Union[List[Ticket], Optional[Ticket]]:
         """
         Search for tickets based on several criteria.
         Jira filters are also supported.
 
         :param limit: the max number of results retrieved
-        :param expand: fields to include together with results. values: 'jira'
+        :param fields: additional fields to include in results schema
+        :param model: whether to return a ticket model or cross results Jira data
         :param filters: the query filters
         """
-        jira_service = JiraService()
 
         # split filters
         local_filters = {k: v for k, v in filters.items() if k in Ticket.__dict__}
         jira_filters = {k: v for k, v in filters.items() if cls.is_jira_filter(k)}
 
-        if expand and 'jira' in expand.split(','):
+        if model:
+            return Ticket.query.filter_by(**local_filters).all()
+        else:
+            jira_service = JiraService()
 
             # if any of the filter is not a Jira filter, then
             # apply local filter and pass on results to jql
@@ -127,13 +136,15 @@ class TicketService:
             )
 
             # include additional fields together with ticket
-            fields = '*all, watcher, comments, attachments'
+            fields = fields or []
+            if '*all' not in fields:
+                fields.append('*all')
 
             issues = jira_service.search_issues(
                 jql_str=query,
                 maxResults=limit,
                 validate_query=False,
-                fields=fields
+                fields=','.join(fields)
             )
 
             tickets = []
@@ -148,8 +159,6 @@ class TicketService:
                     ticket['url'] = "{0}/browse/{1}".format(current_app.config['ATLASSIAN_URL'], issue.key),
                     tickets.append(ticket)
             return tickets
-        else:
-            return Ticket.query.filter_by(**local_filters).all()
 
     @classmethod
     def update(cls, ticket_id, **kwargs):
