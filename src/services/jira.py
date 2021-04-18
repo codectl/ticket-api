@@ -230,6 +230,14 @@ class JiraService(ProxyJIRA):
         return Board(key=key, **raw)
 
     @staticmethod
+    def is_jira_filter(filter_):
+        """
+        Check whether given filter is a Jira only filter.
+        """
+
+        return filter_ in ['assignee', 'boards', 'category', 'key', 'q', 'sort', 'status', 'watcher']
+
+    @staticmethod
     def supported_board_keys():
         return [board['key'] for board in current_app.config['JIRA_BOARDS']]
 
@@ -239,4 +247,4 @@ class JiraService(ProxyJIRA):
 
     @staticmethod
     def supported_fields():
-        return ['watchers', 'comments', 'attachments']
+        return ['watchers', 'comments', 'attachments', 'rendered']

@@ -35,7 +35,7 @@ class Tickets(Resource):
                    type='array',
                    items={'type': 'string', 'enum': JiraService.supported_fields()})
     @tickets.param('sort', description='sort tickets by', default='created', enum=['created'])
-    @tickets.marshal_list_with(issue)
+    @tickets.marshal_list_with(issue, skip_none=True)
     @tickets.response(200, 'Ok')
     @tickets.response(400, 'Bad request')
     def get(self):

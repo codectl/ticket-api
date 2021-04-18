@@ -110,7 +110,7 @@ class TicketService:
 
         # split filters
         local_filters = {k: v for k, v in filters.items() if k in Ticket.__dict__}
-        jira_filters = {k: v for k, v in filters.items() if cls.is_jira_filter(k)}
+        jira_filters = {k: v for k, v in filters.items() if JiraService.is_jira_filter(k)}
 
         if _model:
             return Ticket.query.filter_by(**local_filters).all()
@@ -139,19 +139,19 @@ class TicketService:
             fields = fields or []
             if '*navigable' not in fields:
                 fields.append('*navigable')
+            rendered = 'renderedFields' if 'rendered' in fields else 'fields'
 
             # remove plurals in fields
             issues = jira_service.search_issues(
                 jql_str=query,
                 maxResults=limit,
                 validate_query=False,
-                fields=','.join([field[:-1] if field.endswith('s') else field for field in fields])
+                fields=','.join([field[:-1] if field.endswith('s') else field for field in fields]),
+                expand=rendered
             )
 
             tickets = []
             for issue in issues:
-                import pprint
-                pprint.pprint(vars(issue))
                 model = cls.find_one(key=issue.key, _model=True)
 
                 # prevent cases where local db is not synched with Jira
@@ -165,10 +165,13 @@ class TicketService:
                         'emailAddress': model.reporter
                     }
 
+                    # add rendered fields if requested
+                    if 'rendered' in fields:
+                        ticket['rendered'] = issue.raw['renderedFields']
+
                     # add watchers if requested
                     if 'watchers' in fields:
-                        watchers = jira_service.watchers(issue.key).raw['watchers']
-                        ticket['watchers'] = watchers
+                        ticket['watchers'] = jira_service.watchers(issue.key).raw['watchers']
 
                     tickets.append(ticket)
             return tickets
@@ -192,14 +195,6 @@ class TicketService:
             db.session.commit()
 
             current_app.logger.info("Deleted ticket '{0}'.".format(ticket.key))
-
-    @staticmethod
-    def is_jira_filter(filter_):
-        """
-        Check whether given filter is a Jira only filter.
-        """
-
-        return filter_ in ['assignee', 'boards', 'category', 'key', 'q', 'sort', 'status', 'watcher']
 
     @staticmethod
     def create_ticket_body(template='default.j2', **kwargs):

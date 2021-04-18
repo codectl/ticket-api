@@ -2,7 +2,7 @@ from flask_restplus import fields
 
 from src import api
 from src.dto.jira.attachment import attachment
-from src.dto.jira.comment import comment
+from src.dto.jira.comment import comment, rendered_comment
 from src.dto.jira.project import project
 from src.dto.jira.issueType import issue_type
 from src.dto.jira.user import user
@@ -27,6 +27,14 @@ issue = api.model('jira-issue', {
         attribute=lambda x: x.get('comment', {}).get('comments'),
         allow_null=True
     ),
-    'attachments': fields.List(fields.Nested(attachment), attribute='attachment', allow_null=True),
-    'watchers': fields.List(fields.Nested(user))
+    'attachments': fields.List(fields.Nested(attachment), attribute='attachment'),
+    'watchers': fields.List(fields.Nested(user)),
+    'rendered': fields.Nested(api.model('jira-rendered', {
+        'body': fields.String(attribute='description'),
+        'comments': fields.List(
+            fields.Nested(rendered_comment),
+            attribute=lambda x: x.get('comment', {}).get('comments'),
+            allow_null=True
+        )
+    }), allow_null=True)
 })
