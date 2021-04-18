@@ -12,13 +12,19 @@ issue = api.model('jira-issue', {
     'key': fields.String,
     'title': fields.String(attribute='summary'),
     'body': fields.String(attribute='description'),
-    'url': fields.Url,
+    'created': fields.DateTime,
+    'updated': fields.DateTime,
     'assignee': fields.Nested(user, attribute='assignee', allow_null=True),
     'reporter': fields.Nested(user, attribute='reporter', allow_null=True),
     'status': fields.Nested(status, attribute='status'),
     'labels': fields.List(fields.String, attribute='labels'),
-    'comments': fields.List(fields.Nested(comment), attribute=lambda x: x['comment']['comments'], allow_null=True),
-    'watchers': fields.List(fields.Nested(user, attribute='watchers', allow_null=True)),
+    'url': fields.Url,
     'type': fields.Nested(issue_type, attribute='issuetype'),
-    'project': fields.Nested(project, attribute='project')
+    'project': fields.Nested(project, attribute='project'),
+    'watchers': fields.List(fields.Nested(user)),
+    'comments': fields.List(
+        fields.Nested(comment),
+        attribute=lambda x: x.get('comment', {}).get('comments'),
+        allow_null=True
+    ),
 })

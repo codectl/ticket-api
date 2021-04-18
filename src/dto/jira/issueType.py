@@ -5,5 +5,5 @@ from src import api
 
 issue_type = api.model('jira-issue-type', {
     'name': fields.String(attribute='name'),
-    'icon': fields.String(attribute='iconUrl')
+    'icon': fields.Url(attribute='iconUrl')
 })

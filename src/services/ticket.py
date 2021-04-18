@@ -135,28 +135,38 @@ class TicketService:
                 **jira_filters
             )
 
-            # include additional fields together with ticket
+            # include additional fields
             fields = fields or []
-            if '*all' not in fields:
-                fields.append('*all')
+            if '*navigable' not in fields:
+                fields.append('*navigable')
 
+            # remove plurals in fields
             issues = jira_service.search_issues(
                 jql_str=query,
                 maxResults=limit,
                 validate_query=False,
-                fields=','.join(fields)
+                fields=','.join([field[:-1] if field.endswith('s') else field for field in fields])
             )
 
             tickets = []
             for issue in issues:
                 import pprint
                 pprint.pprint(vars(issue))
-                ticket = cls.find_one(key=issue.key, expand=None)
+                ticket = cls.find_one(key=issue.key, model=True)
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
                 if ticket:
                     ticket = issue.raw['fields']
+                    ticket['id'] = issue.id
+                    ticket['key'] = issue.key
                     ticket['url'] = "{0}/browse/{1}".format(current_app.config['ATLASSIAN_URL'], issue.key),
+
+                    # add watchers if requested
+                    if 'watchers' in fields:
+                        watchers = jira_service.watchers(issue.key).raw['watchers']
+                        ticket['watchers'] = watchers
+                        pprint.pprint(type(watchers[0]))
+
                     tickets.append(ticket)
             return tickets
 
