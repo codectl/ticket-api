@@ -150,7 +150,10 @@ class TicketService:
 
             tickets = []
             for issue in issues:
+                import pprint
+                pprint.pprint(vars(issue))
                 model = cls.find_one(key=issue.key, _model=True)
+
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
                 if model:

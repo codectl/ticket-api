@@ -1,6 +1,7 @@
 from flask_restplus import fields
 
 from src import api
+from src.dto.jira.attachment import attachment
 from src.dto.jira.comment import comment
 from src.dto.jira.project import project
 from src.dto.jira.issueType import issue_type
@@ -21,10 +22,11 @@ issue = api.model('jira-issue', {
     'url': fields.String,
     'type': fields.Nested(issue_type, attribute='issuetype'),
     'project': fields.Nested(project, attribute='project'),
-    'watchers': fields.List(fields.Nested(user)),
     'comments': fields.List(
         fields.Nested(comment),
         attribute=lambda x: x.get('comment', {}).get('comments'),
         allow_null=True
     ),
+    'attachments': fields.List(fields.Nested(attachment), attribute='attachment', allow_null=True),
+    'watchers': fields.List(fields.Nested(user))
 })
