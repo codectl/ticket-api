@@ -14,7 +14,7 @@ api = Api()
 
 # Swagger properties
 swagger = Swagger(config={
-    # 'openapi': '3.0.2',
+    'openapi': '3.0.0',
     'info': {
         'title': "Ticket manager service",
         'description': "Service to manage tickets and Jira integration.",
@@ -22,14 +22,25 @@ swagger = Swagger(config={
     },
     'specs': [
         {
-            'endpoint': 'apispec',
-            'route': '/mysite.com/api.json',
+            'endpoint': 'swagger',
+            'route': '/swagger.json',
             'rule_filter': lambda rule: True,
             'model_filter': lambda tag: True
         }
     ],
+
+    # hide the Swagger top bar
+    'hide_top_bar': True,
+
+    # where to find the docs
     'specs_route': '/api/tickets/',
-    "host": "mysite.com"
+
+    # OAS3 fields
+    'servers': [
+        {
+            'url': 'http://localhost:5000/api/tickets',
+        }
+    ]
 }, merge=True, template={
-    "basePath": "/api/tickets"
+    'basePath': '/api/tickets'
 })
