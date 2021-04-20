@@ -1,11 +1,12 @@
 click
+flasgger
 Flask
+flask_restful
 Flask-Caching
-flask-restplus
 Flask-SQLAlchemy
 jinja2
 jira
-jsonschema
+marshmallow
 mistune
 O365
 python-dotenv

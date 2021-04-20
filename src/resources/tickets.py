@@ -1,6 +1,5 @@
-import jira
 from flask import current_app, request
-from flask_restplus import Namespace, Resource
+from flask_restful import Namespace, Resource
 
 from src.dto.jira.issue import issue
 from src.dto.ticket import ticket
@@ -50,18 +49,32 @@ class Tickets(Resource):
         return TicketService.find_by(limit=limit, boards=boards, fields=fields, **params)
 
     # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
+    parser = tickets.parser()
+    parser.add_argument('test', type=int, default=10, location='form')
+    parser.add_argument('ticket', location='body')
+
     @tickets.response(201, 'Created')
     @tickets.response(400, 'Bad request')
-    @tickets.expect(ticket, validate=True)
-    @tickets.marshal_with(issue, code=201)
+    # @tickets.expect(ticket)
+    @tickets.expect(parser)
+    # @tickets.param('attachments', description='files to attach',
+    #                type='file',
+    #                _in='formData')
+    # @tickets.marshal_with(issue, code=201)
     def post(self):
         """
         Create a new ticket.
         """
-        try:
-            return TicketService.create(**request.get_json()), 201
-        except jira.exceptions.JIRAError as ex:
-            tickets.abort(400, ex.text)
+        print(request.mimetype)
+        print(tickets)
+        print('--')
+
+        # try:
+        #     return TicketService.create(
+        #         attachments=request.form.get('attachments')
+        #     ), 201
+        # except jira.exceptions.JIRAError as ex:
+        #     tickets.abort(400, ex.text)
 
 
 @tickets.param('key', description='the ticket identifier')
