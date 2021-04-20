@@ -1,18 +1,14 @@
 from flask import current_app, request
-from flask_restful import Namespace, Resource
+from flask_restful import Resource
 
+from src import api
 from src.dto.jira.issue import issue
 from src.dto.ticket import ticket
 from src.services.ticket import TicketService
 from src.services.jira import JiraService
 
-tickets = Namespace(
-    'tickets',
-    description='Manage tickets.'
-)
 
-
-@tickets.route('/')
+@api.resource('/tickets')
 class Tickets(Resource):
 
     @tickets.param('limit', description='results limit', default=20, required=True)

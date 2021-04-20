@@ -1,3 +1,4 @@
+import base64
 import os
 from typing import List, Optional, Union
 
@@ -15,9 +16,25 @@ from src.services.jira import JiraService
 class TicketService:
 
     @classmethod
-    def create(cls, **kwargs) -> Ticket:
+    def create(
+            cls,
+            attachments: list = None,
+            **kwargs
+    ) -> Ticket:
+        """
+        Create a new ticket by calling Jira API to create a new
+        issue. A new local reference is also created.
 
+        :param attachments: the files to attach to the ticket which
+                            are stored in Jira
+        :param kwargs: properties of the ticket
+        """
         jira_service = JiraService()
+
+        print('----')
+        print(attachments)
+
+        return None
 
         # translate reporter into a Jira account
         reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'), limit=1)), None)
@@ -48,8 +65,6 @@ class TicketService:
                                           labels=categories,
                                           priority=priority)
 
-        print(issue)
-
         # add watchers iff has permission
         if kwargs.get('watchers') and jira_service.has_permissions(permissions=['MANAGE_WATCHERS'],
                                                                    issue_key=issue.key):
@@ -67,6 +82,13 @@ class TicketService:
                                                        .format(user.displayName, issue.key))
                         else:
                             raise e
+
+        # adding attachments
+        for attachment in attachments or []:
+            if attachment.content is not None:
+                jira_service.add_attachment(issue=issue.key,
+                                            attachment=base64.b64decode(attachment.content),
+                                            filename=attachment.name)
 
         # add new entry to the db
         local_fields = {k: v for k, v in kwargs.items() if k in Ticket.__dict__}

@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, Blueprint
 
-from src import api, cache, db
+from src import api, cache, db, swagger
 from src.cli.o365 import o365_cli
 from src.settings.config import config_by_name
 
@@ -41,6 +41,12 @@ def setup_app(app):
     # link db to app
     db.init_app(app)
 
+    # link api to app
+    api.init_app(app)
+
+    # link swagger to app
+    swagger.init_app(app)
+
     # link cache to app
     cache.init_app(app)
 
@@ -50,19 +56,22 @@ def setup_app(app):
         db.create_all()
 
         # use app context to load namespaces and blueprints
-        from src.namespaces.tickets.index import tickets
+        from src.resources.test import Test
+        from src.resources.testview import TestView
 
     # initialize root blueprint
-    root = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])
+    bp = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])
 
     # link api to blueprint
-    api.init_app(root)
+    api.init_app(bp)
+
+    # # register namespaces
+    # api.add_namespace(tickets)
+    api.add_resource(Test, '/test', endpoint='foo')
+    api.add_resource(TestView, '/testview', endpoint='testview')
 
     # register blueprints
-    app.register_blueprint(root)
-
-    # register namespaces
-    api.add_namespace(tickets)
+    app.register_blueprint(bp)
 
     # register cli commands
     app.cli.add_command(o365_cli)

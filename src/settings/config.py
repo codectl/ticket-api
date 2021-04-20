@@ -35,7 +35,7 @@ class BaseConfig:
     # Office365 related configurations #
     O365_URL = os.getenv('O365_URL', 'https://login.microsoftonline.com')
 
-    # Office365 registered tenant (ASML)
+    # Office365 registered tenant
     O365_TENANT_ID = os.getenv('O365_TENANT_ID')
 
     # O365 client Id according to OAuth2 standards
@@ -78,11 +78,6 @@ class BaseConfig:
     # Filter settings
     EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split()
     EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split()
-
-    # additional configuration settings below ...
-
-    # disable X-Fields
-    RESTPLUS_MASK_SWAGGER = os.getenv('RESTPLUS_MASK_SWAGGER', False)
 
 
 class ProductionConfig(BaseConfig):
