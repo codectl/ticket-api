@@ -44,6 +44,12 @@ def setup_app(app):
     # link api to app
     api.init_app(app)
 
+    # link swagger to app
+    swagger.init_app(app)
+    swagger.template = {
+        'basePath': app.config['APPLICATION_CONTEXT']
+    }
+
     # link cache to app
     cache.init_app(app)
 
@@ -69,9 +75,6 @@ def setup_app(app):
 
     # register blueprints
     app.register_blueprint(bp)
-
-    # link swagger to app
-    swagger.init_app(app)
 
     # register cli commands
     app.cli.add_command(o365_cli)

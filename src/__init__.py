@@ -20,6 +20,4 @@ swagger = Swagger(config={
         'description': "Service to manage tickets and Jira integration.",
         'version': '1.0.0'
     },
-}, merge=True, template={
-    'basePath': '/api/tickets'
-})
+}, merge=True)
