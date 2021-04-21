@@ -52,7 +52,7 @@ class Tickets(Resource):
                         schema:
                             type: array
                             items:
-                                $ref: 'Issue'
+                                $ref: '#/components/schemas/Issue'
             400:
                 description: Bad request
         """

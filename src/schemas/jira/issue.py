@@ -12,7 +12,7 @@ from src import swagger
 
 
 class Issue(Schema):
-    id = fields.Integer
+    id = fields.Int()
 
 
 # issue = api.model('jira-issue', {

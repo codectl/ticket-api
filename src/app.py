@@ -1,7 +1,9 @@
 import logging
 import os
 
-import flasgger.utils
+import flasgger
+from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
 from dotenv import load_dotenv
 from flask import Flask, Blueprint
 
@@ -49,11 +51,10 @@ def setup_app(app):
     cache.init_app(app)
 
     with app.app_context():
-
         # create tables if they do not exist already
         db.create_all()
 
-        # use app context to load namespaces and blueprints
+        # use app context to load namespaces, blueprints and schemas
         from src.resources.tickets import Tickets
         from src.schemas.jira.issue import Issue
 
@@ -72,12 +73,24 @@ def setup_app(app):
 
     # link swagger to app
     swagger.init_app(app)
-    swagger.template = {
-        'basePath': app.config['APPLICATION_CONTEXT'],
-        'components': {
-            'schemas': [Issue]
-        }
-    }
+
+    # define OAS3 base template
+    swagger.template = flasgger.apispec_to_template(
+        app=app,
+        spec=APISpec(
+            title=app.config['OPENAPI_SPEC']['info']['title'],
+            version=app.config['OPENAPI_SPEC']['info']['version'],
+            openapi_version=app.config['OPENAPI_SPEC']['openapi'],
+            plugins=(MarshmallowPlugin(),),
+            basePath=app.config['APPLICATION_CONTEXT'],
+            **app.config['OPENAPI_SPEC']
+        ),
+        definitions=[Issue]
+    )
+    import pprint
+    # pprint.pprint(swagger.template)
+    # print('---')
+    # pprint.pprint(swagger.config)
 
     # register cli commands
     app.cli.add_command(o365_cli)

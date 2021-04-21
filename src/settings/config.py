@@ -11,6 +11,42 @@ class BaseConfig:
     # Application root context
     APPLICATION_CONTEXT = os.getenv('APPLICATION_CONTEXT', '/')
 
+    # Swagger properties
+    OPENAPI = os.getenv('OPENAPI', '3.0.3')
+    SWAGGER = {
+        'openapi': OPENAPI,
+        'specs': [
+            {
+                'endpoint': 'swagger',
+                'route': '/swagger.json',
+                'rule_filter': lambda rule: True,
+                'model_filter': lambda tag: True
+            }
+        ],
+
+        # where to find the docs (ensure trailing slash)
+        'specs_route': APPLICATION_CONTEXT + ('' if APPLICATION_CONTEXT.endswith('/') else '/'),
+
+        # hide the Swagger top bar
+        'hide_top_bar': True,
+    }
+
+    # OpenAPI 3 initial specs
+    OPENAPI_SPEC = {
+        'openapi': OPENAPI,
+        'info': {
+            'title': "Ticket manager service",
+            'description': "Service to manage tickets and Jira integration.",
+            'version': '1.0.0',
+        },
+        'servers': [
+            {
+                'url': APPLICATION_CONTEXT,
+                'description': 'dev',
+            }
+        ]
+    }
+
     # Database settings
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -78,32 +114,6 @@ class BaseConfig:
     # Filter settings
     EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split()
     EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split()
-
-    # Swagger properties
-    SWAGGER = {
-        'specs': [
-            {
-                'endpoint': 'swagger',
-                'route': '/swagger.json',
-                'rule_filter': lambda rule: True,
-                'model_filter': lambda tag: True
-            }
-        ],
-
-        # hide the Swagger top bar
-        'hide_top_bar': True,
-
-        # where to find the docs (ensure trailing slash)
-        'specs_route': APPLICATION_CONTEXT + ('' if APPLICATION_CONTEXT.endswith('/') else '/'),
-
-        # OAS3 fields
-        'servers': [
-            {
-                'url': APPLICATION_CONTEXT,
-                'description': 'dev',
-            }
-        ]
-    }
 
 
 class ProductionConfig(BaseConfig):
