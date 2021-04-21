@@ -2,7 +2,7 @@ from flask import current_app
 from flask_restplus import fields
 
 from src import api
-from src.dto.fields.Email import Email
+from src.schemas.fields.Email import Email
 from src.models.jira.Board import Board
 from src.services.jira import JiraService
 

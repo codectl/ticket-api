@@ -1,7 +1,7 @@
 from flask_restplus import fields
 
 from src import api
-from src.dto.jira.user import user
+from src.schemas.jira.user import user
 
 
 comment = api.model('jira-comment', {

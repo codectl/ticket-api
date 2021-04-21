@@ -1,6 +1,7 @@
 import logging
 import os
 
+import flasgger.utils
 from dotenv import load_dotenv
 from flask import Flask, Blueprint
 
@@ -44,12 +45,6 @@ def setup_app(app):
     # link api to app
     api.init_app(app)
 
-    # link swagger to app
-    swagger.init_app(app)
-    swagger.template = {
-        'basePath': app.config['APPLICATION_CONTEXT']
-    }
-
     # link cache to app
     cache.init_app(app)
 
@@ -59,8 +54,8 @@ def setup_app(app):
         db.create_all()
 
         # use app context to load namespaces and blueprints
-        from src.resources.test import Test
-        from src.resources.testview import TestView
+        from src.resources.tickets import Tickets
+        from src.schemas.jira.issue import Issue
 
     # initialize root blueprint
     bp = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])
@@ -70,11 +65,19 @@ def setup_app(app):
 
     # # register namespaces
     # api.add_namespace(tickets)
-    api.add_resource(Test, '/test', endpoint='foo')
-    api.add_resource(TestView, '/testview', endpoint='testview')
+    api.add_resource(Tickets, '/tickets', endpoint='tickets')
 
     # register blueprints
     app.register_blueprint(bp)
+
+    # link swagger to app
+    swagger.init_app(app)
+    swagger.template = {
+        'basePath': app.config['APPLICATION_CONTEXT'],
+        'components': {
+            'schemas': [Issue]
+        }
+    }
 
     # register cli commands
     app.cli.add_command(o365_cli)
