@@ -51,6 +51,7 @@ def setup_app(app):
     cache.init_app(app)
 
     with app.app_context():
+
         # create tables if they do not exist already
         db.create_all()
 
