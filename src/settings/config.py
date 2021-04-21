@@ -79,6 +79,32 @@ class BaseConfig:
     EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split()
     EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split()
 
+    # Swagger properties
+    SWAGGER = {
+        'specs': [
+            {
+                'endpoint': 'swagger',
+                'route': '/swagger.json',
+                'rule_filter': lambda rule: True,
+                'model_filter': lambda tag: True
+            }
+        ],
+
+        # hide the Swagger top bar
+        'hide_top_bar': True,
+
+        # where to find the docs (ensure trailing slash)
+        'specs_route': APPLICATION_CONTEXT + ('' if APPLICATION_CONTEXT.endswith('/') else '/'),
+
+        # OAS3 fields
+        'servers': [
+            {
+                'url': APPLICATION_CONTEXT,
+                'description': 'dev',
+            }
+        ]
+    }
+
 
 class ProductionConfig(BaseConfig):
     ENV = 'production'
