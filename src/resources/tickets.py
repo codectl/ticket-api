@@ -33,35 +33,127 @@ class Tickets(Resource):
     # @tickets.marshal_list_with(issue, skip_none=True)
     # @tickets.response(200, 'Ok')
     # @tickets.response(400, 'Bad request')
-    @swag_from(definition=Issue)
+    @swag_from({
+        'parameters': [
+            {
+                'in': 'query',
+                'name': 'boards',
+                'description': 'boards to fetch tickets from',
+                'schema': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'string',
+                        'enum': JiraService.supported_board_keys()
+                    },
+                },
+                'default': [current_app.config['JIRA_DEFAULT_BOARD']['key']],
+                'explode': False,
+                'required': True
+            }, {
+                'in': 'query',
+                'name': 'categories',
+                'description': 'categories that the ticket belongs to',
+                'schema': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'string',
+                        'enum': JiraService.supported_categories()
+                    },
+                },
+                'default': [current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY']],
+                'explode': False,
+                'required': True
+            }, {
+                'in': 'query',
+                'name': 'q',
+                'description': 'search for text occurrences',
+            }, {
+                'in': 'query',
+                'name': 'reporter',
+                'description': 'the ticket reporter email',
+            }, {
+                'in': 'query',
+                'name': 'assignee',
+                'description': 'the user email whose ticket is assigned to',
+            }, {
+                'in': 'query',
+                'name': 'status'
+            }, {
+                'in': 'query',
+                'name': 'watcher',
+                'description': 'tickets user has subscribed to',
+            }, {
+                'in': 'query',
+                'name': 'fields',
+                'description': 'additional fields to include in the results',
+                'schema': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'string',
+                        'enum': JiraService.supported_fields()
+                    },
+                }
+            }, {
+                'in': 'query',
+                'name': 'limit',
+                'description': 'results limit',
+                'default': 20,
+                'required': True
+            }, {
+                'in': 'query',
+                'name': 'sort',
+                'description': 'sort tickets by',
+                'schema': {
+                    'type': 'string',
+                    'enum': ['created']
+                },
+                'default': 'created',
+            }
+        ],
+        'responses': {
+            200: {
+                'description': 'Ok'
+            }
+        }
+    })
     def get(self):
         """
         Get service tickets based on search criteria.
-        ---
-        parameters:
-            - name: limit
-              description: results limit
-              in: query
-              default: 20
-              required: true
-        responses:
-            200:
-                description: Ok
-                content:
-                    application/json:
-                        schema:
-                            type: array
-                            items:
-                                $ref: '#/components/schemas/Issue'
-            400:
-                description: Bad request
+        # ---
+        # parameters:
+        #     - name: limit
+        #       description: results limit
+        #       in: query
+        #       default: 20
+        #       required: true
+        #     - name: boards
+        #       description: boards to fetch tickets from
+        #       in: query
+        #       schema:
+        #           type: array
+        #           items:
+        #             type: string
+        #             enum: [1,2]
+        #       explode: false
+        #       required: true
+        # responses:
+        #     200:
+        #         description: Ok
+        #         content:
+        #             application/json:
+        #                 schema:
+        #                     type: array
+        #                     items:
+        #                         $ref: '#/components/schemas/Issue'
+        #     400:
+        #         description: Bad request
         """
-        from pprint import pprint
-        # pprint(swagger.get_apispecs())
         params = request.args.to_dict()
         limit = params.pop('limit', 20)
         boards = params.pop('boards', '').split(',')
         fields = params.pop('fields', '').split(',')
+
+        print(JiraService.supported_board_keys())
 
         return TicketService.find_by(limit=limit, boards=boards, fields=fields, **params)
 
@@ -92,7 +184,6 @@ class Tickets(Resource):
     #     #     ), 201
     #     # except jira.exceptions.JIRAError as ex:
     #     #     tickets.abort(400, ex.text)
-
 
 # @tickets.param('key', description='the ticket identifier')
 # @tickets.route('/<key>')

@@ -13,6 +13,7 @@ from src import swagger
 
 class Issue(Schema):
     id = fields.Int()
+    key = fields.String()
 
 
 # issue = api.model('jira-issue', {
