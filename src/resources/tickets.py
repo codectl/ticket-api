@@ -65,23 +65,24 @@ class Tickets(Resource):
                 'required': True
             }, {
                 'in': 'query',
-                'name': 'q',
-                'description': 'search for text occurrences',
-            }, {
-                'in': 'query',
                 'name': 'reporter',
-                'description': 'the ticket reporter email',
+                'description': 'ticket reporter email',
             }, {
                 'in': 'query',
                 'name': 'assignee',
-                'description': 'the user email whose ticket is assigned to',
+                'description': 'user email whose ticket is assigned to',
             }, {
                 'in': 'query',
-                'name': 'status'
+                'name': 'status',
+                'description': 'name of the current ticket status'
             }, {
                 'in': 'query',
                 'name': 'watcher',
                 'description': 'tickets user has subscribed to',
+            }, {
+                'in': 'query',
+                'name': 'q',
+                'description': 'search for text occurrences',
             }, {
                 'in': 'query',
                 'name': 'fields',
@@ -112,48 +113,39 @@ class Tickets(Resource):
         ],
         'responses': {
             200: {
-                'description': 'Ok'
+                'description': 'Ok',
+                'content': {
+                    'application/json': {
+                        'schema': {
+                            'type': 'array',
+                            'items': {
+                                '$ref': '#/components/schemas/Issue'
+                            }
+                        }
+                    },
+                }
+            },
+            400: {
+                'description': 'Ok',
+                'content': {
+                    'application/json': {
+                        'schema': {
+                            'type': 'string',
+                            'example': 'ping'
+                        }
+                    }
+                }
             }
         }
     })
     def get(self):
         """
         Get service tickets based on search criteria.
-        # ---
-        # parameters:
-        #     - name: limit
-        #       description: results limit
-        #       in: query
-        #       default: 20
-        #       required: true
-        #     - name: boards
-        #       description: boards to fetch tickets from
-        #       in: query
-        #       schema:
-        #           type: array
-        #           items:
-        #             type: string
-        #             enum: [1,2]
-        #       explode: false
-        #       required: true
-        # responses:
-        #     200:
-        #         description: Ok
-        #         content:
-        #             application/json:
-        #                 schema:
-        #                     type: array
-        #                     items:
-        #                         $ref: '#/components/schemas/Issue'
-        #     400:
-        #         description: Bad request
         """
         params = request.args.to_dict()
         limit = params.pop('limit', 20)
         boards = params.pop('boards', '').split(',')
         fields = params.pop('fields', '').split(',')
-
-        print(JiraService.supported_board_keys())
 
         return TicketService.find_by(limit=limit, boards=boards, fields=fields, **params)
 

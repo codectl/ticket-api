@@ -88,10 +88,6 @@ def setup_app(app):
         ),
         definitions=[Issue]
     )
-    import pprint
-    # pprint.pprint(swagger.template)
-    # print('---')
-    # pprint.pprint(swagger.config)
 
     # register cli commands
     app.cli.add_command(o365_cli)
