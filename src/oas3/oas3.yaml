@@ -9,16 +9,24 @@ servers:
   - url: "{APPLICATION_CONTEXT}"
     description: dev
 
-responses:
-  - NotFound:
-      description: Not found
+components:
+  responses:
+    BadRequest:
+      description: Bad request
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
-  - Unauthorized:
+            $ref: '#/components/schemas/HttpError'
+    Unauthorized:
       description: Unauthorized
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/HttpError'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+

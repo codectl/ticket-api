@@ -57,7 +57,7 @@ def setup_app(app):
 
         # use app context to load namespaces, blueprints and schemas
         from src.resources.tickets import Ticket, Tickets
-        from src.oas3.components.schemas.error import ErrorSchema
+        from src.oas3.components.schemas.http_error import HttpErrorSchema
         from src.oas3.components.schemas.jira.issue import IssueSchema
 
     # initialize root blueprint
@@ -88,7 +88,7 @@ def setup_app(app):
             **app.config['OPENAPI_SPEC']
         ),
         definitions=[
-            ErrorSchema,
+            HttpErrorSchema,
             IssueSchema
         ]
     )

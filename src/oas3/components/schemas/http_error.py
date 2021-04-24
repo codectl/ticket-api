@@ -1,6 +1,6 @@
 from marshmallow import fields, Schema
 
 
-class ErrorSchema(Schema):
-    code = fields.String()
+class HttpErrorSchema(Schema):
+    code = fields.Int()
     message = fields.String()

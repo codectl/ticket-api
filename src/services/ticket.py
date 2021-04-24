@@ -9,7 +9,6 @@ from flask import current_app
 
 from src import db
 from src.models.Ticket import Ticket
-from src.models.jira.Board import Board
 from src.services.jira import JiraService
 
 
@@ -49,7 +48,7 @@ class TicketService:
         reporter_id = getattr(reporter, 'accountId', None)
 
         # set defaults
-        board_key = kwargs.get('board', Board.default().key)
+        board_key = kwargs.get('board')
         project_key = jira_service.find_board(key=board_key).project['projectKey']
         priority = dict(name=kwargs.get('priority').capitalize() if kwargs.get('priority') else 'None')
 
@@ -149,9 +148,8 @@ class TicketService:
                     return []
                 jira_filters['key'] = [ticket.key for ticket in tickets]
 
-            # set Jira default values
-            normalized = filters.pop('categories', current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'])
-            categories = normalized.split(',') + current_app.config['JIRA_TICKET_LABELS']
+            # add base categories
+            categories = filters.pop('categories', []) + current_app.config['JIRA_TICKET_LABELS']
 
             # fetch tickets from Jira using jql while skipping jql
             # validation since local db might not be synched with Jira
@@ -160,9 +158,6 @@ class TicketService:
                 summary=filters.pop('q', None),
                 **jira_filters
             )
-
-            # print(jira_filters)
-            # print(query)
 
             # include additional fields
             fields = fields or []

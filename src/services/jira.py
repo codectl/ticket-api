@@ -141,7 +141,7 @@ class ProxyJIRA(JIRA):
         Build jql query based on a provided searching parameters.
 
         :param assignee: the key assignee
-        :param boards: the boards to get tickets from
+        :param boards: the board keys to get tickets from
         :param key: the Jira ticket key
         :param labels: the labels to search for
         :param summary: the text search
@@ -150,16 +150,14 @@ class ProxyJIRA(JIRA):
         :param expand: the expand field
         :param sort: the sort criteria. Could have the value 'created'.
         """
+        jql = ''
+        if boards:
+            boards_ = (self.find_board(key=board_key) for board_key in boards)
+            board_ids = [getattr(board, 'id', getattr(board, 'board_id', None)) for board in boards_]
 
-        # search from all boards if none provided
-        board_keys = boards or JiraService.supported_board_keys()
-        boards_ = (self.find_board(key=board_key) for board_key in board_keys)
-        board_ids = [getattr(board, 'id', getattr(board, 'board_id', None)) for board in boards_]
-
-        # search for issues under the right boards
-        filters = [self.get_board_filter(board_id=board_id) for board_id in board_ids]
-        jql = "filter in ({0})".format(', '.join([filter_.id for filter_ in filters]))
-
+            # translate boards into filters
+            filters = [self.get_board_filter(board_id=board_id) for board_id in board_ids]
+            jql += "filter in ({0})".format(', '.join([filter_.id for filter_ in filters]))
         if summary:
             jql += '&summary ~ \'' + summary + '\''
         if key:

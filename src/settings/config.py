@@ -92,8 +92,8 @@ class BaseConfig:
     JIRA_TICKET_BOARD_ID = os.getenv('JIRA_TICKET_BOARD_ID')
     JIRA_TICKET_BOARD_KEY = os.getenv('JIRA_TICKET_BOARD_KEY')
     JIRA_TICKET_TYPE = os.getenv('JIRA_TICKET_TYPE')
-    JIRA_TICKET_LABELS = os.getenv('JIRA_TICKET_LABELS', []).split()
-    JIRA_TICKET_LABEL_CATEGORIES = os.getenv('JIRA_TICKET_LABEL_CATEGORIES', []).split()
+    JIRA_TICKET_LABELS = os.getenv('JIRA_TICKET_LABELS', []).split(',')
+    JIRA_TICKET_LABEL_CATEGORIES = os.getenv('JIRA_TICKET_LABEL_CATEGORIES', []).split(',')
     JIRA_TICKET_LABEL_DEFAULT_CATEGORY = os.getenv('JIRA_TICKET_LABEL_DEFAULT_CATEGORY')
     JIRA_DEFAULT_REPORTER = os.getenv('JIRA_DEFAULT_REPORTER')
 
@@ -101,14 +101,14 @@ class BaseConfig:
     JIRA_BOARDS = [{
         'key': board.lower().replace('jira_', '').replace('_board', ''),
         'jira_name': os.getenv(board)
-    } for board in os.getenv('JIRA_BOARDS').split()]
+    } for board in os.getenv('JIRA_BOARDS').split(',')]
     JIRA_DEFAULT_BOARD = next(
         board for board in JIRA_BOARDS if board['jira_name'] == os.getenv(os.getenv('JIRA_DEFAULT_BOARD'))
     )
 
     # Filter settings
-    EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split()
-    EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split()
+    EMAIL_WHITELISTED_DOMAINS = os.getenv('EMAIL_WHITELISTED_DOMAINS', []).split(',')
+    EMAIL_BLACKLIST = os.getenv('EMAIL_BLACKLIST', []).split(',')
 
 
 class ProductionConfig(BaseConfig):
