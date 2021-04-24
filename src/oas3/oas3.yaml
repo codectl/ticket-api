@@ -1,0 +1,24 @@
+---
+openapi: "{OPENAPI}"
+info:
+  title: Ticket manager service
+  description': Service to manage tickets and Jira integration.
+  version: 1.0.0
+
+servers:
+  - url: "{APPLICATION_CONTEXT}"
+    description: dev
+
+responses:
+  - NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  - Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,6 +1,4 @@
 from marshmallow import Schema, fields
-# from flask_restful import fields
-from flasgger import Schema
 
 from src import swagger
 # from src.dto.jira.attachment import attachment
@@ -11,7 +9,7 @@ from src import swagger
 # from src.dto.jira.status import status
 
 
-class Issue(Schema):
+class IssueSchema(Schema):
     id = fields.Int()
     key = fields.String()
 

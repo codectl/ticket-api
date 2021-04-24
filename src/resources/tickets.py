@@ -1,10 +1,8 @@
-from flask import current_app, request
+from flask import abort, current_app, request
 from flask_restful import Resource
 from flasgger import swag_from
 
-from src import swagger
-from src.schemas.jira.issue import Issue
-# from src.dto.ticket import ticket
+from src.oas3.components.schemas.jira.issue import IssueSchema
 from src.services.ticket import TicketService
 from src.services.jira import JiraService
 
@@ -126,15 +124,7 @@ class Tickets(Resource):
                 }
             },
             400: {
-                'description': 'Ok',
-                'content': {
-                    'application/json': {
-                        'schema': {
-                            'type': 'string',
-                            'example': 'ping'
-                        }
-                    }
-                }
+                'description': 'Bad request'
             }
         }
     })
@@ -147,7 +137,8 @@ class Tickets(Resource):
         boards = params.pop('boards', '').split(',')
         fields = params.pop('fields', '').split(',')
 
-        return TicketService.find_by(limit=limit, boards=boards, fields=fields, **params)
+        tickets = TicketService.find_by(limit=limit, boards=boards, fields=fields, **params)
+        return IssueSchema(many=True).dump(tickets)
 
     # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
     # parser = tickets.parser()
@@ -162,6 +153,7 @@ class Tickets(Resource):
     # #                type='file',
     # #                _in='formData')
     # # @tickets.marshal_with(issue, code=201)
+    # @swagger.validate('UserSchema')
     # def post(self):
     #     """
     #     Create a new ticket.
@@ -177,19 +169,44 @@ class Tickets(Resource):
     #     # except jira.exceptions.JIRAError as ex:
     #     #     tickets.abort(400, ex.text)
 
-# @tickets.param('key', description='the ticket identifier')
-# @tickets.route('/<key>')
-# class Ticket(Resource):
-#
-#     @tickets.response(200, 'Ok')
-#     @tickets.response(404, 'Not found')
-#     @tickets.marshal_with(issue, skip_none=True)
-#     def get(self, key):
-#         """
-#         Get a ticket given its identifier
-#         """
-#         result = next(iter(TicketService.find_by(key=key, limit=1)), None)
-#         if not result:
-#             tickets.abort(404, 'Ticket not found')
-#         else:
-#             return ticket
+
+class Ticket(Resource):
+
+    @swag_from({
+        'parameters': [
+            {
+                'in': 'path',
+                'name': 'key',
+                'description': 'ticket unique identifier',
+            }
+        ],
+        'responses': {
+            200: {
+                'description': 'Ok',
+                'content': {
+                    'application/json': {
+                        'schema': {
+                            '$ref': '#/components/schemas/Issue'
+                        }
+                    },
+                }
+            },
+            404: {
+                'description': 'Not found',
+                'content': {
+                    'application/json': {
+                    },
+                }
+            }
+        }
+    })
+    def get(self, key):
+        """
+        Get a ticket given its identifier
+        """
+        result = next(iter(TicketService.find_by(key=key, limit=1)), None)
+        print(key)
+        if not result:
+            abort(404, 'Ticket not found')
+        else:
+            return IssueSchema().dump(result)

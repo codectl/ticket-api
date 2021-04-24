@@ -13,6 +13,7 @@ O365
 python-dotenv
 requests
 Werkzeug==0.16.1
+yaml
 
 # From git
 git+git://github.com/rena2damas/o365-notifications

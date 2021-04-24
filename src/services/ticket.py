@@ -20,7 +20,7 @@ class TicketService:
             cls,
             attachments: list = None,
             **kwargs
-    ) -> Ticket:
+    ) -> dict:
         """
         Create a new ticket by calling Jira API to create a new
         issue. A new local reference is also created.
@@ -99,14 +99,14 @@ class TicketService:
 
         current_app.logger.info("Created ticket '{0}'.".format(ticket.key))
 
-        return TicketService.find_by(key=ticket.key, limit=1)
+        return next(iter(TicketService.find_by(key=ticket.key, limit=1)))
 
     @staticmethod
     def get(ticket_id) -> Optional[Ticket]:
         return Ticket.query.get(ticket_id)
 
     @classmethod
-    def find_one(cls, **filters) -> Optional[Ticket]:
+    def find_one(cls, **filters) -> Optional[dict]:
         """
         Search for a single ticket based on several criteria.
         """
@@ -119,7 +119,7 @@ class TicketService:
             fields: list = None,
             _model: bool = False,
             **filters
-    ) -> Union[List[Ticket], Optional[Ticket]]:
+    ) -> List[dict]:
         """
         Search for tickets based on several criteria.
         Jira filters are also supported.
@@ -143,11 +143,15 @@ class TicketService:
             # apply local filter and pass on results to jql
             if local_filters:
                 tickets = Ticket.query.filter_by(**local_filters).all()
+
+                # skip routine if no local entries are found
+                if not tickets:
+                    return []
                 jira_filters['key'] = [ticket.key for ticket in tickets]
 
             # set Jira default values
-            category = filters.pop('category', current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'])
-            categories = category.split(',') + current_app.config['JIRA_TICKET_LABELS']
+            normalized = filters.pop('categories', current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'])
+            categories = normalized.split(',') + current_app.config['JIRA_TICKET_LABELS']
 
             # fetch tickets from Jira using jql while skipping jql
             # validation since local db might not be synched with Jira
@@ -156,6 +160,9 @@ class TicketService:
                 summary=filters.pop('q', None),
                 **jira_filters
             )
+
+            # print(jira_filters)
+            # print(query)
 
             # include additional fields
             fields = fields or []

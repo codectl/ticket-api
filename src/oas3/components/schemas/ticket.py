@@ -1,8 +1,8 @@
 from flask import current_app
-from flask_restplus import fields
+from flask_restful import fields
 
 from src import api
-from src.schemas.fields.Email import Email
+from src.oas3.components import Email
 from src.models.jira.Board import Board
 from src.services.jira import JiraService
 

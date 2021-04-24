@@ -1,5 +1,8 @@
 import os
 
+import flasgger
+import yaml
+
 
 class BaseConfig:
     DEBUG = False
@@ -32,20 +35,12 @@ class BaseConfig:
     }
 
     # OpenAPI 3 initial specs
-    OPENAPI_SPEC = {
-        'openapi': OPENAPI,
-        'info': {
-            'title': "Ticket manager service",
-            'description': "Service to manage tickets and Jira integration.",
-            'version': '1.0.0',
-        },
-        'servers': [
-            {
-                'url': APPLICATION_CONTEXT,
-                'description': 'dev',
-            }
-        ]
-    }
+    OPENAPI_SPEC = yaml.safe_load(flasgger.utils.load_from_file(
+        os.path.join('src', 'oas3', 'oas3.yaml')
+    ).format(**{
+        'OPENAPI': OPENAPI,
+        'APPLICATION_CONTEXT': APPLICATION_CONTEXT
+    }))
 
     # Database settings
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')

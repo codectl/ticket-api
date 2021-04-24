@@ -56,8 +56,9 @@ def setup_app(app):
         db.create_all()
 
         # use app context to load namespaces, blueprints and schemas
-        from src.resources.tickets import Tickets
-        from src.schemas.jira.issue import Issue
+        from src.resources.tickets import Ticket, Tickets
+        from src.oas3.components.schemas.error import ErrorSchema
+        from src.oas3.components.schemas.jira.issue import IssueSchema
 
     # initialize root blueprint
     bp = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])
@@ -66,8 +67,8 @@ def setup_app(app):
     api.init_app(bp)
 
     # # register namespaces
-    # api.add_namespace(tickets)
     api.add_resource(Tickets, '/tickets', endpoint='tickets')
+    api.add_resource(Ticket, '/tickets/<key>', endpoint='ticket')
 
     # register blueprints
     app.register_blueprint(bp)
@@ -86,7 +87,10 @@ def setup_app(app):
             basePath=app.config['APPLICATION_CONTEXT'],
             **app.config['OPENAPI_SPEC']
         ),
-        definitions=[Issue]
+        definitions=[
+            ErrorSchema,
+            IssueSchema
+        ]
     )
 
     # register cli commands
