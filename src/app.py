@@ -9,6 +9,7 @@ from flask import Flask, Blueprint
 
 from src import api, cache, db, swagger
 from src.cli.o365 import o365_cli
+from src.misc.converters import openapi3_converters
 from src.settings.config import config_by_name
 
 
@@ -55,10 +56,13 @@ def setup_app(app):
         # create tables if they do not exist already
         db.create_all()
 
+        # make use of OAS3 schema converters
+        openapi3_converters()
+
         # use app context to load namespaces, blueprints and schemas
         from src.resources.tickets import Ticket, Tickets
-        from src.oas3.components.schemas.http_error import HttpErrorSchema
-        from src.oas3.components.schemas.jira.issue import IssueSchema
+        from src.serializers.outbound.http import HttpErrorSchema
+        from src.serializers.outbound.jira.issue import IssueSchema
 
     # initialize root blueprint
     bp = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])

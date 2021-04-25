@@ -2,7 +2,7 @@ from flask import current_app
 from flask_restful import fields
 
 from src import api
-from src.oas3.components import Email
+from src.serializers.components import Email
 from src.models.jira.Board import Board
 from src.services.jira import JiraService
 

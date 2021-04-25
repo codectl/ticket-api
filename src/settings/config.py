@@ -36,7 +36,7 @@ class BaseConfig:
 
     # OpenAPI 3 initial specs
     OPENAPI_SPEC = yaml.safe_load(flasgger.utils.load_from_file(
-        os.path.join('src', 'oas3', 'oas3.yaml')
+        os.path.join('src', 'settings', 'oas3.yaml')
     ).format(**{
         'OPENAPI': OPENAPI,
         'APPLICATION_CONTEXT': APPLICATION_CONTEXT

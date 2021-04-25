@@ -151,6 +151,7 @@ class ProxyJIRA(JIRA):
         :param sort: the sort criteria. Could have the value 'created'.
         """
         jql = ''
+        print(boards)
         if boards:
             boards_ = (self.find_board(key=board_key) for board_key in boards)
             board_ids = [getattr(board, 'id', getattr(board, 'board_id', None)) for board in boards_]

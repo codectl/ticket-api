@@ -1,7 +1,7 @@
 from flask_restplus import fields
 
 from src import api
-from src.oas3.components import user
+from src.serializers.components import user
 
 attachment = api.model('jira-attachment', {
     'filename': fields.String,
