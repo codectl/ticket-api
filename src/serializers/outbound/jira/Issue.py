@@ -1,7 +1,7 @@
 from marshmallow import Schema, fields
 
-from src import swagger
-# from src.dto.jira.attachment import attachment
+from src.serializers.outbound.jira.Status import StatusSchema
+from src.serializers.outbound.jira.User import UserSchema
 # from src.dto.jira.comment import comment, rendered_comment
 # from src.dto.jira.project import project
 # from src.dto.jira.issueType import issue_type
@@ -10,8 +10,17 @@ from src import swagger
 
 
 class IssueSchema(Schema):
-    id = fields.Int()
+    id = fields.Integer()
     key = fields.String()
+    title = fields.String(attribute='summary')
+    body = fields.String(attribute='description')
+    created = fields.String()
+    assignee = fields.Nested(UserSchema)
+    reporter = fields.Nested(UserSchema)
+    status = fields.Nested(StatusSchema)
+    labels = fields.List(fields.String())
+
+    # updated = fields.DateTime()
 
 
 # issue = api.model('jira-issue', {

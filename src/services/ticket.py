@@ -105,7 +105,7 @@ class TicketService:
         return Ticket.query.get(ticket_id)
 
     @classmethod
-    def find_one(cls, **filters) -> Optional[dict]:
+    def find_one(cls, **filters) -> Optional[Union[dict, Ticket]]:
         """
         Search for a single ticket based on several criteria.
         """

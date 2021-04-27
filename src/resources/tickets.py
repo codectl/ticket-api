@@ -2,8 +2,8 @@ import flasgger
 from flask import current_app, request
 from flask_restful import abort, Resource
 
-from src.serializers.inbound.tickets import TicketSearchCriteria
-from src.serializers.outbound.jira.issue import IssueSchema
+from src.serializers.inbound.TicketSearchCriteria import TicketSearchCriteriaSchema
+from src.serializers.outbound.jira.Issue import IssueSchema
 from src.services.ticket import TicketService
 from src.services.jira import JiraService
 
@@ -12,83 +12,9 @@ class Tickets(Resource):
 
     @flasgger.swag_from({
         'parameters': flasgger.marshmallow_apispec.schema2parameters(
-            TicketSearchCriteria,
+            TicketSearchCriteriaSchema,
             location='query'
         ),
-        # 'parameters': [
-        #     {
-        #         'in': 'query',
-        #         'name': 'boards',
-        #         'description': 'boards to fetch tickets from',
-        #         'schema': {
-        #             'type': 'array',
-        #             'items': {
-        #                 'type': 'string',
-        #                 'enum': JiraService.supported_board_keys()
-        #             },
-        #         },
-        #         'default': [current_app.config['JIRA_DEFAULT_BOARD']['key']],
-        #         'explode': False
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'categories',
-        #         'description': 'categories that the ticket belongs to',
-        #         'schema': {
-        #             'type': 'array',
-        #             'items': {
-        #                 'type': 'string',
-        #                 'enum': JiraService.supported_categories()
-        #             },
-        #         },
-        #         'default': [current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY']],
-        #         'explode': False
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'reporter',
-        #         'description': 'ticket reporter email',
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'assignee',
-        #         'description': 'user email whose ticket is assigned to',
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'status',
-        #         'description': 'name of the current ticket status'
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'watcher',
-        #         'description': 'tickets user has subscribed to',
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'q',
-        #         'description': 'search for text occurrences',
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'fields',
-        #         'description': 'additional fields to include in the results',
-        #         'schema': {
-        #             'type': 'array',
-        #             'items': {
-        #                 'type': 'string',
-        #                 'enum': JiraService.supported_fields()
-        #             },
-        #         }
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'limit',
-        #         'description': 'results limit',
-        #         'default': 20
-        #     }, {
-        #         'in': 'query',
-        #         'name': 'sort',
-        #         'description': 'sort tickets by',
-        #         'schema': {
-        #             'type': 'string',
-        #             'enum': ['created']
-        #         },
-        #         'default': 'created',
-        #     }
-        # ],
         'responses': {
             200: {
                 'description': 'Ok',
@@ -123,7 +49,7 @@ class Tickets(Resource):
         }
 
         # validate parameters
-        errors = TicketSearchCriteria().validate(filters)
+        errors = TicketSearchCriteriaSchema().validate(filters)
         if errors:
             abort(400, status=400, message=errors)
 
