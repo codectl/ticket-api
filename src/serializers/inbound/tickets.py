@@ -20,10 +20,16 @@ class TicketSearchCriteria(Schema):
 
     boards = fields.List(
         fields.String(
-            validate=validate.OneOf(JiraService.supported_board_keys()),
+            validate=validate.OneOf(JiraService.supported_board_keys())
         ),
-        missing= [current_app.config['JIRA_DEFAULT_BOARD']['key']],
-        description='boards to fetch tickets from',
-        explode=False,
+        missing=[current_app.config['JIRA_DEFAULT_BOARD']['key']],
+        metadata=dict(description='boards to fetch tickets from'),
+    )
+    categories = fields.List(
+        fields.String(
+            validate=validate.OneOf(JiraService.supported_categories())
+        ),
+        missing=[current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY']],
+        metadata=dict(description='categories that the ticket belongs to'),
     )
     message = fields.String()

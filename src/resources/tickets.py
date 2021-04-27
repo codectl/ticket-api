@@ -117,20 +117,20 @@ class Tickets(Resource):
         #     if not all(board in JiraService.supported_board_keys() for board in params.get('boards', '').split(',')):
         #         raise Va
 
-        from src import swagger
-        from pprint import pprint
-        pprint(swagger.get_apispecs('swagger'))
-        params = request.args.to_dict()
+        # read params and set defaults
+        params = request.args.copy()
+        filters = {
+            'boards': params.poplist('boards') or [current_app.config['JIRA_DEFAULT_BOARD']['key']],
+            'categories': params.poplist('categories') or [current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY']],
+            'fields': params.poplist('fields'),
+            'limit': params.get('limit', 20),
+            'sort': params.get('sort', 'created'),
+            **params
+        }
+        print(TicketSearchCriteria().validate(filters))
 
         # consider default values
-        tickets = TicketService.find_by(
-            boards=params.pop('boards', current_app.config['JIRA_DEFAULT_BOARD']['key']).split(','),
-            categories=params.pop('categories', current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY']).split(','),
-            fields=params.pop('fields', '').split(','),
-            limit=params.pop('limit', 20),
-            sort=params.pop('sort', 'created'),
-            **params
-        )
+        tickets = TicketService.find_by(**filters)
 
         return IssueSchema(many=True).dump(tickets)
 
