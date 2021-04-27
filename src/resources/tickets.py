@@ -1,6 +1,6 @@
 import flasgger
-from flask import abort, current_app, request
-from flask_restful import Resource
+from flask import current_app, request
+from flask_restful import abort, Resource
 
 from src.serializers.inbound.tickets import TicketSearchCriteria
 from src.serializers.outbound.jira.issue import IssueSchema
@@ -110,12 +110,6 @@ class Tickets(Resource):
         """
         Get service tickets based on search criteria.
         """
-        # def validation():
-        #     """
-        #     Validate query parameters
-        #     """
-        #     if not all(board in JiraService.supported_board_keys() for board in params.get('boards', '').split(',')):
-        #         raise Va
 
         # read params and set defaults
         params = request.args.copy()
@@ -127,7 +121,11 @@ class Tickets(Resource):
             'sort': params.get('sort', 'created'),
             **params
         }
-        print(TicketSearchCriteria().validate(filters))
+
+        # validate parameters
+        errors = TicketSearchCriteria().validate(filters)
+        if errors:
+            abort(400, status=400, message=errors)
 
         # consider default values
         tickets = TicketService.find_by(**filters)
