@@ -1,4 +1,4 @@
-from typing import List, Optional
+import typing
 
 import jira.resources
 import requests
@@ -91,7 +91,7 @@ class ProxyJIRA(JIRA):
         return self._fetch_pages(jira.resources.User, None, 'user/search',
                                  startAt=start_at, maxResults=limit, params=params)
 
-    def search_boards(self, jira_name=None) -> List[jira.resources.Board]:
+    def search_boards(self, jira_name=None) -> typing.List[jira.resources.Board]:
         """
         Search for boards.
 
@@ -100,7 +100,7 @@ class ProxyJIRA(JIRA):
         params = {'name': jira_name}
         return self._fetch_pages(jira.resources.Board, 'values', 'board', params=params, base=self.AGILE_BASE_URL)
 
-    def find_board(self, key=None) -> Optional[jira.resources.Board]:
+    def find_board(self, key=None) -> typing.Optional[jira.resources.Board]:
         """
         Get single board.
 
@@ -133,25 +133,35 @@ class ProxyJIRA(JIRA):
         configuration = self.get_board_configuration(board_id=board_id)
         return self.filter(configuration.get('filter', {}).get('id'))
 
-    def create_jql_query(self, assignee=None, boards=None, expand=None,
-                         key=None, labels=None, sort=None,
-                         status=None, summary=None, watcher=None,
-                         **_):
+    def create_jql_query(
+            self,
+            assignee: str = None,
+            boards: typing.List[str] = None,
+            expand: typing.List[str] = None,
+            key: typing.Union[str, typing.List[str]] = None,
+            labels: typing.List[str] = None,
+            sort: str = None,
+            status: str = None,
+            summary: str = None,
+            tags: typing.List[str] = None,
+            watcher: str = None,
+            **_
+    ):
         """
         Build jql query based on a provided searching parameters.
 
-        :param assignee: the key assignee
+        :param assignee: the assignee key (e.g. email)
         :param boards: the board keys to get tickets from
+        :param expand: the expand fields (enum: ['renderedFields'])
         :param key: the Jira ticket key
-        :param labels: the labels to search for
-        :param summary: the text search
+        :param labels: base labels to search for
+        :param sort: sorting criteria (enum: ['created'])
         :param status: the status key
-        :param watcher: the watcher key
-        :param expand: the expand field
-        :param sort: the sort criteria. Could have the value 'created'.
+        :param summary: the text search
+        :param tags: ticket categorization
+        :param watcher: the watcher key (e.g. email)
         """
         jql = ''
-        print(boards)
         if boards:
             boards_ = (self.find_board(key=board_key) for board_key in boards)
             board_ids = [getattr(board, 'id', getattr(board, 'board_id', None)) for board in boards_]
@@ -170,10 +180,12 @@ class ProxyJIRA(JIRA):
         if labels:
             for label in labels:
                 jql += "&labels={0}".format(label)
+        if tags:
+            jql += "&labels in ({0})".format(', '.join(tags) if isinstance(tags, list) else key)
         if watcher:
             jql += '&watcher=' + watcher
         if expand:
-            jql += '&expand=' + expand
+            jql += '&expand=' + ','.join(expand)
         if sort:
             jql += ' ORDER BY ' + sort
 

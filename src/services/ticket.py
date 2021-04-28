@@ -148,14 +148,12 @@ class TicketService:
                     return []
                 jira_filters['key'] = [ticket.key for ticket in tickets]
 
-            # add base categories
-            categories = filters.pop('categories', []) + current_app.config['JIRA_TICKET_LABELS']
-
             # fetch tickets from Jira using jql while skipping jql
             # validation since local db might not be synched with Jira
             query = jira_service.create_jql_query(
-                labels=categories,
                 summary=filters.pop('q', None),
+                labels=current_app.config['JIRA_TICKET_LABELS'],
+                tags=filters.pop('categories', []),
                 **jira_filters
             )
 

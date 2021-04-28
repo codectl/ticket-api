@@ -1,4 +1,5 @@
 import flasgger
+import marshmallow
 from flask import current_app, request
 from flask_restful import abort, Resource
 
@@ -92,13 +93,15 @@ class Tickets(Resource):
 class Ticket(Resource):
 
     @flasgger.swag_from({
-        'parameters': [
-            {
-                'in': 'path',
-                'name': 'key',
-                'description': 'ticket unique identifier',
-            }
-        ],
+        'parameters': flasgger.marshmallow_apispec.schema2parameters(
+            marshmallow.Schema.from_dict({
+                'key': marshmallow.fields.String(
+                    required=True,
+                    metadata=dict(description='ticket unique identifier')
+                )
+            }),
+            location='path'
+        ),
         'responses': {
             200: {
                 'description': 'Ok',
@@ -126,6 +129,6 @@ class Ticket(Resource):
             limit=1
         )), None)
         if not result:
-            abort(404, 'Ticket not found')
+            abort(404, status=404, message='Ticket not found')
         else:
             return IssueSchema().dump(result)
