@@ -30,18 +30,13 @@ class TicketService:
         """
         jira_service = JiraService()
 
-        print('----')
-        print(attachments)
-
-        return None
-
         # translate reporter into a Jira account
         reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'), limit=1)), None)
 
         # create ticket body with Jira markdown format
         body = cls.create_ticket_body(
             author=jira_service.markdown.mention(reporter=reporter or kwargs.get('reporter')),
-            body=kwargs.get('description')
+            body=kwargs.get('body')
         )
 
         # if reporter is not a Jira account, reporter is set to 'Anonymous'
@@ -52,7 +47,7 @@ class TicketService:
         project_key = jira_service.find_board(key=board_key).project['projectKey']
         priority = dict(name=kwargs.get('priority').capitalize() if kwargs.get('priority') else 'None')
 
-        category = kwargs.pop('category', current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY'])
+        category = kwargs.pop('category')
         categories = category.split(',') + current_app.config['JIRA_TICKET_LABELS']
 
         # create ticket in Jira
@@ -98,7 +93,7 @@ class TicketService:
 
         current_app.logger.info("Created ticket '{0}'.".format(ticket.key))
 
-        return next(iter(TicketService.find_by(key=ticket.key, limit=1)))
+        return TicketService.find_one(key=ticket.key)
 
     @staticmethod
     def get(ticket_id) -> Optional[Ticket]:
@@ -156,6 +151,7 @@ class TicketService:
                 tags=filters.pop('categories', []),
                 **jira_filters
             )
+            print(query)
 
             # include additional fields
             fields = fields or []

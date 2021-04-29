@@ -1,8 +1,10 @@
 import flasgger
+import jira
 import marshmallow
-from flask import current_app, request
+from flask import request
 from flask_restful import abort, Resource
 
+from src.serializers.inbound.CreateTicket import CreateTicketSchema
 from src.serializers.inbound.TicketSearchCriteria import TicketSearchCriteriaSchema
 from src.serializers.outbound.jira.Issue import IssueSchema
 from src.services.ticket import TicketService
@@ -41,8 +43,8 @@ class Tickets(Resource):
         # read params and set defaults
         params = request.args.copy()
         filters = {
-            'boards': params.poplist('boards') or [current_app.config['JIRA_DEFAULT_BOARD']['key']],
-            'categories': params.poplist('categories') or [current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY']],
+            'boards': params.poplist('boards') or JiraService.supported_board_keys(),
+            'categories': params.poplist('categories') or JiraService.supported_categories(),
             'fields': params.poplist('fields'),
             'limit': params.get('limit', 20),
             'sort': params.get('sort', 'created'),
@@ -59,6 +61,59 @@ class Tickets(Resource):
 
         return IssueSchema(many=True).dump(tickets)
 
+    @flasgger.swag_from({
+        'requestBody': {
+            'required': True,
+            'content': {
+                'application/json': {
+                    'schema': CreateTicketSchema
+                },
+                'multipart/form-data': {
+                    'schema': CreateTicketSchema
+                }
+            }
+        },
+        'responses': {
+            201: {
+                'description': 'Created',
+                'content': {
+                    'application/json': {
+                        'schema': {
+                            'type': 'array',
+                            'items': {
+                                '$ref': '#/components/schemas/Issue'
+                            }
+                        }
+                    },
+                }
+            },
+            400: {'$ref': '#/components/responses/BadRequest'},
+            415: {'$ref': '#/components/responses/UnsupportedMediaType'}
+        }
+    })
+    def post(self):
+        """
+        Create a new ticket.
+        """
+        body = None
+        errors = None
+        if request.mimetype == 'application/json':
+            body = request.json
+            errors = CreateTicketSchema().validate(body)
+        elif request.mimetype == 'multipart/form-data':
+            pass
+        else:
+            abort(415, status=415, message='Unsupported media type')
+
+        if errors:
+            abort(400, status=400, message=errors)
+
+        try:
+            created = TicketService.create(**body)
+            return IssueSchema().dump(created), 201
+        except jira.exceptions.JIRAError as ex:
+            abort(400, status=400, message=ex.text)
+
 
 # @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
 # parser = tickets.parser()
@@ -74,20 +129,6 @@ class Tickets(Resource):
 # #                _in='formData')
 # # @tickets.marshal_with(issue, code=201)
 # @swagger.validate('UserSchema')
-# def post(self):
-#     """
-#     Create a new ticket.
-#     """
-#     print(request.mimetype)
-#     print(tickets)
-#     print('--')
-#
-#     # try:
-#     #     return TicketService.create(
-#     #         attachments=request.form.get('attachments')
-#     #     ), 201
-#     # except jira.exceptions.JIRAError as ex:
-#     #     tickets.abort(400, ex.text)
 
 
 class Ticket(Resource):

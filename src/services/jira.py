@@ -168,7 +168,7 @@ class ProxyJIRA(JIRA):
 
             # translate boards into filters
             filters = [self.get_board_filter(board_id=board_id) for board_id in board_ids]
-            jql += "filter in ({0})".format(', '.join([filter_.id for filter_ in filters]))
+            jql += "&filter in ({0})".format(', '.join([filter_.id for filter_ in filters]))
         if summary:
             jql += '&summary ~ \'' + summary + '\''
         if key:
@@ -188,6 +188,9 @@ class ProxyJIRA(JIRA):
             jql += '&expand=' + ','.join(expand)
         if sort:
             jql += ' ORDER BY ' + sort
+
+        # remove trailing url character
+        jql = jql.lstrip('&')
 
         return jql
 

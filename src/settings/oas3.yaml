@@ -12,7 +12,7 @@ servers:
 components:
   responses:
     BadRequest:
-      description: Bad request
+      description: Bad Request
       content:
         application/json:
           schema:
@@ -24,7 +24,13 @@ components:
           schema:
             $ref: '#/components/schemas/HttpError'
     NotFound:
-      description: Not found
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    UnsupportedMediaType:
+      description: Unsupported Media Type
       content:
         application/json:
           schema:
