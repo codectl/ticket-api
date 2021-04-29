@@ -10,7 +10,7 @@ class TicketSearchCriteriaSchema(Schema):
     )
     categories = fields.List(
         fields.String(validate=validate.OneOf(JiraService.supported_categories())),
-        metadata=dict(description='categories that the ticket belongs to'),
+        metadata=dict(description='categories the tickets belongs to'),
     )
     reporter = fields.Email(metadata=dict(description='ticket reporter email'))
     assignee = fields.Email(metadata=dict(description='user whose ticket is assigned to'))

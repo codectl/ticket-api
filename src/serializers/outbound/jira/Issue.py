@@ -4,6 +4,7 @@ from src.serializers.outbound.jira.Attachment import AttachmentSchema
 from src.serializers.outbound.jira.Comment import CommentSchema
 from src.serializers.outbound.jira.IssueType import IssueTypeSchema
 from src.serializers.outbound.jira.Project import ProjectSchema
+from src.serializers.outbound.jira.Rendered import RenderedSchema
 from src.serializers.outbound.jira.Status import StatusSchema
 from src.serializers.outbound.jira.User import UserSchema
 
@@ -24,7 +25,4 @@ class IssueSchema(Schema):
     comments = fields.List(fields.Nested(CommentSchema), attribute='comment.comments')
     attachments = fields.List(fields.Nested(AttachmentSchema), attribute='attachment')
     watchers = fields.List(fields.Nested(UserSchema))
-    rendered = fields.Nested(Schema.from_dict({
-        'body': fields.String(attribute='description'),
-        'comments': fields.List(fields.Nested(CommentSchema), attribute='comment.comments')
-    }))
+    rendered = fields.Nested(RenderedSchema)

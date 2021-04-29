@@ -6,6 +6,7 @@ from flask_restful import abort, Resource
 
 from src.serializers.inbound.CreateTicket import CreateTicketSchema
 from src.serializers.inbound.TicketSearchCriteria import TicketSearchCriteriaSchema
+from src.serializers.outbound.jira.Attachment import AttachmentSchema
 from src.serializers.outbound.jira.Issue import IssueSchema
 from src.services.ticket import TicketService
 from src.services.jira import JiraService
@@ -66,10 +67,17 @@ class Tickets(Resource):
             'required': True,
             'content': {
                 'application/json': {
-                    'schema': CreateTicketSchema
+                    'schema': flasgger.marshmallow_apispec.schema2jsonschema(CreateTicketSchema)
                 },
                 'multipart/form-data': {
-                    'schema': CreateTicketSchema
+                    'schema': flasgger.marshmallow_apispec.schema2jsonschema(
+                        marshmallow.Schema.from_dict({
+                            **CreateTicketSchema().fields,
+                            'attachments': marshmallow.fields.List(
+                                marshmallow.fields.Nested(AttachmentSchema)
+                            )
+                        })
+                    )
                 }
             }
         },
