@@ -5,6 +5,7 @@ from typing import List, Optional, Union
 import jinja2
 import jira
 import requests
+import werkzeug
 from flask import current_app
 
 from src import db
@@ -79,10 +80,21 @@ class TicketService:
 
         # adding attachments
         for attachment in attachments or []:
-            if attachment.content is not None:
-                jira_service.add_attachment(issue=issue.key,
-                                            attachment=base64.b64decode(attachment.content),
-                                            filename=attachment.name)
+            if isinstance(attachment, werkzeug.datastructures.FileStorage):
+                filename = attachment.filename
+                content = attachment.stream.read()
+            else:
+                print(vars(attachment))
+                filename = attachment.name
+                content = base64.b64decode(attachment.content)
+
+            # no point on adding empty file
+            if content:
+                jira_service.add_attachment(
+                    issue=issue.key,
+                    attachment=content,
+                    filename=filename
+                )
 
         # add new entry to the db
         local_fields = {k: v for k, v in kwargs.items() if k in Ticket.__dict__}

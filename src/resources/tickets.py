@@ -74,7 +74,12 @@ class Tickets(Resource):
                         marshmallow.Schema.from_dict({
                             **CreateTicketSchema().fields,
                             'attachments': marshmallow.fields.List(
-                                marshmallow.fields.Nested(AttachmentSchema)
+                                marshmallow.fields.Raw(
+                                    metadata=dict(
+                                        type='file',
+                                        description='files to attach'
+                                    )
+                                )
                             )
                         })
                     )
@@ -103,21 +108,23 @@ class Tickets(Resource):
         """
         Create a new ticket.
         """
-        body = None
-        errors = None
+        body = {}
+        files = {}
         if request.mimetype == 'application/json':
             body = request.json
-            errors = CreateTicketSchema().validate(body)
         elif request.mimetype == 'multipart/form-data':
-            pass
+            body = request.form.to_dict(flat=True)
+            files = request.files.to_dict(flat=False)
         else:
             abort(415, status=415, message='Unsupported media type')
 
+        # validate body
+        errors = CreateTicketSchema().validate(body)
         if errors:
             abort(400, status=400, message=errors)
 
         try:
-            created = TicketService.create(**body)
+            created = TicketService.create(**body, attachments=files.get('attachments', []))
             return IssueSchema().dump(created), 201
         except jira.exceptions.JIRAError as ex:
             abort(400, status=400, message=ex.text)
