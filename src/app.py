@@ -9,7 +9,7 @@ from flask import Flask, Blueprint
 
 from src import api, cache, db, swagger
 from src.cli.o365 import o365_cli
-from src.misc.converters import openapi3_converters
+from src.utils.converters import openapi3_converters
 from src.settings.config import config_by_name
 
 
