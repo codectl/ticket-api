@@ -1,7 +1,9 @@
+import base64
 import typing
 
 import jira.resources
 import requests
+import werkzeug
 from flask import current_app
 from jira import JIRA
 
@@ -243,12 +245,31 @@ class JiraService(ProxyJIRA):
 
         return Board(key=key, **raw)
 
+    def add_attachment(self, issue, attachment, filename=None):
+        """
+        Add attachment considering different types of files
+        """
+        if isinstance(attachment, werkzeug.datastructures.FileStorage):
+            filename = filename or attachment.filename
+            content = attachment.stream.read()
+        else:
+            print(vars(attachment))
+            filename = filename or attachment.name
+            content = base64.b64decode(attachment.content)
+
+        # no point on adding empty file
+        if content:
+            super().add_attachment(
+                issue=issue.key,
+                attachment=content,
+                filename=filename
+            )
+
     @staticmethod
     def is_jira_filter(filter_):
         """
         Check whether given filter is a Jira only filter.
         """
-
         return filter_ in ['assignee', 'boards', 'category', 'key', 'q', 'sort', 'status', 'watcher']
 
     @staticmethod

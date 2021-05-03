@@ -1,11 +1,9 @@
-import base64
 import os
 from typing import List, Optional, Union
 
 import jinja2
 import jira
 import requests
-import werkzeug
 from flask import current_app
 
 from src import db
@@ -36,8 +34,10 @@ class TicketService:
 
         # create ticket body with Jira markdown format
         body = cls.create_ticket_body(
-            author=jira_service.markdown.mention(reporter=reporter or kwargs.get('reporter')),
-            body=kwargs.get('body')
+            values={
+                'author': jira_service.markdown.mention(reporter=reporter or kwargs.get('reporter')),
+                'body': kwargs.get('body')
+            }
         )
 
         # if reporter is not a Jira account, reporter is set to 'Anonymous'
@@ -80,21 +80,7 @@ class TicketService:
 
         # adding attachments
         for attachment in attachments or []:
-            if isinstance(attachment, werkzeug.datastructures.FileStorage):
-                filename = attachment.filename
-                content = attachment.stream.read()
-            else:
-                print(vars(attachment))
-                filename = attachment.name
-                content = base64.b64decode(attachment.content)
-
-            # no point on adding empty file
-            if content:
-                jira_service.add_attachment(
-                    issue=issue.key,
-                    attachment=content,
-                    filename=filename
-                )
+            jira_service.add_attachment(issue=issue, attachment=attachment)
 
         # add new entry to the db
         local_fields = {k: v for k, v in kwargs.items() if k in Ticket.__dict__}
@@ -163,7 +149,6 @@ class TicketService:
                 tags=filters.pop('categories', []),
                 **jira_filters
             )
-            print(query)
 
             # include additional fields
             fields = fields or []
@@ -227,12 +212,33 @@ class TicketService:
             current_app.logger.info("Deleted ticket '{0}'.".format(ticket.key))
 
     @staticmethod
-    def create_ticket_body(template='default.j2', **kwargs):
+    def create_comment(
+            key: str,
+            body: str,
+            attachments: list = None,
+    ):
+        """
+        Create the body of the ticket.
+
+        :param key: the ticket key to comment on
+        :param body: the body of the ticket comment
+        :param attachments: the files to attach to the comment which
+                            are stored in Jira
+        """
+        jira_service = JiraService()
+        jira_service.add_comment(issue=key, body=body, is_internal=True)
+
+        # adding attachments
+        for attachment in attachments or []:
+            jira_service.add_attachment(issue=key, attachment=attachment)
+
+    @staticmethod
+    def create_ticket_body(template='default.j2', values=None):
         """
         Create the body of the ticket.
 
         :param template: the template to build ticket body from
-        :param kwargs: values for template interpolation
+        :param values: values for template interpolation
         """
         if not template:
             return None
@@ -245,4 +251,4 @@ class TicketService:
         with open(template_filepath) as file:
             content = file.read()
 
-        return jinja2.Template(content).render(**kwargs)
+        return jinja2.Template(content).render(**values)

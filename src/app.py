@@ -60,7 +60,7 @@ def setup_app(app):
         openapi3_converters()
 
         # use app context to load namespaces, blueprints and schemas
-        from src.resources.tickets import Ticket, Tickets
+        import src.resources.tickets
         from src.serializers.outbound.HttpError import HttpErrorSchema
         from src.serializers.outbound.jira.Issue import IssueSchema
 
@@ -69,10 +69,6 @@ def setup_app(app):
 
     # link api to blueprint
     api.init_app(bp)
-
-    # # register namespaces
-    api.add_resource(Tickets, '/tickets', endpoint='tickets')
-    api.add_resource(Ticket, '/tickets/<key>', endpoint='ticket')
 
     # register blueprints
     app.register_blueprint(bp)
