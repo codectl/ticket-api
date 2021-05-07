@@ -41,7 +41,7 @@ class Tickets(Resource):
     })
     def get(self):
         """
-        Get service tickets based on search criteria.
+        Get service tickets based on search criteria
         """
 
         # read params and set defaults
@@ -110,7 +110,7 @@ class Tickets(Resource):
     })
     def post(self):
         """
-        Create a new ticket.
+        Create a new ticket
         """
         body = {}
         files = []
@@ -132,22 +132,6 @@ class Tickets(Resource):
             return IssueSchema().dump(created), 201
         except jira.exceptions.JIRAError as ex:
             abort(400, status=400, message=ex.text)
-
-
-# @tickets.param('internal', description='if set to true, tag Jira ticket as internal', default=True)
-# parser = tickets.parser()
-# parser.add_argument('test', type=int, default=10, location='form')
-# parser.add_argument('ticket', location='body')
-#
-# @tickets.response(201, 'Created')
-# @tickets.response(400, 'Bad request')
-# # @tickets.expect(ticket)
-# @tickets.expect(parser)
-# # @tickets.param('attachments', description='files to attach',
-# #                type='file',
-# #                _in='formData')
-# # @tickets.marshal_with(issue, code=201)
-# @swagger.validate('UserSchema')
 
 
 @api.resource('/tickets/<key>', endpoint='ticket')
@@ -250,7 +234,7 @@ class Comment(Resource):
     })
     def post(self, key):
         """
-        Create a new ticket comment.
+        Create a new ticket comment
         """
         body = {}
         files = []
@@ -298,3 +282,25 @@ class SupportedBoards(Resource):
                                 type: string
         """
         return jsonify(JiraService.supported_board_keys())
+
+
+@api.resource('/tickets/supported-categories', endpoint='supported-categories')
+class SupportedCategories(Resource):
+
+    def get(self):
+        """
+        Lists currently supported categories
+        ---
+        tags:
+            - tickets
+        responses:
+            200:
+                description: Ok
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: string
+        """
+        return jsonify(JiraService.supported_categories())
