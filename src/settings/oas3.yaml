@@ -9,6 +9,10 @@ servers:
   - url: "{APPLICATION_CONTEXT}"
     description: dev
 
+tags:
+  - name: tickets
+    description: All operations involving tickets
+
 components:
   responses:
     BadRequest:

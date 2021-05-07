@@ -1,7 +1,7 @@
 import flasgger
 import jira
 import marshmallow
-from flask import request
+from flask import request, jsonify
 from flask_restful import abort, Resource
 
 from src import api
@@ -21,6 +21,7 @@ class Tickets(Resource):
             TicketSearchCriteriaSchema,
             location='query'
         ),
+        'tags': ['tickets'],
         'responses': {
             200: {
                 'description': 'Ok',
@@ -36,7 +37,7 @@ class Tickets(Resource):
                 }
             },
             400: {'$ref': '#/components/responses/BadRequest'}
-        }
+        },
     })
     def get(self):
         """
@@ -88,6 +89,7 @@ class Tickets(Resource):
                 }
             }
         },
+        'tags': ['tickets'],
         'responses': {
             201: {
                 'description': 'Created',
@@ -111,12 +113,12 @@ class Tickets(Resource):
         Create a new ticket.
         """
         body = {}
-        files = {}
+        files = []
         if request.mimetype == 'application/json':
             body = request.json
         elif request.mimetype == 'multipart/form-data':
             body = request.form.to_dict(flat=True)
-            files = request.files.to_dict(flat=False)
+            files = request.files.to_dict(flat=False).get('attachments', [])
         else:
             abort(415, status=415, message='Unsupported media type')
 
@@ -126,7 +128,7 @@ class Tickets(Resource):
             abort(400, status=400, message=errors)
 
         try:
-            created = TicketService.create(**body, attachments=files.get('attachments', []))
+            created = TicketService.create(**body, attachments=files)
             return IssueSchema().dump(created), 201
         except jira.exceptions.JIRAError as ex:
             abort(400, status=400, message=ex.text)
@@ -161,6 +163,7 @@ class Ticket(Resource):
             }),
             location='path'
         ),
+        'tags': ['tickets'],
         'responses': {
             200: {
                 'description': 'Ok',
@@ -169,7 +172,7 @@ class Ticket(Resource):
                         'schema': {
                             '$ref': '#/components/schemas/Issue'
                         }
-                    },
+                    }
                 }
             },
             404: {'$ref': '#/components/responses/NotFound'}
@@ -206,6 +209,7 @@ class Comment(Resource):
             }),
             location='path'
         ),
+        'tags': ['tickets'],
         'requestBody': {
             'required': True,
             'content': {
@@ -244,17 +248,17 @@ class Comment(Resource):
             415: {'$ref': '#/components/responses/UnsupportedMediaType'}
         }
     })
-    def post(self):
+    def post(self, key):
         """
         Create a new ticket comment.
         """
         body = {}
-        files = {}
+        files = []
         if request.mimetype == 'application/json':
             body = request.json
         elif request.mimetype == 'multipart/form-data':
             body = request.form.to_dict(flat=True)
-            files = request.files.to_dict(flat=False)
+            files = request.files.to_dict(flat=False).get('attachments', [])
         else:
             abort(415, status=415, message='Unsupported media type')
 
@@ -264,7 +268,33 @@ class Comment(Resource):
             abort(400, status=400, message=errors)
 
         try:
-            created = TicketService.comment(**body, attachments=files.get('attachments', []))
+            created = TicketService.create_comment(
+                key=key,
+                body=body,
+                attachments=files
+            )
             return IssueSchema().dump(created), 201
         except jira.exceptions.JIRAError as ex:
             abort(400, status=400, message=ex.text)
+
+
+@api.resource('/tickets/supported-boards', endpoint='supported-boards')
+class SupportedBoards(Resource):
+
+    def get(self):
+        """
+        Lists currently supported boards
+        ---
+        tags:
+            - tickets
+        responses:
+            200:
+                description: Ok
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: string
+        """
+        return jsonify(JiraService.supported_board_keys())
