@@ -26,6 +26,13 @@ class TicketService:
         :param attachments: the files to attach to the ticket which
                             are stored in Jira
         :param kwargs: properties of the ticket
+            title: title of the ticket
+            description: body of the ticket
+            reporter: author of the ticket
+            board: which board the ticket belongs to
+            category: which category to assign ticket to
+            priority: severity of the ticket
+            watchers: users to watch for ticket changes
         """
         jira_service = JiraService()
 
@@ -46,19 +53,22 @@ class TicketService:
         # set defaults
         board_key = kwargs.get('board')
         project_key = jira_service.find_board(key=board_key).project['projectKey']
-        priority = dict(name=kwargs.get('priority').capitalize() if kwargs.get('priority') else 'None')
+        priority = kwargs.get('priority') if kwargs.get('priority', '').lower() in ['high', 'low'] else 'None'
+        priority = dict(name=priority.capitalize())
 
         category = kwargs.pop('category')
         categories = category.split(',') + current_app.config['JIRA_TICKET_LABELS']
 
         # create ticket in Jira
-        issue = jira_service.create_issue(summary=kwargs.get('title'),
-                                          description=body,
-                                          reporter=dict(id=reporter_id),
-                                          project=dict(key=project_key),
-                                          issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
-                                          labels=categories,
-                                          priority=priority)
+        issue = jira_service.create_issue(
+            summary=kwargs.get('title'),
+            description=body,
+            reporter=dict(id=reporter_id),
+            project=dict(key=project_key),
+            issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
+            labels=categories,
+            priority=priority
+        )
 
         # add watchers iff has permission
         if kwargs.get('watchers') and jira_service.has_permissions(permissions=['MANAGE_WATCHERS'],
@@ -111,7 +121,7 @@ class TicketService:
             fields: list = None,
             _model: bool = False,
             **filters
-    ) -> List[dict]:
+    ) -> Union[List[dict], List[Ticket]]:
         """
         Search for tickets based on several criteria.
         Jira filters are also supported.
