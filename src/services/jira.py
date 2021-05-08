@@ -209,14 +209,14 @@ class JiraMarkdown(ProxyJIRA):
             super().__init__(**kwargs)
 
     @staticmethod
-    def mention(reporter):
+    def mention(user):
         """
         Create Jira markdown mention out of a user.
         If user does not exist, create email markdown.
         """
-        if isinstance(reporter, jira.resources.User):
-            return '[~accountid:{0}]'.format(reporter.accountId)
-        return ''.join(('[', reporter, ';|', 'mailto:', reporter, ']'))
+        if isinstance(user, jira.resources.User):
+            return '[~accountid:{0}]'.format(user.accountId)
+        return ''.join(('[', user, ';|', 'mailto:', user, ']'))
 
 
 class JiraService(ProxyJIRA):

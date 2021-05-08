@@ -42,7 +42,7 @@ class TicketService:
         # create ticket body with Jira markdown format
         body = cls.create_ticket_body(
             values={
-                'author': jira_service.markdown.mention(reporter=reporter or kwargs.get('reporter')),
+                'author': jira_service.markdown.mention(user=reporter or kwargs.get('reporter')),
                 'body': kwargs.get('body')
             }
         )
@@ -53,7 +53,8 @@ class TicketService:
         # set defaults
         board_key = kwargs.get('board')
         project_key = jira_service.find_board(key=board_key).project['projectKey']
-        priority = kwargs.get('priority') if kwargs.get('priority', '').lower() in ['high', 'low'] else 'None'
+        priority = (kwargs.get('priority') or '').lower()
+        priority = priority if priority in ['high', 'low'] else 'None'
         priority = dict(name=priority.capitalize())
 
         category = kwargs.pop('category')

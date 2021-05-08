@@ -216,29 +216,13 @@ class O365MailboxManager:
         :param message: the message to build description from
         :return: the comment
         """
-
-        def resolve_username(email):
-            """
-            Resolve email into a Jira mention, if user exists.
-            Otherwise return link to the email.
-
-            :param email: the email
-            :return: the resolved email
-            """
-            jira_service = JiraService()
-            user = next(iter(jira_service.search_users(user=email, limit=1)), None)
-            account_id = getattr(user, 'accountId', None)
-            if account_id is not None:
-                return '[~accountid:{0}]'.format(account_id)
-            return ''.join(('[', email, ';|', 'mailto:', email, ']'))
-
+        jira_service = JiraService()
         return TicketService.create_ticket_body(
             template='default.j2',
             values={
-                'author': resolve_username(message.sender.address),
-                'cc': ' '.join(resolve_username(e.address) for e in message.cc),
+                'author': jira_service.markdown.mention(user=message.sender.address),
+                'cc': ' '.join(jira_service.markdown.mention(user=e.address) for e in message.cc),
                 'body': O365.message.bs(message.unique_body, 'html.parser').body.text
-
             }
         )
 
