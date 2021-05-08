@@ -8,7 +8,7 @@ import O365.mailbox
 from flask import current_app
 
 from src.models.Ticket import Ticket
-from src.services.jira import ProxyJIRA as Jira, JiraService
+from src.services.jira import JiraService
 from src.services.notifications.handlers.JiraNotificationHandler import JiraNotificationHandler
 from src.services.ticket import TicketService
 
@@ -165,7 +165,7 @@ class O365MailboxManager:
             # notify ticket reporter about created ticket
             notification = self._notify_reporter(
                 message=message,
-                ticket_key=model.key
+                key=model.key
             )
 
             # append message to history
@@ -256,7 +256,7 @@ class O365MailboxManager:
         """
 
         # creating notification message to be sent to all recipients
-        url = "{0}/jira/tickets?board=support&q={1}".format(current_app.config['TICKET_CLIENT_APP'], ticket_key)
+        url = "{0}/jira/tickets?board=support&q={1}".format(current_app.config['TICKET_CLIENT_APP'], key)
         body = mistune.markdown(TicketService.create_ticket_body(
             template='notification.j2',
             values={
