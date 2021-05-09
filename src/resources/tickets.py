@@ -96,10 +96,7 @@ class Tickets(Resource):
                 'content': {
                     'application/json': {
                         'schema': {
-                            'type': 'array',
-                            'items': {
-                                '$ref': '#/components/schemas/Issue'
-                            }
+                            '$ref': '#/components/schemas/Issue'
                         }
                     }
                 }
