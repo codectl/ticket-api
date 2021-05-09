@@ -2,8 +2,6 @@ import os
 from typing import List, Optional, Union
 
 import jinja2
-import jira
-import requests
 from flask import current_app
 
 from src import db
@@ -28,21 +26,24 @@ class TicketService:
         :param kwargs: properties of the ticket
             title: title of the ticket
             description: body of the ticket
-            reporter: author of the ticket
+            reporter: email of the author's ticket
             board: which board the ticket belongs to
             category: which category to assign ticket to
             priority: severity of the ticket
-            watchers: users to watch for ticket changes
+            watchers: user emails to watch for ticket changes
         """
         jira_service = JiraService()
 
-        # translate reporter into a Jira account
-        reporter = next(iter(jira_service.search_users(user=kwargs.get('reporter'), limit=1)), None)
+        # translate emails into jira.User objects
+        reporter = cls._email_to_user(kwargs.get('reporter'))
+        watchers = [cls._email_to_user(email, default=email) for email in kwargs.get('watchers') or []]
 
         # create ticket body with Jira markdown format
         body = cls.create_ticket_body(
+            template='jira.j2',
             values={
                 'author': jira_service.markdown.mention(user=reporter or kwargs.get('reporter')),
+                'cc': ' '.join(jira_service.markdown.mention(user=watcher) for watcher in watchers),
                 'body': kwargs.get('body')
             }
         )
@@ -71,23 +72,11 @@ class TicketService:
             priority=priority
         )
 
-        # add watchers iff has permission
-        if kwargs.get('watchers') and jira_service.has_permissions(permissions=['MANAGE_WATCHERS'],
-                                                                   issue_key=issue.key):
-            # check whether watcher has permissions to watch the issue
-            for email in kwargs.get('watchers'):
-                user = next(iter(jira_service.search_users(user=email, limit=1)), None)
-                if user is not None:
-                    # check whether watcher has permissions to watch the issue
-                    try:
-                        jira_service.add_watcher(issue=issue.key,
-                                                 watcher=user.accountId)
-                    except jira.exceptions.JIRAError as e:
-                        if e.status_code == requests.codes.unauthorized:
-                            current_app.logger.warning("Watcher '{0}' has no permission to watch issue '{1}'."
-                                                       .format(user.displayName, issue.key))
-                        else:
-                            raise e
+        # add watchers
+        jira_service.add_watchers(
+            key=issue.key,
+            watchers=watchers
+        )
 
         # adding attachments
         for attachment in attachments or []:
@@ -222,29 +211,49 @@ class TicketService:
 
             current_app.logger.info("Deleted ticket '{0}'.".format(ticket.key))
 
-    @staticmethod
+    @classmethod
     def create_comment(
+            cls,
             key: str,
+            author: str,
             body: str,
+            watchers: list = None,
             attachments: list = None,
     ):
         """
         Create the body of the ticket.
 
         :param key: the ticket key to comment on
-        :param body: the body of the ticket comment
+        :param author: the author of the comment
+        :param body: the body of the comment
+        :param watchers: user emails to watch for ticket changes
         :param attachments: the files to attach to the comment which
                             are stored in Jira
         """
         jira_service = JiraService()
+
+        # translate watchers into jira.User objects iff exists
+        watchers = [cls._email_to_user(email, default=email) for email in watchers or []]
+
+        body = cls.create_ticket_body(
+            template='jira.j2',
+            values={
+                'author': jira_service.markdown.mention(user=author),
+                'cc': ' '.join(jira_service.markdown.mention(user=watcher) for watcher in watchers),
+                'body': body
+            }
+        )
         jira_service.add_comment(issue=key, body=body, is_internal=True)
+
+        # add watchers
+        jira_service.add_watchers(key=key, watchers=watchers)
 
         # adding attachments
         for attachment in attachments or []:
             jira_service.add_attachment(issue=key, attachment=attachment)
 
     @staticmethod
-    def create_ticket_body(template='default.j2', values=None):
+    def create_ticket_body(template=None, values=None):
         """
         Create the body of the ticket.
 
@@ -263,3 +272,14 @@ class TicketService:
             content = file.read()
 
         return jinja2.Template(content).render(**values)
+
+    @staticmethod
+    def _email_to_user(email, default=None):
+        """ Email translation to Jira user """
+        jira_service = JiraService()
+        return next(iter(jira_service.search_users(user=email, limit=1)), default)
+
+    # @classmethod
+    # def _emails_to_users(cls, emails):
+    #     """ Emails translation to Jira users """
+    #     return [cls._email_to_user(email) for email in emails]

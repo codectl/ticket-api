@@ -214,9 +214,12 @@ class JiraMarkdown(ProxyJIRA):
         Create Jira markdown mention out of a user.
         If user does not exist, create email markdown.
         """
-        if isinstance(user, jira.resources.User):
+        if isinstance(user, jira.User):
             return '[~accountid:{0}]'.format(user.accountId)
-        return ''.join(('[', user, ';|', 'mailto:', user, ']'))
+        elif isinstance(user, str):
+            return ''.join(('[', user, ';|', 'mailto:', user, ']'))
+        else:
+            return None
 
 
 class JiraService(ProxyJIRA):
@@ -264,6 +267,34 @@ class JiraService(ProxyJIRA):
                 attachment=content,
                 filename=filename
             )
+
+    def add_watchers(
+            self,
+            key: str,
+            watchers: typing.List[jira.User] = None
+    ):
+        """
+        Add a list of watchers to a ticket
+
+        :param key: the ticket key
+        :param watchers:
+        """
+        # add watchers iff has permission
+        if self.has_permissions(permissions=['MANAGE_WATCHERS'],
+                                issue_key=key):
+            for watcher in watchers or []:
+                if isinstance(watcher, jira.User):
+                    try:
+                        self.add_watcher(issue=key,
+                                         watcher=watcher.accountId)
+                    except jira.exceptions.JIRAError as e:
+                        if e.status_code == requests.codes.unauthorized:
+                            current_app.logger.warning("Watcher '{0}' has no permission to watch issue '{1}'."
+                                                       .format(watcher.displayName, key))
+                        else:
+                            raise e
+        else:
+            current_app.logger.warning("The 'me' user has no permission to manage watchers.")
 
     @staticmethod
     def is_jira_filter(filter_):

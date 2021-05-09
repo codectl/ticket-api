@@ -8,7 +8,6 @@ import O365.mailbox
 from flask import current_app
 
 from src.models.Ticket import Ticket
-from src.services.jira import JiraService
 from src.services.notifications.handlers.JiraNotificationHandler import JiraNotificationHandler
 from src.services.ticket import TicketService
 
@@ -82,6 +81,11 @@ class O365MailboxManager:
         # reading message from the corresponding folder
         # and create Jira ticket for it.
         message = self._get_message(message_id=message_id)
+
+        # watchers list
+        emails = list(itertools.chain((e.address for e in message.cc),
+                                      (e.address for e in message.bcc)))
+
         current_app.logger.info('*** Processing new message ***')
         current_app.logger.info(json.dumps({
             'outlook id': message.object_id,
@@ -94,8 +98,6 @@ class O365MailboxManager:
         if any(not e for e in list(map(lambda filter_: filter_.apply(message), self._filters))):
             current_app.logger.info('Message \'{0}\' filtered.'.format(message.subject))
             return
-
-        owner_email = message.sender.address
 
         # check for local existing ticket
         existing_ticket = TicketService.find_one(
@@ -121,7 +123,9 @@ class O365MailboxManager:
             if message.object_id not in existing_ticket.outlook_messages_id:
                 TicketService.create_comment(
                     key=existing_ticket.key,
-                    body=self._create_comment(message),
+                    author=message.sender.address,
+                    body=O365.message.bs(message.unique_body, 'html.parser').body.text,
+                    watchers=emails,
                     attachments=message.attachments
                 )
 
@@ -134,18 +138,13 @@ class O365MailboxManager:
                                         .format(existing_ticket.key))
         else:
 
-            # watchers list
-            emails = itertools.chain((e.address for e in message.cc),
-                                     (e.address for e in message.bcc),
-                                     (e.address for e in message.to))
-
             # create ticket in Jira and keep local reference
             issue = TicketService.create(
 
                 # Jira fields
                 title=message.subject,
-                description=self._create_comment(message),
-                reporter=owner_email,
+                body=O365.message.bs(message.unique_body, 'html.parser').body.text,
+                reporter=message.sender.address,
                 board='support',
                 category='general',
                 priority=message.importance.value,
@@ -208,23 +207,6 @@ class O365MailboxManager:
         message_object.folder = folder
         message_object.resource_namespace = message['@odata.id']
         return message_object
-
-    def _create_comment(self, message: O365.Message):
-        """
-        Create comment for the Jira ticket
-
-        :param message: the message to build description from
-        :return: the comment
-        """
-        jira_service = JiraService()
-        return TicketService.create_ticket_body(
-            template='default.j2',
-            values={
-                'author': jira_service.markdown.mention(user=message.sender.address),
-                'cc': ' '.join(jira_service.markdown.mention(user=e.address) for e in message.cc),
-                'body': O365.message.bs(message.unique_body, 'html.parser').body.text
-            }
-        )
 
     @classmethod
     def _notify_reporter(
