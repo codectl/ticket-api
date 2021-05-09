@@ -278,8 +278,3 @@ class TicketService:
         """ Email translation to Jira user """
         jira_service = JiraService()
         return next(iter(jira_service.search_users(user=email, limit=1)), default)
-
-    # @classmethod
-    # def _emails_to_users(cls, emails):
-    #     """ Emails translation to Jira users """
-    #     return [cls._email_to_user(email) for email in emails]
