@@ -263,34 +263,34 @@ class JiraService(ProxyJIRA):
         # no point on adding empty file
         if content:
             super().add_attachment(
-                issue=issue.key,
+                issue=str(issue),
                 attachment=content,
                 filename=filename
             )
 
     def add_watchers(
             self,
-            key: str,
+            issue: typing.Union[jira.User, str],
             watchers: typing.List[jira.User] = None
     ):
         """
         Add a list of watchers to a ticket
 
-        :param key: the ticket key
+        :param issue: the Jira issue
         :param watchers:
         """
         # add watchers iff has permission
         if self.has_permissions(permissions=['MANAGE_WATCHERS'],
-                                issue_key=key):
+                                issue_key=str(issue)):
             for watcher in watchers or []:
                 if isinstance(watcher, jira.User):
                     try:
-                        self.add_watcher(issue=key,
+                        self.add_watcher(issue=str(issue),
                                          watcher=watcher.accountId)
                     except jira.exceptions.JIRAError as e:
                         if e.status_code == requests.codes.unauthorized:
                             current_app.logger.warning("Watcher '{0}' has no permission to watch issue '{1}'."
-                                                       .format(watcher.displayName, key))
+                                                       .format(watcher.displayName, str(issue)))
                         else:
                             raise e
         else:

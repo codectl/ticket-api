@@ -1,7 +1,8 @@
 import os
-from typing import List, Optional, Union
+import typing
 
 import jinja2
+import jira
 from flask import current_app
 
 from src import db
@@ -74,7 +75,7 @@ class TicketService:
 
         # add watchers
         jira_service.add_watchers(
-            key=issue.key,
+            issue=issue.key,
             watchers=watchers
         )
 
@@ -94,11 +95,11 @@ class TicketService:
         return TicketService.find_one(key=ticket.key)
 
     @staticmethod
-    def get(ticket_id) -> Optional[Ticket]:
+    def get(ticket_id) -> typing.Optional[Ticket]:
         return Ticket.query.get(ticket_id)
 
     @classmethod
-    def find_one(cls, **filters) -> Optional[Union[dict, Ticket]]:
+    def find_one(cls, **filters) -> typing.Optional[typing.Union[dict, Ticket]]:
         """
         Search for a single ticket based on several criteria.
         """
@@ -111,7 +112,7 @@ class TicketService:
             fields: list = None,
             _model: bool = False,
             **filters
-    ) -> Union[List[dict], List[Ticket]]:
+    ) -> typing.List[typing.Union[dict, Ticket]]:
         """
         Search for tickets based on several criteria.
         Jira filters are also supported.
@@ -214,7 +215,7 @@ class TicketService:
     @classmethod
     def create_comment(
             cls,
-            key: str,
+            issue: typing.Union[jira.User, str],
             author: str,
             body: str,
             watchers: list = None,
@@ -223,7 +224,7 @@ class TicketService:
         """
         Create the body of the ticket.
 
-        :param key: the ticket key to comment on
+        :param issue: the ticket to comment on
         :param author: the author of the comment
         :param body: the body of the comment
         :param watchers: user emails to watch for ticket changes
@@ -243,14 +244,14 @@ class TicketService:
                 'body': body
             }
         )
-        jira_service.add_comment(issue=key, body=body, is_internal=True)
+        jira_service.add_comment(issue=str(issue), body=body, is_internal=True)
 
         # add watchers
-        jira_service.add_watchers(key=key, watchers=watchers)
+        jira_service.add_watchers(issue=str(issue), watchers=watchers)
 
         # adding attachments
         for attachment in attachments or []:
-            jira_service.add_attachment(issue=key, attachment=attachment)
+            jira_service.add_attachment(issue=str(issue), attachment=attachment)
 
     @staticmethod
     def create_ticket_body(template=None, values=None):

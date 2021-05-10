@@ -30,28 +30,28 @@ class CreateTicketSchema(Schema):
         )
     )
     board = fields.String(
-        validate=validate.OneOf(JiraService.supported_board_keys()),
+        required=True,
         metadata=dict(
             description='boards to fetch tickets from',
             default=Board.default().key
         ),
-        required=True
+        validate=validate.OneOf(JiraService.supported_board_keys())
     )
     category = fields.String(
-        validate=validate.OneOf(JiraService.supported_categories()),
+        required=True,
         metadata=dict(
             description='category the ticket belongs to',
             default=current_app.config['JIRA_TICKET_LABEL_DEFAULT_CATEGORY']
         ),
-        required=True
+        validate=validate.OneOf(JiraService.supported_categories())
     )
     watchers = fields.List(
         fields.Email(),
-        allow_none=True,
-        missing=None,
+        allow_none=False,
+        missing=[],
         metadata=dict(
             description='tickets user has subscribed to',
-            example=None
+            example=[]
         )
     )
     priority = fields.String(
