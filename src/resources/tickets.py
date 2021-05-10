@@ -124,7 +124,12 @@ class Tickets(Resource):
         if request.mimetype == 'application/json':
             body = request.json
         elif request.mimetype == 'multipart/form-data':
-            body = request.form.to_dict(flat=True)
+            form = request.form.copy()
+            form.pop('attachments', default=None)  # ignore this field
+            body = {
+                'watchers': form.poplist('watchers'),
+                **form
+            }
             files = request.files.to_dict(flat=False).get('attachments', [])
         else:
             abort(415, status=415, message='Unsupported media type')
