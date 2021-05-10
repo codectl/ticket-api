@@ -257,7 +257,9 @@ class O365MailboxManager:
             data=None,
             metadata=None
     ):
-        """ Create a reply message to a given message with a given body. """
+        """
+        Create a reply message to a given message with a given body
+        """
 
         reply = message.reply(to_all=True)
 
