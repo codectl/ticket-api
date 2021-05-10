@@ -215,16 +215,7 @@ class Comment(Resource):
             }
         },
         'responses': {
-            201: {
-                'description': 'Created',
-                'content': {
-                    'application/json': {
-                        'schema': {
-                            '$ref': '#/components/schemas/Issue'
-                        }
-                    }
-                }
-            },
+            204: {'description': 'No Content'},
             400: {'$ref': '#/components/responses/BadRequest'},
             415: {'$ref': '#/components/responses/UnsupportedMediaType'}
         }
@@ -249,12 +240,12 @@ class Comment(Resource):
             abort(400, status=400, message=errors)
 
         try:
-            created = TicketService.create_comment(
+            TicketService.create_comment(
                 key=key,
-                body=body,
+                **body,
                 attachments=files
             )
-            return IssueSchema().dump(created), 201
+            return None, 201
         except jira.exceptions.JIRAError as ex:
             abort(400, status=400, message=ex.text)
 
