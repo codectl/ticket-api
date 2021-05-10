@@ -50,7 +50,7 @@ class CreateTicketSchema(Schema):
         allow_none=False,
         missing=[],
         metadata=dict(
-            description='tickets user has subscribed to',
+            description='users to be watching the ticket',
             example=[]
         )
     )

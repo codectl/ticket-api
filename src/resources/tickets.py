@@ -85,7 +85,17 @@ class Tickets(Resource):
                                 )
                             )
                         })
-                    )
+                    ),
+                    'encoding': {
+                        'watchers': {
+                            'style': 'form',
+                            'explode': True
+                        },
+                        'attachments': {
+                            'style': 'form',
+                            'explode': True
+                        }
+                    },
                 }
             }
         },
@@ -210,7 +220,17 @@ class Comment(Resource):
                                 )
                             )
                         })
-                    )
+                    ),
+                    'encoding': {
+                        'watchers': {
+                            'style': 'form',
+                            'explode': True
+                        },
+                        'attachments': {
+                            'style': 'form',
+                            'explode': True
+                        }
+                    },
                 }
             }
         },
