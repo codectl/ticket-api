@@ -55,7 +55,7 @@ class O365MailboxManager:
         for message in messages:
             self.process_message(message_id=message.object_id)
 
-    def notification_manager(self, **kwargs):
+    def start_streaming(self, **kwargs):
         handler = JiraNotificationHandler(manager=self)
 
         # set inbox/sent folder

@@ -98,9 +98,11 @@ def handle_incoming_email(mailbox=None, retries=0):
     manager = create_mailbox_manager(mailbox=mailbox, retries=retries)
 
     # Start listening for incoming notifications...
-    manager.notification_manager(connection_timeout=current_app.config['CONNECTION_TIMEOUT_IN_MINUTES'],
-                                 keep_alive_interval=current_app.config['KEEP_ALIVE_NOTIFICATION_INTERVAL_IN_SECONDS'],
-                                 refresh_after_expire=True)
+    manager.start_streaming(
+        connection_timeout=current_app.config['CONNECTION_TIMEOUT_IN_MINUTES'],
+        keep_alive_interval=current_app.config['KEEP_ALIVE_NOTIFICATION_INTERVAL_IN_SECONDS'],
+        refresh_after_expire=True
+    )
 
 
 @o365_cli.command()
