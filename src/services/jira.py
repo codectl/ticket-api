@@ -8,8 +8,8 @@ from flask import current_app
 from jira import JIRA
 
 from src import cache
-from src.models.jira.Board import Board
-from src.resources.tickets import Ticket
+from src.models import Ticket
+from src.models.jira import Board
 
 __all__ = ('JiraService',)
 
