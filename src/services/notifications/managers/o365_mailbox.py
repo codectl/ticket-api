@@ -122,7 +122,7 @@ class O365MailboxManager:
             # only add comment if not added yet
             if message.object_id not in existing_ticket.outlook_messages_id:
                 TicketService.create_comment(
-                    key=existing_ticket.key,
+                    issue=existing_ticket,
                     author=message.sender.address,
                     body=O365.message.bs(message.unique_body, 'html.parser').body.text,
                     watchers=emails,

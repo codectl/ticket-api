@@ -63,9 +63,6 @@ def create_mailbox_manager(**kwargs):
     # the O365 mailbox manager
     manager = O365MailboxManager(mailbox=o365_mailbox) \
         .subscriber(mailbox_notifications) \
-        .jira(url=current_app.config['ATLASSIAN_URL'],
-              user=current_app.config['ATLASSIAN_USER'],
-              token=current_app.config['ATLASSIAN_API_TOKEN']) \
         .filters(
         [
             JiraCommentNotificationFilter(mailbox=o365_mailbox),

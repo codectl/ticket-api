@@ -9,6 +9,7 @@ from jira import JIRA
 
 from src import cache
 from src.models.jira.Board import Board
+from src.resources.tickets import Ticket
 
 __all__ = ('JiraService',)
 
@@ -270,7 +271,7 @@ class JiraService(ProxyJIRA):
 
     def add_watchers(
             self,
-            issue: typing.Union[jira.User, str],
+            issue: typing.Union[Ticket, str],
             watchers: typing.List[jira.User] = None
     ):
         """

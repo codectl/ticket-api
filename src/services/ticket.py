@@ -215,7 +215,7 @@ class TicketService:
     @classmethod
     def create_comment(
             cls,
-            issue: typing.Union[jira.User, str],
+            issue: typing.Union[Ticket, str],
             author: str,
             body: str,
             watchers: list = None,
@@ -244,14 +244,14 @@ class TicketService:
                 'body': body
             }
         )
-        jira_service.add_comment(issue=str(issue), body=body, is_internal=True)
+        jira_service.add_comment(issue=issue, body=body, is_internal=True)
 
         # add watchers
-        jira_service.add_watchers(issue=str(issue), watchers=watchers)
+        jira_service.add_watchers(issue=issue, watchers=watchers)
 
         # adding attachments
         for attachment in attachments or []:
-            jira_service.add_attachment(issue=str(issue), attachment=attachment)
+            jira_service.add_attachment(issue=issue, attachment=attachment)
 
     @staticmethod
     def create_ticket_body(template=None, values=None):

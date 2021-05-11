@@ -15,3 +15,6 @@ class Ticket(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     reporter = db.Column(db.String, nullable=False)
+
+    def __str__(self):
+        return self.key
