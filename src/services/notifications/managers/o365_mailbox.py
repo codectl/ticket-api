@@ -17,7 +17,7 @@ class O365MailboxManager:
     Manager for O365 events.
     """
 
-    def __init__(self, mailbox):
+    def __init__(self, mailbox: O365.mailbox.MailBox):
         self._mailbox = mailbox
         self._subscriber = None
         self._filters = None
@@ -49,7 +49,7 @@ class O365MailboxManager:
         # sort messages by age (older first)
         messages.sort(key=lambda e: e.received)
 
-        current_app.logger.info('Found {0} messages to process.'.format(str(len(messages))))
+        current_app.logger.info("Found {0} messages to process.".format(str(len(messages))))
 
         # process each individual message
         for message in messages:
@@ -67,6 +67,7 @@ class O365MailboxManager:
         sent_subscription_id = self._subscriber.subscribe(resource=sent_folder)
         subscriptions = [inbox_subscription_id, sent_subscription_id]
 
+        current_app.logger.info("Start streaming connection for '{0}' ...".format(self._mailbox.main_resource))
         self._subscriber.create_event_channel(
             subscriptions=subscriptions,
             notification_handler=handler,

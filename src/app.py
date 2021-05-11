@@ -5,7 +5,7 @@ import flasgger
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from dotenv import load_dotenv
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, logging as flask_logging
 
 from src import api, cache, db, swagger
 from src.cli.o365 import o365_cli
@@ -41,6 +41,8 @@ def setup_app(app):
 
     # set app default logging to INFO
     app.logger.setLevel(logging.INFO)
+    logging.getLogger('o365_notifications').addHandler(flask_logging.default_handler)
+    logging.getLogger('o365_notifications').setLevel(logging.INFO)
 
     # link db to app
     db.init_app(app)

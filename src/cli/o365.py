@@ -24,14 +24,15 @@ def authenticate_account(mailbox=None, retries=0):
     """
     Authenticate an O365 account.
     """
-
     credentials = (current_app.config['O365_CLIENT_ID'], None)
     protocol = MSOffice365Protocol(api_version='beta')
-    account = Account(credentials,
-                      protocol=protocol,
-                      tenant_id=current_app.config['O365_TENANT_ID'],
-                      main_resource=mailbox or current_app.config['MAILBOX'],
-                      request_retries=retries)
+    account = Account(
+        credentials,
+        protocol=protocol,
+        tenant_id=current_app.config['O365_TENANT_ID'],
+        main_resource=mailbox or current_app.config['MAILBOX'],
+        request_retries=retries
+    )
 
     if account.is_authenticated:
         current_app.logger.info('Account already authenticated.')
@@ -43,12 +44,12 @@ def authenticate_account(mailbox=None, retries=0):
     return account
 
 
-def create_mailbox_manager(**kwargs):
+def create_mailbox_manager(mailbox=None, **kwargs):
     """
     Create the mailbox manager.
     """
-
-    account = authenticate_account(**kwargs)
+    mailbox = mailbox or current_app.config['MAILBOX']
+    account = authenticate_account(mailbox=mailbox, **kwargs)
     o365_mailbox = account.mailbox()
 
     mailbox_notifications = O365MailBoxStreamingNotifications(
@@ -66,7 +67,7 @@ def create_mailbox_manager(**kwargs):
         .filters(
         [
             JiraCommentNotificationFilter(mailbox=o365_mailbox),
-            RecipientsFilter(recipient_reference=current_app.config['MAILBOX'], sent_folder=sent_folder),
+            RecipientsFilter(recipient_reference=mailbox, sent_folder=sent_folder),
             SenderEmailBlacklistFilter(blacklist=current_app.config['EMAIL_BLACKLIST']),
             SenderEmailDomainWhitelistedFilter(whitelisted_domains=current_app.config['EMAIL_WHITELISTED_DOMAINS']),
             ValidateMetadataFilter()
@@ -83,7 +84,6 @@ def authenticate(mailbox=None, retries=0):
     """
     Set code used for OAuth2 authentication.
     """
-
     return authenticate_account(mailbox=mailbox, retries=retries)
 
 
@@ -94,7 +94,6 @@ def handle_incoming_email(mailbox=None, retries=0):
     """
     Handle incoming email.
     """
-
     manager = create_mailbox_manager(mailbox=mailbox, retries=retries)
 
     # Start listening for incoming notifications...
@@ -111,7 +110,6 @@ def check_for_missing_tickets(days=1):
     """
     Check for possible tickets that went missing in the last days.
     """
-
     manager = create_mailbox_manager()
 
     # Start listening for incoming notifications...
