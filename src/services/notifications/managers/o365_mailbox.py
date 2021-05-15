@@ -160,7 +160,7 @@ class O365MailboxManager:
             )
 
             # get local ticket reference
-            model = TicketService.find_one(key=issue['key'])
+            model = TicketService.find_one(key=issue['key'], _model=True)
 
             # notify ticket reporter about created ticket
             notification = self._notify_reporter(
