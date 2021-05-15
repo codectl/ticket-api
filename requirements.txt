@@ -1,5 +1,6 @@
 apispec
 click
+environs
 flasgger
 Flask
 flask_restful
@@ -10,9 +11,8 @@ jira
 marshmallow
 mistune
 O365
-python-dotenv
 requests
-Werkzeug==0.16.1
+Werkzeug
 yaml
 
 # From git
