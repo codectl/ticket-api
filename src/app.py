@@ -4,7 +4,6 @@ import os
 import flasgger
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
-from dotenv import load_dotenv
 from flask import Flask, Blueprint, logging as flask_logging
 
 from src import api, cache, db, swagger
@@ -20,9 +19,6 @@ def create_app(config_name=None):
 
     # define the WSGI application object
     app = Flask(__name__)
-
-    # load .env and variables
-    load_dotenv()
 
     # load object-based default configuration
     env = os.getenv('FLASK_ENV', config_name)
