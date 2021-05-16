@@ -2,8 +2,9 @@ import base64
 import typing
 
 import jira.resources
+import O365
 import requests
-import werkzeug
+import werkzeug.datastructures
 from flask import current_app
 from jira import JIRA
 
@@ -23,15 +24,17 @@ class ProxyJIRA(JIRA):
         url = kwargs.pop('url')
         user = kwargs.pop('user')
         token = kwargs.pop('token')
-        super().__init__(server=url,
-                         basic_auth=(user, token),
-                         options={
-                             'rest_path': 'api',
-                             'rest_api_version': 2,
-                             'agile_rest_path': jira.resources.GreenHopperResource.AGILE_BASE_REST_PATH,
-                             'agile_rest_api_version': 'latest'
-                         },
-                         **kwargs)
+        super().__init__(
+            server=url,
+            basic_auth=(user, token),
+            options={
+                'rest_path': 'api',
+                'rest_api_version': 2,
+                'agile_rest_path': jira.resources.GreenHopperResource.AGILE_BASE_REST_PATH,
+                'agile_rest_api_version': 'latest'
+            },
+            **kwargs
+        )
 
     def exists_issue(self, issue_id):
         """
@@ -249,17 +252,23 @@ class JiraService(ProxyJIRA):
 
         return Board(key=key, **raw)
 
-    def add_attachment(self, issue, attachment, filename=None):
+    def add_attachment(
+            self,
+            issue,
+            attachment: typing.Union[werkzeug.datastructures.FileStorage, O365.message.MessageAttachment],
+            filename: str = None
+    ):
         """
         Add attachment considering different types of files
         """
         if isinstance(attachment, werkzeug.datastructures.FileStorage):
             filename = filename or attachment.filename
             content = attachment.stream.read()
-        else:
-            print(vars(attachment))
+        elif isinstance(attachment, O365.message.MessageAttachment):
             filename = filename or attachment.name
             content = base64.b64decode(attachment.content)
+        else:
+            raise ValueError("'{0}' is not a supported attachment.".format(type(attachment)))
 
         # no point on adding empty file
         if content:

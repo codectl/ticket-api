@@ -19,20 +19,21 @@ class ValidateMetadataFilter(OutlookMessageFilter):
         else:
 
             # append message to history if jira metadata is present
-            ticket = TicketService.find_by(
+            model = TicketService.find_one(
                 outlook_conversation_id=message.conversation_id,
-                fetch_one=True
+                _model=True
             )
 
             # ignore the notification email sent to user after the creation of a new ticket
             if soup.head.find('meta', attrs={'name': 'message', 'content': 'jira ticket notification'}):
-                O365MailboxManager.add_message_to_history(message, ticket)
-                current_app.logger.info('Message filtered as this is a message notification to the user about created ticket.')
+                O365MailboxManager.add_message_to_history(message, model=model)
+                current_app.logger.info('Message filtered as this is a message notification to the user about created '
+                                        'ticket.')
                 return None
 
             # ignore the message sent when a new comment is added to the ticket
             elif soup.head.find('meta', attrs={'name': 'message', 'content': 'relay jira comment'}):
-                O365MailboxManager.add_message_to_history(message, ticket)
+                O365MailboxManager.add_message_to_history(message, model=model)
                 current_app.logger.info('Message filtered as this is a relay message from a Jira comment.')
                 return None
             else:

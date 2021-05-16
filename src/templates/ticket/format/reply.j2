@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+        <meta content="text/html; charset=us-ascii"/>
+        {% for meta in metadata %}
+            <meta name="{{ meta['name'] }}" content="{{ meta['content'] }}"/>
+        {% endfor %}
+    </head>
+    <body>
+        <div>
+            {{ body }}
+            {% if author %}
+                <div style="margin-top: 10px;">
+                    {{ author }}
+                </div>
+            {% endif %}
+        </div>
+        <div style="border-top:solid #E1E1E1 1.0pt; padding:3.0pt 0in 0in 0in;">
+            {{ reply }}
+        </div>
+    </body>
+</html>

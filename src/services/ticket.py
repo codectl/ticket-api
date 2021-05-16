@@ -40,7 +40,7 @@ class TicketService:
         watchers = [cls._email_to_user(email, default=email) for email in kwargs.get('watchers') or []]
 
         # create ticket body with Jira markdown format
-        body = cls.create_ticket_body(
+        body = cls.create_message_body(
             template='jira.j2',
             values={
                 'author': jira_service.markdown.mention(user=reporter or kwargs.get('reporter')),
@@ -236,7 +236,7 @@ class TicketService:
         # translate watchers into jira.User objects iff exists
         watchers = [cls._email_to_user(email, default=email) for email in watchers or []]
 
-        body = cls.create_ticket_body(
+        body = cls.create_message_body(
             template='jira.j2',
             values={
                 'author': jira_service.markdown.mention(user=author),
@@ -254,7 +254,7 @@ class TicketService:
             jira_service.add_attachment(issue=issue, attachment=attachment)
 
     @staticmethod
-    def create_ticket_body(template=None, values=None):
+    def create_message_body(template=None, values=None):
         """
         Create the body of the ticket.
 

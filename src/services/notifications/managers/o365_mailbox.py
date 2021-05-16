@@ -223,20 +223,26 @@ class O365MailboxManager:
         """
 
         # creating notification message to be sent to all recipients
-        url = "{0}/jira/tickets?board=support&q={1}".format(current_app.config['TICKET_CLIENT_APP'], key)
-        body = mistune.markdown(TicketService.create_ticket_body(
+        body = mistune.markdown(TicketService.create_message_body(
             template='notification.j2',
             values={
                 'summary': message.subject,
                 'key': key,
-                'url': url
+                'url': current_app.config['TICKET_CLIENT_APP']
             }
-        ), escape=False).strip()
+        ), hard_wrap=True)
+        print(body)
         reply = cls.create_reply(
             message,
-            data=dict(body=body),
-            metadata=[dict(name='message', content='jira ticket notification')]
+            values={
+                'body': body,
+                'metadata': [dict(
+                    name='message',
+                    content='jira ticket notification'
+                )]
+            }
         )
+        print(reply)
         reply.send()
         return reply
 
@@ -255,69 +261,34 @@ class O365MailboxManager:
     @staticmethod
     def create_reply(
             message: O365.Message,
-            data=None,
-            metadata=None
+            values: dict = None
     ):
         """
-        Create a reply message to a given message with a given body
+        Create a reply message from template.
         """
 
         reply = message.reply(to_all=True)
 
         # process email body with bs
         bs = O365.message.bs
-        body = bs(data['body'], 'html.parser')
 
-        # process body of the reply with bs
-        sep = bs().new_tag('div', style="border-top:solid #E1E1E1 1.0pt; "
-                                        "padding:3.0pt 0in 0in 0in;")
         if reply.body_type.lower() == 'html':
             soup = bs(reply.body, 'html.parser')
-            soup.find('hr').decompose()
-            soup.find('div', id='divRplyFwdMsg').wrap(sep)
+            reply_fwd = str(soup.find('div', id='divRplyFwdMsg'))
         else:
-            content = '\n'.join(reply.body.splitlines()[2:])
-            soup = bs('<html>'
-                      '<head><meta name="reply"></head>'
-                      '<body><div>{0}</div></body>'
-                      '</html>'.format(content))
-            soup.find('div').wrap(sep)
+            reply_fwd = '\n'.join(reply.body.splitlines()[2:])
 
-        # wrap the body in a div
-        wrapper = soup.new_tag('div')
-        wrapper.append(body)
-        soup.body.div.insert_before(wrapper)
-
-        if data.get('author'):
-            author_tag = soup.new_tag('div', style='margin-top: 10px;')
-            author_tag.string = data['author']['name']
-            author_tag.append(bs('<div>&nbsp;</div>', 'html.parser'))
-            soup.body.div.insert_after(author_tag)
-
-        # add metadata
-        for meta in metadata or []:
-            soup.head('meta')[-1].insert_after(soup.new_tag('meta', attrs=meta))
+        body = TicketService.create_message_body(
+            template='reply.j2',
+            values={
+                'reply': reply_fwd,
+                **values
+            }
+        )
 
         # replace body of the reply with the processed body
         reply.body = None  # reset body
         reply.body_type = 'html'
-        reply.body = str(soup)
+        reply.body = body
 
         return reply
-
-    @staticmethod
-    def extract_ticket_data(message: O365.Message):
-        """ Get information about a ticket from an email Jira notification """
-
-        soup = O365.message.bs(message.unique_body, 'html.parser')
-
-        # remove the external message warning
-        soup.find('div', id='x_extban1').decompose()
-        body = str(soup)
-        body = body.replace('\n', '').replace('\r', '').replace('\\', '')
-
-        # get the json data
-        data = re.search(r'{.*}', body).group()
-        data = json.loads(data)
-
-        return data
