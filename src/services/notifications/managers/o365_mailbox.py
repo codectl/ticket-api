@@ -13,9 +13,7 @@ from src.services.ticket import TicketService
 
 
 class O365MailboxManager:
-    """
-    Manager for O365 events.
-    """
+    """Manager for O365 mailbox events."""
 
     def __init__(self, mailbox: O365.mailbox.MailBox):
         self._mailbox = mailbox
@@ -31,8 +29,7 @@ class O365MailboxManager:
         return self
 
     def check_for_missing_tickets(self, days):
-        """
-        Sweep the messages received in the last days to create tickets out of
+        """Sweep the messages received in the last days to create tickets out of
         of the possible messages that were missed.
         """
 
@@ -75,9 +72,7 @@ class O365MailboxManager:
         )
 
     def process_message(self, message_id):
-        """
-        Process a message (given its Id) for the creation of a ticket.
-        """
+        """Process a message (given its Id) for the creation of a ticket."""
 
         # reading message from the corresponding folder
         # and create Jira ticket for it.
@@ -177,10 +172,12 @@ class O365MailboxManager:
             current_app.logger.info("New ticket created with Jira key '{0}'.".format(model.key, model.id))
 
     def _get_message(self, message_id):
-        """
-        Custom implementation for getting message from id.
+        """Custom implementation for getting message from id.
+
         Headers must be included in the request and original implementation
-        does not allow. Remove this if future implementation of Folder.get_message
+        does not allow.
+
+        Remove this if future implementation of Folder.get_message
         allow kwargs to be passed on to connection.get method.
         """
 
@@ -215,8 +212,7 @@ class O365MailboxManager:
             message: O365.Message,
             key: str
     ):
-        """
-        Notify ticket reporter.
+        """Notify ticket reporter.
 
         :param message: the reported issue message
         :param key: the ticket key
@@ -231,7 +227,7 @@ class O365MailboxManager:
                 'url': current_app.config['TICKET_CLIENT_APP']
             }
         ), hard_wrap=True)
-        print(body)
+
         reply = cls.create_reply(
             message,
             values={
@@ -242,7 +238,6 @@ class O365MailboxManager:
                 )]
             }
         )
-        print(reply)
         reply.send()
         return reply
 
@@ -251,8 +246,7 @@ class O365MailboxManager:
             message: O365.Message,
             model: Ticket
     ):
-        """ Add a message to the ticket history """
-
+        """Add a message to the ticket history."""
         messages_id = model.outlook_messages_id.split(',')
         if message.object_id not in messages_id:
             model.outlook_messages_id = ','.join(messages_id + [message.object_id])
@@ -263,10 +257,7 @@ class O365MailboxManager:
             message: O365.Message,
             values: dict = None
     ):
-        """
-        Create a reply message from template.
-        """
-
+        """Create a reply message from template."""
         reply = message.reply(to_all=True)
 
         # process email body with bs
@@ -292,3 +283,16 @@ class O365MailboxManager:
         reply.body = body
 
         return reply
+
+    @staticmethod
+    def get_message_json(message: O365.Message):
+        """Get json information from message."""
+        soup = O365.message.bs(message.unique_body, 'html.parser')
+
+        body = str(soup)
+
+        # get the json data
+        data = re.search(r'{.*}', body).group()
+        data = json.loads(data)
+
+        return data
