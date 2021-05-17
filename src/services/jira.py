@@ -16,9 +16,7 @@ __all__ = ('JiraService',)
 
 
 class ProxyJIRA(JIRA):
-    """
-    Proxy class for Jira
-    """
+    """Proxy class for Jira."""
 
     def __init__(self, **kwargs):
         url = kwargs.pop('url')
@@ -36,9 +34,23 @@ class ProxyJIRA(JIRA):
             **kwargs
         )
 
-    def exists_issue(self, issue_id):
+    def get_content(
+            self,
+            path: str,
+            params: typing.Optional[str] = None,
+            base: typing.Optional[str] = None
+    ) -> bytes:
+        """Get content bytes for a given path and params.
+
+        :param path: The subpath required
+        :param params: Parameters to filter the json query.
+        :param base: The Base Jira URL, defaults to the instance base.
         """
-        Check if issue exists.
+        url = self._get_url(path, base or self.JIRA_BASE_URL)
+        return self._session.get(url, params=params).content
+
+    def exists_issue(self, issue_id):
+        """Check if issue exists.
 
         :param issue_id: the ticket id or key
         """
@@ -50,17 +62,19 @@ class ProxyJIRA(JIRA):
         else:
             return True
 
+    def comment(self, issue, comment, expand=None):
+        """Method overload to include expand field."""
+        return self._find_for_resource(jira.Comment, (issue, comment), expand=expand)
+
     def has_permissions(self, permissions, **kwargs):
-        """
-        Check whether the signed user has the given permissions.
-        """
+        """Check whether the signed user has the given permissions."""
         jira_permissions = self.my_permissions(permissions=','.join(permissions), **kwargs)
         return all(jira_permissions['permissions'][permission]['havePermission'] for permission in permissions)
 
     def my_permissions(self, project_key=None, project_id=None, issue_key=None, issue_id=None, permissions=None):
-        """
+        """Overridden method.
+
         Introduced param permissions.
-        Overridden method.
 
         :param project_key: see overridden method
         :param project_id: see overridden method
@@ -84,10 +98,10 @@ class ProxyJIRA(JIRA):
 
     def search_users(self, user, start_at=0, limit=50,
                      include_active=True, include_inactive=False):
-        """
+        """Overridden method.
+
         Change from 'username' to 'query' after some Jira API update:
         "The query parameter 'username' is not supported in GDPR strict mode."
-        Overridden method.
         """
         params = {
             'query': user,
@@ -98,8 +112,7 @@ class ProxyJIRA(JIRA):
                                  startAt=start_at, maxResults=limit, params=params)
 
     def search_boards(self, jira_name=None) -> typing.List[jira.resources.Board]:
-        """
-        Search for boards.
+        """Search for boards.
 
         :param jira_name: the Jira board name
         """
@@ -107,8 +120,7 @@ class ProxyJIRA(JIRA):
         return self._fetch_pages(jira.resources.Board, 'values', 'board', params=params, base=self.AGILE_BASE_URL)
 
     def find_board(self, key=None) -> typing.Optional[jira.resources.Board]:
-        """
-        Get single board.
+        """Get single board.
 
         :param key: the board key
         """
@@ -120,8 +132,7 @@ class ProxyJIRA(JIRA):
                     None)
 
     def get_board_configuration(self, board_id) -> dict:
-        """
-        Get the configuration from a given board
+        """Get the configuration from a given board
 
         :param board_id: the Jira id of the board
         :return: the board configuration
@@ -130,8 +141,7 @@ class ProxyJIRA(JIRA):
         return self._session.get(url).json()
 
     def get_board_filter(self, board_id):
-        """
-        Get the filter from a board's configuration
+        """Get the filter from a board's configuration
 
         :param board_id: the Jira id of the board
         :return: the board filter
@@ -153,8 +163,7 @@ class ProxyJIRA(JIRA):
             watcher: str = None,
             **_
     ):
-        """
-        Build jql query based on a provided searching parameters.
+        """Build jql query based on a provided searching parameters.
 
         :param assignee: the assignee key (e.g. email)
         :param boards: the board keys to get tickets from
@@ -214,8 +223,8 @@ class JiraMarkdown(ProxyJIRA):
 
     @staticmethod
     def mention(user):
-        """
-        Create Jira markdown mention out of a user.
+        """Create Jira markdown mention out of a user.
+
         If user does not exist, create email markdown.
         """
         if isinstance(user, jira.User):
@@ -227,9 +236,7 @@ class JiraMarkdown(ProxyJIRA):
 
 
 class JiraService(ProxyJIRA):
-    """
-    Service to handle Jira operations
-    """
+    """Service to handle Jira operations."""
 
     def __init__(self, **kwargs):
         super().__init__(url=current_app.config['ATLASSIAN_URL'],
@@ -258,9 +265,7 @@ class JiraService(ProxyJIRA):
             attachment: typing.Union[werkzeug.datastructures.FileStorage, O365.message.MessageAttachment],
             filename: str = None
     ):
-        """
-        Add attachment considering different types of files
-        """
+        """Add attachment considering different types of files."""
         if isinstance(attachment, werkzeug.datastructures.FileStorage):
             filename = filename or attachment.filename
             content = attachment.stream.read()
@@ -283,8 +288,7 @@ class JiraService(ProxyJIRA):
             issue: typing.Union[Ticket, str],
             watchers: typing.List[jira.User] = None
     ):
-        """
-        Add a list of watchers to a ticket
+        """Add a list of watchers to a ticket.
 
         :param issue: the Jira issue
         :param watchers:
@@ -308,9 +312,7 @@ class JiraService(ProxyJIRA):
 
     @staticmethod
     def is_jira_filter(filter_):
-        """
-        Check whether given filter is a Jira only filter.
-        """
+        """Check whether given filter is a Jira only filter."""
         return filter_ in ['assignee', 'boards', 'category', 'key', 'q', 'sort', 'status', 'watcher']
 
     @staticmethod
