@@ -261,7 +261,7 @@ class JiraService(ProxyJIRA):
 
     def add_attachment(
             self,
-            issue,
+            issue: typing.Union[jira.Issue, str],
             attachment: typing.Union[werkzeug.datastructures.FileStorage, O365.message.MessageAttachment],
             filename: str = None
     ):

@@ -5,6 +5,9 @@
         {% for meta in metadata %}
             <meta name="{{ meta['name'] }}" content="{{ meta['content'] }}"/>
         {% endfor %}
+        <style>
+            {{ style }}
+        </style>
     </head>
     <body>
         <div>

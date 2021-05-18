@@ -92,7 +92,7 @@ class O365MailboxManager:
 
         # skip message processing if message is filtered
         if any(not e for e in list(map(lambda filter_: filter_.apply(message), self._filters))):
-            current_app.logger.info('Message \'{0}\' filtered.'.format(message.subject))
+            current_app.logger.info("Message '{0}' filtered.".format(message.subject))
             return
 
         # check for local existing ticket
@@ -249,8 +249,11 @@ class O365MailboxManager:
         """Add a message to the ticket history."""
         messages_id = model.outlook_messages_id.split(',')
         if message.object_id not in messages_id:
-            model.outlook_messages_id = ','.join(messages_id + [message.object_id])
-            model.update_at = datetime.datetime.utcnow
+            TicketService.update(
+                ticket_id=model.id,
+                outlook_messages_id=','.join(messages_id + [message.object_id]),
+                updated_at=datetime.datetime.utcnow()
+            )
 
     @staticmethod
     def create_reply(
@@ -265,14 +268,18 @@ class O365MailboxManager:
 
         if reply.body_type.lower() == 'html':
             soup = bs(reply.body, 'html.parser')
-            reply_fwd = str(soup.find('div', id='divRplyFwdMsg'))
+            soup.find('hr').decompose()  # remove horizontal lines
+            reply_fwd = soup.find('body').decode_contents()
+            style = soup.find('style').decode_contents()
         else:
             reply_fwd = '\n'.join(reply.body.splitlines()[2:])
+            style = ''
 
         body = TicketService.create_message_body(
             template='reply.j2',
             values={
                 'reply': reply_fwd,
+                'style': style,
                 **values
             }
         )

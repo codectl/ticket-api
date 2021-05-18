@@ -42,6 +42,7 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
 
             # locate last lent message
             last_message_id = model.outlook_messages_id.split(',')[-1]
+
             try:
                 last_message = self.mailbox.get_message(object_id=last_message_id)
             except requests.exceptions.HTTPError as e:
