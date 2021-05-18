@@ -2,7 +2,6 @@ import os
 import typing
 
 import jinja2
-import jira
 from flask import current_app
 
 from src import db
@@ -18,8 +17,7 @@ class TicketService:
             attachments: list = None,
             **kwargs
     ) -> dict:
-        """
-        Create a new ticket by calling Jira API to create a new
+        """Create a new ticket by calling Jira API to create a new
         issue. A new local reference is also created.
 
         :param attachments: the files to attach to the ticket which
@@ -100,9 +98,7 @@ class TicketService:
 
     @classmethod
     def find_one(cls, **filters) -> typing.Optional[typing.Union[dict, Ticket]]:
-        """
-        Search for a single ticket based on several criteria.
-        """
+        """Search for a single ticket based on several criteria."""
         return next(iter(cls.find_by(limit=1, **filters)), None)
 
     @classmethod
@@ -113,8 +109,8 @@ class TicketService:
             _model: bool = False,
             **filters
     ) -> typing.List[typing.Union[dict, Ticket]]:
-        """
-        Search for tickets based on several criteria.
+        """Search for tickets based on several criteria.
+
         Jira filters are also supported.
 
         :param limit: the max number of results retrieved
@@ -200,8 +196,8 @@ class TicketService:
                 setattr(ticket, key, value)
         db.session.commit()
 
-        current_app.logger.info("Updated ticket_id '{0}' with the following attributes: '{1}'."
-                                .format(ticket_id.key, kwargs))
+        current_app.logger.info("Updated ticket '{0}' with the following attributes: '{1}'."
+                                .format(ticket.key, kwargs))
 
     @classmethod
     def delete(cls, ticket_id):
@@ -221,8 +217,7 @@ class TicketService:
             watchers: list = None,
             attachments: list = None,
     ):
-        """
-        Create the body of the ticket.
+        """Create the body of the ticket.
 
         :param issue: the ticket to comment on
         :param author: the author of the comment
@@ -255,8 +250,7 @@ class TicketService:
 
     @staticmethod
     def create_message_body(template=None, values=None):
-        """
-        Create the body of the ticket.
+        """Create the body of the ticket.
 
         :param template: the template to build ticket body from
         :param values: values for template interpolation
@@ -276,6 +270,6 @@ class TicketService:
 
     @staticmethod
     def _email_to_user(email, default=None):
-        """ Email translation to Jira user """
+        """Email translation to Jira user."""
         jira_service = JiraService()
         return next(iter(jira_service.search_users(user=email, limit=1)), default)
