@@ -13,7 +13,6 @@ mistune
 O365
 requests
 Werkzeug
-yaml
 
 # From git
-git+git://github.com/rena2damas/o365-notifications
+git+https://github.com/rena2damas/o365-notifications
