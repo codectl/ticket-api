@@ -219,3 +219,11 @@ python setup.py sdist bdist_wheel
 ```
 
 Add the file entry to the ```requirements.txt```.
+
+## Requirements
+
+See [requirements](requirements.txt)
+
+## License
+
+[GPLv3](LICENSE) license
