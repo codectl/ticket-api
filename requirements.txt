@@ -11,6 +11,7 @@ jira
 marshmallow
 mistune
 O365
+PyYAML
 psycopg2-binary
 requests
 Werkzeug
