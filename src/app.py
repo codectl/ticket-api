@@ -4,7 +4,7 @@ import os
 import flasgger
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
-from flask import Flask, Blueprint, logging as flask_logging
+from flask import Flask, Blueprint, logging as flask_logging, redirect, url_for
 
 from src import api, cache, db, swagger
 from src.cli.o365 import o365_cli
@@ -73,6 +73,13 @@ def setup_app(app):
 
     # link swagger to app
     swagger.init_app(app)
+
+    # Redirect incomplete paths to app context root
+    app.add_url_rule('/', 'index', lambda: redirect(url_for('flasgger.apidocs')))
+    subs = app.config['APPLICATION_CONTEXT'].split('/')
+    for n in range(2, len(subs)):
+        rule = '/'.join(subs[:n] + ['/'])
+        app.add_url_rule(rule, ''.join(('index-', str(n-1))), lambda: redirect(url_for('flasgger.apidocs')))
 
     # define OAS3 base template
     swagger.template = flasgger.apispec_to_template(
