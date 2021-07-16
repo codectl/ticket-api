@@ -36,14 +36,17 @@ class BaseConfig:
         'specs': [
             {
                 'endpoint': 'swagger',
-                'route': '/swagger.json',
+                'route': APPLICATION_CONTEXT + '/swagger.json',
                 'rule_filter': lambda rule: True,
                 'model_filter': lambda tag: True
             }
         ],
 
         # where to find the docs (ensure trailing slash)
-        'specs_route': APPLICATION_CONTEXT + ('' if APPLICATION_CONTEXT.endswith('/') else '/'),
+        'specs_route': APPLICATION_CONTEXT + '/',
+
+        # swagger static files
+        'static_url_path': APPLICATION_CONTEXT + '/flasgger_static',
 
         # hide the Swagger top bar
         'hide_top_bar': True

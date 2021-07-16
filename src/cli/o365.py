@@ -5,6 +5,7 @@ from O365 import Account, MSOffice365Protocol
 from o365_notifications.base import O365Notification
 from o365_notifications.streaming.mailbox import O365MailBoxStreamingNotifications
 
+from src.cli.DatabaseTokenBackend import DatabaseTokenBackend
 from src.services.notifications.managers.o365_mailbox import O365MailboxManager
 from src.services.notifications.filters import (
     JiraCommentNotificationFilter,
@@ -31,7 +32,8 @@ def authenticate_account(mailbox=None, retries=0):
         protocol=protocol,
         tenant_id=current_app.config['O365_TENANT_ID'],
         main_resource=mailbox or current_app.config['MAILBOX'],
-        request_retries=retries
+        request_retries=retries,
+        token_backend=DatabaseTokenBackend()
     )
 
     if account.is_authenticated:

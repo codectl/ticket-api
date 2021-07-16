@@ -25,7 +25,7 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
         if not message:
             return None
 
-        if message.sender.address.split('@')[1] == 'automationforjira.com':
+        if message.sender.address.split('@')[1] == 'automation.atlassian.com':
 
             # get json content from message
             data = O365MailboxManager.get_message_json(message)

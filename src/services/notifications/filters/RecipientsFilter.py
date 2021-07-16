@@ -32,9 +32,9 @@ class RecipientsFilter(OutlookMessageFilter):
             return None
 
         # check for existing ticket
-        existing_ticket = TicketService.find_by(
+        existing_ticket = TicketService.find_one(
             outlook_conversation_id=message.conversation_id,
-            fetch_one=True
+            _model=True
         )
 
         if not existing_ticket:
