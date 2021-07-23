@@ -15,7 +15,7 @@ class DatabaseTokenBackend(BaseTokenBackend):
 
         :return dict or None: The token if exists, None otherwise
         """
-        token = TokenService.find_by(one=True, active=True)
+        token = TokenService.find_by(one=True)
         if token is not None:
             return TokenSchema().dump(token)
         return None
@@ -25,7 +25,13 @@ class DatabaseTokenBackend(BaseTokenBackend):
         if self.token is None:
             raise ValueError('You have to set the "token" first.')
 
-        TokenService.create(**self.token, active=True)
+        # replace older token
+        token = TokenService.find_by(one=True)
+        if token is not None:
+            TokenService.delete(token_id=token.id)
+
+        # ... with the new one
+        TokenService.create(**self.token)
 
         return True
 
@@ -34,15 +40,15 @@ class DatabaseTokenBackend(BaseTokenBackend):
         if self.token is None:
             return False
 
-        token = TokenService.find_by(one=True, access_token=self.token.access_token, active=True)
+        token = TokenService.find_by(one=True, access_token=self.token.access_token)
         if token is not None:
-            TokenService.update(token_id=token.id, active=False)
+            TokenService.delete(token_id=token.id)
 
         return False
 
     def check_token(self):
-        """Check if the active token exists in database.
+        """Check if a token exists in database.
 
         :return bool: True if exists, False otherwise
         """
-        return TokenService.find_by(one=True, active=True) is not None
+        return TokenService.find_by(one=True) is not None

@@ -12,4 +12,3 @@ class OAuth2Token(db.Model):
     expires_in = db.Column(db.Integer, nullable=False)
     ext_expires_in = db.Column(db.Integer, nullable=False)
     expires_at = db.Column(db.Float, nullable=False)
-    active = db.Column(db.Boolean, nullable=False)
