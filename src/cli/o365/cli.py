@@ -5,7 +5,6 @@ from O365 import Account, MSOffice365Protocol
 from o365_notifications.base import O365Notification
 from o365_notifications.streaming.mailbox import O365MailBoxStreamingNotifications
 
-from src.cli.DatabaseTokenBackend import DatabaseTokenBackend
 from src.services.notifications.managers.o365_mailbox import O365MailboxManager
 from src.services.notifications.filters import (
     JiraCommentNotificationFilter,
@@ -14,8 +13,9 @@ from src.services.notifications.filters import (
     SenderEmailDomainWhitelistedFilter,
     ValidateMetadataFilter
 )
+from src.cli.o365.DatabaseTokenBackend import DatabaseTokenBackend
 
-o365_cli = AppGroup(
+cli = AppGroup(
     'o365',
     short_help='Handle O365 operations, mostly to handle Outlook events'
 )
@@ -79,7 +79,7 @@ def create_mailbox_manager(mailbox=None, **kwargs):
     return manager
 
 
-@o365_cli.command()
+@cli.command()
 @click.option('--mailbox', '-m', type=str, help='the mailbox to manage events')
 @click.option('--retries', '-r', type=int, help='number of retries when request fails')
 def authenticate(mailbox=None, retries=0):
@@ -89,7 +89,7 @@ def authenticate(mailbox=None, retries=0):
     return authenticate_account(mailbox=mailbox, retries=retries)
 
 
-@o365_cli.command()
+@cli.command()
 @click.option('--mailbox', '-m', type=str, help='the mailbox to manage events')
 @click.option('--retries', '-r', type=int, help='number of retries when request fails')
 def handle_incoming_email(mailbox=None, retries=0):
@@ -106,7 +106,7 @@ def handle_incoming_email(mailbox=None, retries=0):
     )
 
 
-@o365_cli.command()
+@cli.command()
 @click.option('--days', '-d', type=str, help='number of days to search back')
 def check_for_missing_tickets(days=1):
     """

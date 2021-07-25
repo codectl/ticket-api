@@ -15,7 +15,7 @@ class TokenService:
         db.session.add(token)
         db.session.commit()
 
-        current_app.logger.info("Created token '{0}'.".format(token.access_token))
+        current_app.logger.debug("Created token '{0}'.".format(token.access_token))
 
         return token
 
@@ -46,4 +46,4 @@ class TokenService:
             db.session.delete(token)
             db.session.commit()
 
-            current_app.logger.info("Deleted token '{0}'.".format(token.access_token))
+            current_app.logger.debug("Deleted token '{0}'.".format(token.access_token))
