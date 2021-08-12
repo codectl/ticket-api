@@ -5,14 +5,6 @@ ARG CWD=/usr/local/app
 RUN mkdir $CWD
 WORKDIR $CWD
 
-# proxy settings
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-ARG NO_PROXY
-ENV http_proxy $HTTP_PROXY
-ENV https_proxy $HTTPS_PROXY
-ENV no_proxy $NO_PROXY
-
 # set some environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
