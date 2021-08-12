@@ -1,12 +1,13 @@
 ---
 steps:
-  - label: ":docker: :kubernetes: Build image"
-    command: .buildkite/scripts/build.sh
-    concurrency: 1
-    concurrency_group: ticket-service/build
-    branches: master
-    agents:
-      env: kubernetes
-      namespace: services
-      privileged: true
-      kaniko: true
+  - trigger: "kaniko"
+    label: ":buildkite: Trigger build pipeline"
+    build:
+      message: "${BUILDKITE_MESSAGE}"
+      commit: HEAD
+      branch: "${BUILDKITE_BRANCH}"
+      env:
+        REGISTRY: renato.jfrog.io
+        REGISTRY_REPOSITORY: local-docker
+        IMAGE_NAME: ticket-service
+        IMAGE_TAG: latest
