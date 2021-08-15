@@ -11,3 +11,4 @@ steps:
         REGISTRY_REPOSITORY: local-docker
         IMAGE_NAME: ticket-service
         IMAGE_TAG: latest
+        BITBUCKET_CONTEXT_REPO: "${BUILDKITE_GIT_REPO}"
