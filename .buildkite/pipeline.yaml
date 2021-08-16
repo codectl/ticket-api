@@ -1,5 +1,14 @@
 ---
 steps:
+  - label: ":package: Package repository"
+    command: ".buildkite/scripts/package.sh"
+    agents:
+      env: kubernetes
+      namespace: services
+      privileged: false
+
+  - wait
+
   - trigger: "kaniko"
     label: ":buildkite: Trigger build pipeline"
     build:
@@ -7,8 +16,13 @@ steps:
       commit: HEAD
       branch: "${BUILDKITE_BRANCH}"
       env:
-        REGISTRY: renato.jfrog.io
-        REGISTRY_REPOSITORY: local-docker
-        IMAGE_NAME: ticket-service
-        IMAGE_TAG: latest
-        BITBUCKET_CONTEXT_REPO: "${BUILDKITE_GIT_REPO}"
+        REGISTRY: "${REGISTRY}"
+        REGISTRY_REPOSITORY: "${REGISTRY_REPOSITORY}"
+        IMAGE_NAME: "${IMAGE_NAME}"
+        IMAGE_TAG: "${IMAGE_TAG}"
+
+env:
+  REGISTRY: renatodamas.jfrog.io
+  REGISTRY_REPOSITORY: local-docker
+  IMAGE_NAME: ticket-service
+  IMAGE_TAG: latest
