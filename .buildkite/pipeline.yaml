@@ -1,7 +1,7 @@
 ---
 steps:
   - label: ":package: Package repository"
-    command: ".buildkite/scripts/package.sh"
+    command: ".buildkite/steps/package/package.sh"
     agents:
       env: kubernetes
       namespace: services
@@ -23,7 +23,7 @@ steps:
   - wait
 
   - label: ":rocket: Deploy service"
-    command: ".buildkite/scripts/deploy.sh"
+    command: ".buildkite/steps/deploy/deploy.sh"
     agents:
       env: kubernetes
       namespace: services
