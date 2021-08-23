@@ -20,6 +20,14 @@ steps:
         REGISTRY_REPOSITORY: "${REGISTRY_REPOSITORY}"
         IMAGE_NAME: "${IMAGE_NAME}"
         IMAGE_TAG: "${IMAGE_TAG}"
+  - wait
+
+  - label: ":rocket: Deploy service"
+    command: ".buildkite/scripts/deploy.sh"
+    agents:
+      env: kubernetes
+      namespace: services
+      privileged: false
 
 env:
   REGISTRY: renatodamas.jfrog.io

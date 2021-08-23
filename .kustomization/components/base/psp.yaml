@@ -1,0 +1,47 @@
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: ticket-service
+  annotations:
+    kubernetes.io/description: 'psp for ticket service'
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
+    seccomp.security.alpha.kubernetes.io/defaultProfileName: 'runtime/default'
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+
+  allowedCapabilities: [ ]
+  requiredDropCapabilities: [ ALL ]
+  defaultAddCapabilities: [ ]
+
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+
+  seLinux: # harness for SELinux
+    rule: RunAsAny
+
+  runAsUser:
+    rule: MustRunAsNonRoot
+  runAsGroup:
+    rule: MustRunAs
+    ranges:
+      - min: 1000
+        max: 65535
+  supplementalGroups:
+    rule: MustRunAs
+    ranges:
+      - min: 1000
+        max: 65535
+  fsGroup:
+    rule: MustRunAs
+    ranges:
+      - min: 1000
+        max: 65535
+  volumes:
+    - configMap
+    - secret
+    - emptyDir
+    - persistentVolumeClaim
+  readOnlyRootFilesystem: false

@@ -1,0 +1,13 @@
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ticket-api
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /api/tickets
+            backend:
+              serviceName: ticket-api
+              servicePort: 80

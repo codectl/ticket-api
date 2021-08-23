@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticket-api
+  labels:
+    app: ticket-api
+    framework: flask
+  annotations:
+    a8r.io/description: "API service for CRUD operations on tickets"
+    a8r.io/owner: renatodamas
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: ticket-api
+
+  strategy:
+    # Update each pod at a time and prevent
+    # additional pods from created
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 0
+
+  template:
+    metadata:
+      labels:
+        app: ticket-api
+    spec:
+      containers:
+        - name: ticket-api
+          image: ticket-service:latest
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: ticket
+            - secretRef:
+                name: ticket
+          resources:
+            limits:
+              cpu: 1
+              memory: 1Gi
+            requests:
+              cpu: 1
+              memory: 516Mi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+      serviceAccountName: ticket-service
+      restartPolicy: Always
