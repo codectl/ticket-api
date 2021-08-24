@@ -2,18 +2,15 @@
 
 set -euo pipefail
 
-# validate env parameters
-if [[ ! -v NAMESPACE ]]; then
-  echo "--- :boom: Missing 'NAMESPACE'" 1>&2
+if ! kubectl get deployment --selector app=ticket-api ||
+  ! kubectl get pod --selector app=ticket-bridge; then
+  echo "--- :boom: Missing resources"
   exit 1
+else
+  # base location for services
+  basedir=.kustomization/components/
+
+  # restart services
+  kubectl replace --force -f "${basedir}/api/deployment.yaml"
+  kubectl replace --force -f "${basedir}/bridge/pod.yaml"
 fi
-
-# temporary files
-tmpdir=$(mktemp -d)
-manifest="${tmpdir}/manifest.yaml"
-
-# setup kustomization file
-NAMESPACE="$NAMESPACE" \
-  envsubst <"$(dirname "$0")/templates/kustomization.yaml" >"${manifest}"
-
-kubectl kustomize "$manifest" | kubectl replace -f -
