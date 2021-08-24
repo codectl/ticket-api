@@ -8,7 +8,7 @@ if ! kubectl get deployment --selector app=ticket-api ||
   exit 1
 else
   # base location for services
-  basedir=.kustomization/components/
+  basedir=".kustomization/components/"
 
   # restart services
   kubectl replace --force -f "${basedir}/api/deployment.yaml"
