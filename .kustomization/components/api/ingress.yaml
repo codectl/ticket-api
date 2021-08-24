@@ -5,7 +5,8 @@ metadata:
   name: ticket-api
 spec:
   rules:
-    - http:
+    - host: example.com
+      http:
         paths:
           - path: /api/tickets
             backend:
