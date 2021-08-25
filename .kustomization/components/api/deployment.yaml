@@ -40,12 +40,12 @@ spec:
             - secretRef:
                 name: ticket-service
           resources:
-            limits:
-              cpu: 1
-              memory: 1Gi
             requests:
-              cpu: 1
-              memory: 516Mi
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
