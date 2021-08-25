@@ -20,7 +20,6 @@ COPY src/ src/
 COPY .flaskenv .env* ./
 
 # run process as non root
-RUN chown -R 1000:1000 *
 USER 1000:1000
 
 # command to run on container start
