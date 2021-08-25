@@ -23,11 +23,11 @@ class TicketSearchCriteriaSchema(Schema):
         metadata=dict(description='additional fields to include in the results')
     )
     limit = fields.Integer(
-        missing=20,
+        load_default=20,
         metadata=dict(description='tickets user has subscribed to')
     )
     sort = fields.String(
         validate=validate.OneOf(['created']),
-        missing='created',
+        load_default='created',
         metadata=dict(description='sort tickets by'),
     )

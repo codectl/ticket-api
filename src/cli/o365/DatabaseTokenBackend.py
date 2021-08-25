@@ -1,7 +1,7 @@
 from O365.utils import BaseTokenBackend
 
 from src.services.token import TokenService
-from src.serializers.token import TokenSchema
+from src.serialization.token import TokenSchema
 
 
 class DatabaseTokenBackend(BaseTokenBackend):

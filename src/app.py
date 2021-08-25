@@ -59,8 +59,8 @@ def setup_app(app):
 
         # use app context to load namespaces, blueprints and schemas
         import src.resources.tickets
-        from src.serializers.outbound.HttpError import HttpErrorSchema
-        from src.serializers.outbound.jira.Issue import IssueSchema
+        from src.serialization.serializers.HttpError import HttpErrorSchema
+        from src.serialization.serializers.jira.Issue import IssueSchema
 
     # initialize root blueprint
     bp = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])

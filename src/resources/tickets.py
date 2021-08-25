@@ -5,10 +5,10 @@ from flask import request, jsonify
 from flask_restful import abort, Resource
 
 from src import api
-from src.serializers.inbound.CreateTicket import CreateTicketSchema
-from src.serializers.inbound.CreateTicketComment import CreateTicketCommentSchema
-from src.serializers.inbound.TicketSearchCriteria import TicketSearchCriteriaSchema
-from src.serializers.outbound.jira.Issue import IssueSchema
+from src.serialization.deserializers.CreateTicket import CreateTicketSchema
+from src.serialization.deserializers.CreateTicketComment import CreateTicketCommentSchema
+from src.serialization.deserializers.TicketSearchCriteria import TicketSearchCriteriaSchema
+from src.serialization.serializers.jira.Issue import IssueSchema
 from src.services.ticket import TicketService
 from src.services.jira import JiraService
 

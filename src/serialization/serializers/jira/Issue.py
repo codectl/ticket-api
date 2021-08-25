@@ -1,12 +1,12 @@
 from marshmallow import Schema, fields
 
-from src.serializers.outbound.jira.Attachment import AttachmentSchema
-from src.serializers.outbound.jira.Comment import CommentSchema
-from src.serializers.outbound.jira.IssueType import IssueTypeSchema
-from src.serializers.outbound.jira.Project import ProjectSchema
-from src.serializers.outbound.jira.Rendered import RenderedSchema
-from src.serializers.outbound.jira.Status import StatusSchema
-from src.serializers.outbound.jira.User import UserSchema
+from src.serialization.serializers.jira.Attachment import AttachmentSchema
+from src.serialization.serializers.jira.Comment import CommentSchema
+from src.serialization.serializers.jira.IssueType import IssueTypeSchema
+from src.serialization.serializers.jira.Project import ProjectSchema
+from src.serialization.serializers.jira.Rendered import RenderedSchema
+from src.serialization.serializers.jira.Status import StatusSchema
+from src.serialization.serializers.jira.User import UserSchema
 
 
 class IssueSchema(Schema):

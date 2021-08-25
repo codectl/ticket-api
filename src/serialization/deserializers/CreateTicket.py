@@ -48,7 +48,7 @@ class CreateTicketSchema(Schema):
     watchers = fields.List(
         fields.Email(),
         allow_none=False,
-        missing=[],
+        load_default=[],
         metadata=dict(
             description='users to be watching the ticket',
             example=[]
@@ -57,7 +57,7 @@ class CreateTicketSchema(Schema):
     priority = fields.String(
         validate=validate.OneOf(['low', 'high']),
         allow_none=True,
-        missing=None,
+        load_default=None,
         metadata=dict(
             description='define a higher or lower ticket priority',
             example=None
