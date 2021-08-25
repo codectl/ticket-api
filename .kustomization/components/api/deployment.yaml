@@ -39,6 +39,8 @@ spec:
                 name: ticket-service
             - secretRef:
                 name: ticket-service
+            - secretRef:
+                name: proxy
           resources:
             requests:
               cpu: 500m
