@@ -1,28 +1,39 @@
-# Ticket service
+# Kustomization
 
-Kubernetes configuration files for the ticket manager service. Full details on this service can be
-found [here](https://github.com/rena2damas/ticket-manager).
+This directory contains the ```kubernetes``` resource manifests that provide a description on the different components
+for this project. To do so, it resorts to ```kustomize```, a tool that allows the management of ```kubernetes```
+resource objects using ```kustomization.yaml``` files.
 
-## Install
+More information on that is found in ```kubernetes```
+documentation, [here](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/)
 
-Run the following instructions in the same order to have it installed:
+## Directory structure
+
+In the root location, 3 directories are found:
+
+* base: ```kubernetes``` resources that serve as a base for other components
+* components: ```kubernetes``` components that are put together by each overlay
+* overlays: high level object that represent an environment and defines a combination of bases and components
+
+## Usage
+
+Most systems define a production and development environment. Because each may have specific configurations, an overlay
+exists representing each environment: ```prd``` for production and ```dev``` for development.
+
+Based on the target environment, one should use the right overlay.
+
+For instance, to have a development environment running for this service, it would be achieved this way:
 
 ```bash
-$ cd kubernetes/services/ticket
-$ kubectl apply -f sa.yaml
-$ kubectl apply -f rbac.yaml
-$ kubectl apply -f secrets.yaml
-$ kubectl apply -f configmap.yaml
-$ kubectl apply -f api.deployment.yaml
-$ kubectl apply -f api.svc.yaml
-$ kubectl apply -f api.ingress.yaml
-$ kubectl apply -f bridge.pod.yaml
+$ kubctl apply -k overlays/env
 ```
 
-## Access
+At this point, all the pods should be running (or about to). An example output with default settings:
 
-A web server application should now be running on ```http://<domain>/api/tickets```.
-
-## License
-
-[GPLv3](LICENSE) license
+```bash
+$ kubctl get pods
+NAME                        READY   STATUS      RESTARTS    ...
+ticket-api-XXX-XXX          1/1     Running     0           ...
+ticket-api-XXX-XXX          1/1     Running     0           ...
+ticket-bridge               1/1     Running     0           ...
+```
