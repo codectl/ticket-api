@@ -22,4 +22,4 @@ env/
 o365_token.txt
 
 # keep secrets out of vc
-.kustomization/base/.secrets.yaml
+.secrets.yaml
