@@ -20,3 +20,6 @@ env/
 
 # O365 auth
 o365_token.txt
+
+# keep secrets out of vc
+.kustomization/base/.secrets.yaml
