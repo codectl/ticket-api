@@ -15,6 +15,40 @@ In the root location, 3 directories are found:
 * components: ```kubernetes``` components that are put together by each overlay
 * overlays: high level object that represent an environment and defines a combination of bases and components
 
+## Secret management
+
+The need to have the repository under version control has led to the challenge of having storing sensitive information
+in the remote repository, in this case, ```kubernetes``` secrets. This is where ```bitnami-labs/sealed-secrets``` comes
+in, a tool that encrypts secrets so that one can safely store this information remotely. For instructions on how to
+install & use, visit its documentation [here](https://github.com/bitnami-labs/sealed-secrets)
+.
+
+The idea is then converting regular ```kubernetes``` secrets into sealed secrets. Regular secrets are hidden files,
+like ```.secrets.yaml``` and, in **no** circumstance, should they be committed to git repository. A rule
+in ```.gitignore``` should prevent it from happening and is present for that reason. Sealed secrets are not hidden
+files, like ```sealed.yaml``` and is safe to store in the repository.
+
+Since ```kustomize``` is managing all the different project resources - secrets included -, a combination
+of ```kustomize``` and ```kubeseal``` is needed for this process.
+
+Starting off by running the command below:
+
+```bash
+kustomize build overlays/dev/secrets/
+```
+
+This produces a compilation of all the secrets needed in the project, and which need to be sealed individually.
+Unfortunately there is no better way to go about this than to execute the following sequence:
+
+```bash
+ENV="dev"
+kustomize build overlays/${ENV}/secrets/ | yq e 'select(.metadata.name=="proxy")' - | kubeseal > overlays/$ENV/sealed-secrets/proxy.yaml
+kustomize build overlays/${ENV}/secrets/ | yq e 'select(.metadata.name=="ticket-service")' - | kubeseal > overlays/${ENV}/sealed-secrets/secrets.yaml
+```
+
+As a result, all the secrets are now sealed, they can safely be shared and stored with no risk of compromising sensitive
+information.
+
 ## Usage
 
 Most systems define a production and development environment. Because each may have specific configurations, an overlay
@@ -27,6 +61,9 @@ For instance, to have a development environment running for this service, it wou
 ```bash
 $ kubctl apply -k overlays/env
 ```
+
+Note: it is required to seal the secrets first, as mentioned in [this](#Secret-management) section, before applying
+this.
 
 At this point, all the pods should be running (or about to). An example output with default settings:
 
