@@ -22,4 +22,4 @@ env/
 o365_token.txt
 
 # exclude hidden kustomization files.
-.kustomization/.*.yaml
+.kustomization/**/.*.yaml
