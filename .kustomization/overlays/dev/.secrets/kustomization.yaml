@@ -4,4 +4,4 @@ kind: Kustomization
 namespace: services-dev
 
 resources:
-  - ../../../base/secrets/
+  - ../../../base/.secrets/

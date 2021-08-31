@@ -5,8 +5,7 @@ namespace: services-dev
 
 resources:
   - ../../base/
-  - sealed-secrets/proxy.yaml
-  - sealed-secrets/sealed.yaml
+  - sealed-secrets/
 
 components:
   - ../../components/api/

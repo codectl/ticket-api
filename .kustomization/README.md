@@ -34,20 +34,24 @@ of ```kustomize``` and ```kubeseal``` is needed for this process.
 Starting off by running the command below:
 
 ```bash
-kustomize build overlays/dev/secrets/
+$ kustomize build .kustomization/overlays/dev/.secrets/
 ```
 
 This produces a compilation of all the secrets needed in the project, and which need to be sealed individually.
 Unfortunately there is no better way to go about this than to execute the following sequence:
 
 ```bash
+(
 ENV="dev"
-kustomize build overlays/${ENV}/secrets/ | yq e 'select(.metadata.name=="proxy")' - | kubeseal > overlays/$ENV/sealed-secrets/proxy.yaml
-kustomize build overlays/${ENV}/secrets/ | yq e 'select(.metadata.name=="ticket-service")' - | kubeseal > overlays/${ENV}/sealed-secrets/secrets.yaml
+basedir="$(pwd)/.kustomization"
+cd "${basedir}/overlays/${ENV}/"
+kustomize build .secrets | yq e 'select(.metadata.name=="'proxy'")' - | kubeseal > sealed-secrets/proxy.yaml 
+kustomize build .secrets | yq e 'select(.metadata.name=="'ticket-service'")' - | kubeseal > sealed-secrets/secrets.yaml 
+)
 ```
 
-As a result, all the secrets are now sealed, they can safely be shared and stored with no risk of compromising sensitive
-information.
+As a result, all the secrets are now sealed under ```sealed-secrets```, and they can now safely be shared and stored
+with no risk of compromising sensitive information.
 
 ## Usage
 
@@ -59,7 +63,7 @@ Based on the target environment, one should use the right overlay.
 For instance, to have a development environment running for this service, it would be achieved this way:
 
 ```bash
-$ kubctl apply -k overlays/env
+$ kubctl apply -k .kustomization/overlays/dev/
 ```
 
 Note: it is required to seal the secrets first, as mentioned in [this](#Secret-management) section, before applying
