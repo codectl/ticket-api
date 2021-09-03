@@ -4,6 +4,6 @@ kind: Kustomization
 
 resources:
   - psp.yaml
-  - configmap.yaml
+  - cm.yaml
   - sa.yaml
   - rbac.yaml

@@ -5,7 +5,7 @@ namespace: services-dev
 
 resources:
   - ../../base/
-  - sealed-secrets/
+  - secrets/sealed/
 
 components:
   - ../../components/api/

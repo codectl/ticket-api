@@ -4,8 +4,8 @@ kind: Kustomization
 namespace: services
 
 resources:
-  - sealed-secrets
   - ../../base/
+  - secrets/sealed/
 
 components:
   - ../../components/api/

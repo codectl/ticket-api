@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ticket-service
+data:
+
+  # The mailbox to manage
+  MAILBOX: dev-mailbox@example.com
+
+  # Jira settings
+  JIRA_TICKET_LABELS: ticket,dev

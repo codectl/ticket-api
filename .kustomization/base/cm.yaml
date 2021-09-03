@@ -46,4 +46,3 @@ data:
   # filter settings
   EMAIL_WHITELISTED_DOMAINS: example.com
   EMAIL_BLACKLIST: malicious@example.com
-
