@@ -10,3 +10,10 @@ resources:
 components:
   - ../../components/api/
   - ../../components/bridge/
+  - configs/
+  - ingress/
+
+images:
+  - name: ticket-service
+    newName: ...
+    newTag: latest
