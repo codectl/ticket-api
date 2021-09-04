@@ -35,12 +35,14 @@ spec:
           image: ticket-service:latest
           imagePullPolicy: Always
           envFrom:
-            - configMapRef:
-                name: ticket-service
-            - secretRef:
-                name: ticket-service
             - secretRef:
                 name: proxy
+            - secretRef:
+                name: ticket-service-postgres
+            - secretRef:
+                name: ticket-service
+            - configMapRef:
+                name: ticket-service
           resources:
             requests:
               cpu: 500m

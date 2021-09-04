@@ -16,12 +16,14 @@ spec:
       imagePullPolicy: Always
       command: [ "flask", "o365", "handle-incoming-email" ]
       envFrom:
-        - configMapRef:
-            name: ticket-service
-        - secretRef:
-            name: ticket-service
         - secretRef:
             name: proxy
+        - secretRef:
+            name: postgres
+        - secretRef:
+            name: ticket-service
+        - configMapRef:
+            name: ticket-service
       resources:
         requests:
           cpu: 300m

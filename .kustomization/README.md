@@ -45,7 +45,8 @@ are more than a single one. Unfortunately there is no better way to go about thi
 ENV="dev"
 basedir="$(pwd)/.kustomization"
 cd "${basedir}/overlays/${ENV}/"
-kustomize build secrets/ | kubeseal > secrets/sealed/base.yaml 
+kustomize build secrets/ | yq e 'select(.metadata.name=="'ticket-service'")' | kubeseal > secrets/sealed/base.yaml 
+kustomize build secrets/ | yq e 'select(.metadata.name=="'ticket-service-postgres'")' | kubeseal > secrets/sealed/postgres.yaml 
 )
 ```
 
