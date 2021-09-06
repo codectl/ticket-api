@@ -3,9 +3,9 @@ steps:
   - label: ":package: Package repository"
     command: ".buildkite/steps/package/package.sh"
     agents:
-      env: kubernetes
+      env: prd
       namespace: services
-      privileged: false
+      kubernetes: true
 
   - wait
 
@@ -25,9 +25,9 @@ steps:
   - label: ":rocket: Deploy service"
     command: ".buildkite/steps/deploy/deploy.sh"
     agents:
-      env: kubernetes
+      env: prd
       namespace: services
-      privileged: false
+      kubernetes: true
 
 env:
   REGISTRY: renatodamas.jfrog.io
