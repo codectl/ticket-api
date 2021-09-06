@@ -19,7 +19,7 @@ spec:
         - secretRef:
             name: proxy
         - secretRef:
-            name: postgres
+            name: ticket-service-postgres
         - secretRef:
             name: ticket-service
         - configMapRef:
