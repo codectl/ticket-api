@@ -115,4 +115,4 @@ def check_for_missing_tickets(days=1):
     manager = create_mailbox_manager()
 
     # Start listening for incoming notifications...
-    manager.check_for_missing_tickets(days=days)
+    manager.check_for_missing_tickets(days=int(days))
