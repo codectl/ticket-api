@@ -14,6 +14,7 @@ O365
 PyYAML
 psycopg2-binary
 requests
+tzlocal~=2.1
 Werkzeug
 
 # From git
