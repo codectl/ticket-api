@@ -299,7 +299,7 @@ class O365MailboxManager:
         body = str(soup)
 
         # get the json data
-        data = re.search(r'{.*}', body).group()
+        data = re.search(r'{.*\s.*}', body).group()
         data = json.loads(data)
 
         return data
