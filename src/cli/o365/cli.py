@@ -80,8 +80,8 @@ def create_mailbox_manager(mailbox=None, **kwargs):
 
 
 @cli.command()
-@click.option('--mailbox', '-m', type=str, help='the mailbox to manage events')
-@click.option('--retries', '-r', type=int, help='number of retries when request fails')
+@click.option('--mailbox', '-m', default=None, help='the mailbox to manage events')
+@click.option('--retries', '-r', default=0, help='number of retries when request fails')
 def authenticate(mailbox=None, retries=0):
     """
     Set code used for OAuth2 authentication.
@@ -90,9 +90,9 @@ def authenticate(mailbox=None, retries=0):
 
 
 @cli.command()
-@click.option('--mailbox', '-m', type=str, help='the mailbox to manage events')
-@click.option('--retries', '-r', type=int, help='number of retries when request fails')
-def handle_incoming_email(mailbox=None, retries=0):
+@click.option('--mailbox', '-m', default=None, help='the mailbox to manage events')
+@click.option('--retries', '-r', default=0, help='number of retries when request fails')
+def handle_incoming_email(mailbox, retries):
     """
     Handle incoming email.
     """
@@ -107,8 +107,8 @@ def handle_incoming_email(mailbox=None, retries=0):
 
 
 @cli.command()
-@click.option('--days', '-d', type=str, help='number of days to search back')
-def check_for_missing_tickets(days=1):
+@click.option('--days', '-d', default=1, help='number of days to search back')
+def check_for_missing_tickets(days):
     """
     Check for possible tickets that went missing in the last days.
     """
