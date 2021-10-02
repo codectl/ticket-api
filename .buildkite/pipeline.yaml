@@ -20,6 +20,7 @@ steps:
         REGISTRY_REPOSITORY: "${REGISTRY_REPOSITORY}"
         IMAGE_NAME: "${IMAGE_NAME}"
         IMAGE_TAG: "${IMAGE_TAG}"
+
   - wait
 
   - label: ":rocket: Deploy service"

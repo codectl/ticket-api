@@ -6,8 +6,7 @@ import yaml
 
 
 def create_env():
-    """ Create an env from local .env """
-
+    """Create an env from local .env."""
     dotenv = environs.Env()
     dotenv.read_env()
     return dotenv
@@ -18,6 +17,7 @@ env = create_env()
 
 
 class BaseConfig:
+    """Base configurations."""
 
     DEBUG = False
     TESTING = False

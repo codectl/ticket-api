@@ -13,9 +13,7 @@ from src.settings.config import config_by_name
 
 
 def create_app(config_name=None):
-    """
-    Create a new app.
-    """
+    """Create a new app."""
 
     # define the WSGI application object
     app = Flask(__name__)
@@ -31,9 +29,7 @@ def create_app(config_name=None):
 
 
 def setup_app(app):
-    """
-    Setup the app
-    """
+    """Setup the app."""
 
     # set app default logging to INFO
     app.logger.setLevel(logging.INFO)
