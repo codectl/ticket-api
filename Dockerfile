@@ -5,10 +5,6 @@ ARG CWD=/usr/local/app
 RUN mkdir $CWD
 WORKDIR $CWD
 
-# set some environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
 # install python dependencies
 COPY requirements.txt .
 RUN pip install -r requirements.txt
@@ -16,7 +12,7 @@ RUN pip install -r requirements.txt
 # copy the content of the local src directory to the working directory
 COPY src/ src/
 
-# get configurations
+# copy configurations
 COPY .flaskenv .env* ./
 
 # run process as non root

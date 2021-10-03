@@ -17,8 +17,8 @@ Sealing secrets would be done this way for this case:
 ENV="dev"
 basedir="$(pwd)/.kustomization"
 cd "${basedir}/overlays/${ENV}/"
-kustomize build secrets/ | yq e 'select(.metadata.name=="'ticket-service'")' | kubeseal > secrets/sealed/base.yaml 
-kustomize build secrets/ | yq e 'select(.metadata.name=="'ticket-service-postgres'")' | kubeseal > secrets/sealed/postgres.yaml 
+kustomize build secrets/ | yq e 'select(.metadata.name=="'ticket-service'")' - | kubeseal > secrets/sealed/base.yaml 
+kustomize build secrets/ | yq e 'select(.metadata.name=="'ticket-service-postgres'")' - | kubeseal > secrets/sealed/postgres.yaml 
 )
 ```
 
