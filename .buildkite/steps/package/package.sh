@@ -10,6 +10,7 @@ jfrog rt upload \
 --url "https://${REGISTRY}" \
 --user "$REGISTRY_USER" \
 --apikey "$REGISTRY_TOKEN" \
+--insecure-tls \
 -- "$tarfile" "artifactory/${REGISTRY_REPOSITORY}/${tarfile}"
 
 # upload to buildkite artifactory (for reference only)
