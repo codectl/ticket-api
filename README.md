@@ -26,9 +26,11 @@ The ```kubernetes``` resource manifests that describe the different components o
 files are found under ```.kustomization/```. A quick installation can be done this way:
 
 ```bash
-ENV=dev  # change to prd (production), if applicable
+(
+ENV=prd  # change to prd (production), if applicable
 cd .kustomization/
-kubectl -k apply overlays/${ENV}/
+kubectl apply -k overlays/${ENV}/
+)
 ```
 
 And it's as simple as that! All the services should now be up and running.
