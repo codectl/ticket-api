@@ -25,14 +25,20 @@ class ValidateMetadataFilter(OutlookMessageFilter):
             )
 
             # ignore the notification email sent to user after the creation of a new ticket
-            if soup.head.find('meta', attrs={'name': 'message', 'content': 'jira ticket notification'}):
+            if soup.head.find('meta', attrs={
+                'type': 'message',
+                'content': 'jira ticket notification'
+            }):
                 O365MailboxManager.add_message_to_history(message, model=model)
                 current_app.logger.info('Message filtered as this is a message notification to the user about created '
                                         'ticket.')
                 return None
 
             # ignore the message sent when a new comment is added to the ticket
-            elif soup.head.find('meta', attrs={'name': 'message', 'content': 'relay jira comment'}):
+            elif soup.head.find('meta', attrs={
+                'type': 'message',
+                'content': 'relay jira comment'
+            }):
                 O365MailboxManager.add_message_to_history(message, model=model)
                 current_app.logger.info('Message filtered as this is a relay message from a Jira comment.')
                 return None
