@@ -219,7 +219,7 @@ class O365MailboxManager:
         """
 
         # creating notification message to be sent to all recipients
-        markdown = mistune.create_markdown(escape=False)
+        markdown = mistune.create_markdown(escape=False, hard_wrap=True)
         body = markdown(TicketService.create_message_body(
             template='notification.j2',
             values={
