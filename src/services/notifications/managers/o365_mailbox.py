@@ -219,21 +219,22 @@ class O365MailboxManager:
         """
 
         # creating notification message to be sent to all recipients
-        body = mistune.markdown(TicketService.create_message_body(
+        markdown = mistune.create_markdown(escape=False)
+        body = markdown(TicketService.create_message_body(
             template='notification.j2',
             values={
                 'summary': message.subject,
                 'key': key,
                 'url': current_app.config['TICKET_CLIENT_APP']
             }
-        ), hard_wrap=True)
+        ))
 
         reply = cls.create_reply(
             message,
             values={
                 'body': body,
                 'metadata': [dict(
-                    name='message',
+                    type='message',
                     content='jira ticket notification'
                 )]
             }
