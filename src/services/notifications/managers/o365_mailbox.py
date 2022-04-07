@@ -234,7 +234,7 @@ class O365MailboxManager:
             values={
                 'body': body,
                 'metadata': [dict(
-                    type='message',
+                    name='message',
                     content='jira ticket notification'
                 )]
             }
