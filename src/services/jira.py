@@ -271,9 +271,12 @@ class JiraService(ProxyJIRA):
             content = attachment.stream.read()
         elif isinstance(attachment, O365.message.MessageAttachment):
             filename = filename or attachment.name
+            if not attachment.content:
+                raise ValueError(f"Attachment '{filename}' is empty")
             content = base64.b64decode(attachment.content)
         else:
-            raise ValueError("'{0}' is not a supported attachment.".format(type(attachment)))
+            msg = f"'{type(attachment)}' is not a supported attachment type."
+            raise ValueError(msg)
 
         # no point on adding empty file
         if content:
