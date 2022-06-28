@@ -261,24 +261,25 @@ class O365MailboxManager:
             values: dict = None
     ):
         """Create a reply message from template."""
-        reply = message.reply(to_all=True)
+        reply_msg = message.reply(to_all=True)
 
         # process email body with bs
         bs = O365.message.bs
 
-        if reply.body_type.lower() == 'html':
-            soup = bs(reply.body, 'html.parser')
+        if reply_msg.body_type.lower() == 'html':
+            soup = bs(reply_msg.body, 'html.parser')
             soup.find('hr').decompose()  # remove horizontal lines
-            reply_fwd = soup.find('body').decode_contents()
-            style = soup.find('style').decode_contents()
+            reply = soup.find('body').decode_contents()
+            style_bs = soup.find('style')
+            style = style_bs.decode_contents() if style_bs else ''
         else:
-            reply_fwd = '\n'.join(reply.body.splitlines()[2:])
+            reply = '\n'.join(reply_msg.body.splitlines()[2:])
             style = ''
 
         body = TicketService.create_message_body(
             template='reply.j2',
             values={
-                'reply': reply_fwd,
+                'reply': reply,
                 'style': style,
                 **values
             }
