@@ -307,7 +307,8 @@ class JiraService(ProxyJIRA):
                         self.add_watcher(issue=str(issue),
                                          watcher=watcher.accountId)
                     except jira.exceptions.JIRAError as e:
-                        if e.status_code == requests.codes.unauthorized:
+                        if e.status_code in (requests.codes.unauthorized,
+                                             requests.codes.forbidden):
                             current_app.logger.warning("Watcher '{0}' has no permission to watch issue '{1}'."
                                                        .format(watcher.displayName, str(issue)))
                         else:
