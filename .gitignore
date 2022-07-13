@@ -53,6 +53,7 @@ venv.bak/
 # database files
 *.db
 *.db-journal
+:memory
 
 # logs
 *.log*
