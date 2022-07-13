@@ -13,10 +13,10 @@ class SenderEmailDomainWhitelistedFilter(OutlookMessageFilter):
         if not message:
             return None
 
-        sender_email = message.sender.address
-        if sender_email.split("@")[1] not in self.whitelisted_domains:
+        sender = message.sender.address
+        if sender.split("@")[1] not in self.whitelisted_domains:
             current_app.logger.info(
-                f"Message skipped as the sender's email '{sender_email}' is not whitelisted."
+                f"Message skipped as the sender's email '{sender}' is not whitelisted."
             )
             return None
         return message

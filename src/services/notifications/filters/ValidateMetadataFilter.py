@@ -23,12 +23,12 @@ class ValidateMetadataFilter(OutlookMessageFilter):
                 outlook_conversation_id=message.conversation_id, _model=True
             )
 
-            # ignore the notification email sent to user after the creation of a new ticket
+            # ignore the notification email sent to user after the creation of a ticket
             if soup.head.find("meta", attrs={"content": "jira ticket notification"}):
                 O365MailboxManager.add_message_to_history(message, model=model)
                 current_app.logger.info(
-                    "Message filtered as this is a message notification to the user about created "
-                    "ticket."
+                    "Message filtered as this is a message notification to the user "
+                    "about created ticket."
                 )
                 return None
 

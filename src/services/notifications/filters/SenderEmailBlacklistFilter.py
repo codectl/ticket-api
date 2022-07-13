@@ -15,7 +15,8 @@ class SenderEmailBlacklistFilter(OutlookMessageFilter):
 
         sender = message.sender.address
         if sender in self.blacklist:
-            msg = f"Message skipped as the sender's email '{sender}' is blacklisted."
-            current_app.logger.info(msg)
+            current_app.logger.info(
+                f"Message skipped as the sender's email '{sender}' is blacklisted."
+            )
             return None
         return message
