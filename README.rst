@@ -15,9 +15,16 @@ ticket-api
     :target: https://opensource.org/licenses/MIT
     :alt: license: MIT
 
-A service for managing emails coming in/out from/to a O365 mailbox and integrates them with Jira.
+A service for managing emails coming in/out from/to a *O365* mailbox and integrates
+them with *Jira*.
 
-This service is suitable for anyone looking to create Jira tickets from the emails arriving to a mailbox. The motivation behind the creation of this project is that, on one hand, Jira provides good tools to track and manage tickets, and O365 mailbox is a convenient way to receive requests in the form of an email. This solution comes to merge the best of both worlds by allowing one to create a Jira ticket directly from a O365 email. Once a new email arrives to a mailbox, the service picks up the message from the inbox folder, and contacts the Jira API for the creation of the ticket.
+This service is suitable for anyone looking to create *Jira* tickets from the emails
+arriving to a mailbox. The motivation behind the creation of this project is that, on
+one hand, *Jira* provides good tools to track and manage tickets, and *O365* mailbox is
+a convenient way to receive requests in the form of an email. This solution comes to
+merge the best of both worlds by allowing one to create a *Jira* ticket directly from
+a *O365* email. Once a new email arrives to a mailbox, the service picks up the message
+from the inbox folder, and contacts the *Jira* API for the creation of the ticket.
 
 Setup 🔧
 =====
@@ -110,8 +117,8 @@ Note ⚠️: one should use ``configmap`` and ``secret`` instead when configurin
 
 O365 Auth
 ^^^^^^^^^
-Because the service relies on ``O365`` services, one should start off by requesting permissions against the ``O365``
-service:
+Because the service relies on *O365* services, one should start off by requesting
+permissions against the *O365* service:
 
 .. code-block:: bash
 
@@ -122,17 +129,19 @@ service:
     > Paste the authenticated url here:
     > ...
 
-As seen above, the ``O365`` user must provide proper consent for this service to perform certain actions (see scopes)
-on behalf of the user, as per defined in OAuth2 authorization flow. For the use case previously mentioned, the service
-would require access to the ``O365`` user's inbox to read its content.
+As seen above, the *O365* user must provide proper consent for this service to
+perform certain actions (see scopes) on behalf of the user, as per defined in OAuth2
+authorization flow. For the use case previously mentioned, the service would require
+access to the *O365* user's inbox to read its content.
 
-The best way to go about it is simply to open the link in a browser and accept the requested consents. The ``O365``
-will redirect to a link containing the so desired authorization code. Simply paste that response link back to the
-terminal, and it's done.
+The best way to go about it is simply to open the link in a browser and accept the
+requested consents. The *O365* will redirect to a link containing the so desired
+authorization code. Simply paste that response link back to the terminal, and it's done.
 
-A new file ``o365_token.txt`` will be created which contains all the important OAuth2 parameters such as
-the ``access_token`` and ``refresh_token``. The ``refresh_token`` has a duration of 90 days after which it
-expires, so one must repeat the process just described to request new access codes.
+A new file ``o365_token.txt`` will be created which contains all the important
+*OAuth2* parameters such as the ``access_token`` and ``refresh_token``. The
+``refresh_token`` has a duration of 90 days after which it expires, so one must
+repeat the process just described to request new access codes.
 
 Run 🚀
 ====
@@ -146,9 +155,9 @@ To start listening for incoming events (aka emails), it would go like this:
     > ... INFO in base: Open new events channel ...
     > ...
 
-A new streaming connection is then initiated between our service and the ``O365`` notification service. From this
-moment on, as soon as a new email reaches the inbox folder, a Jira API request is performed, and a new ticket is
-created.
+A new streaming connection is then initiated between our service and the *O365*
+notification service. From this moment on, as soon as a new email reaches the inbox
+folder, a *Jira* API request is performed, and a new ticket is created.
 
 A thorough explanation on how the notification streaming mechanism works, can be
 found `here <https://github.com/rena2damas/o365-notifications>`_.
@@ -184,19 +193,20 @@ Core packages
 --------------
 This project takes advantage of several python packages that leverage the service implementation. The core packages are:
 
-* `Flask <https://pypi.org/project/Flask/>`_: famous application web framework based
-on ``werkzeug`` WSGI
+* `Flask <https://pypi.org/project/Flask/>`_ : famous application web framework based
+  on ``werkzeug`` WSGI
 * `Flask-RESTful <https://pypi.org/project/Flask-RESTful/>`_: serve RESTful endpoints
-in ``Flask``
+  in ``Flask``
 * `Flask-SQLAlchemy <https://pypi.org/project/Flask-SQLAlchemy/>`_: enable
 * `APISpec <https://pypi.org/project/apispec/>`_: the OpenAPI standard
-``SQLAlchemy`` support for ``Flask``
+  ``SQLAlchemy`` support for ``Flask``
 * `marshmallow <https://pypi.org/project/marshmallow/>`_: for API data serialization
-* `jira <https://pypi.org/project/jira/>`_: _pythonic_ implementation for Jira REST API
-* `O365 <https://pypi.org/project/o365/>`_: _pythonic_ implementation for Microsoft
-Graph & Office 365 REST API
-* `O365-notifications <https://github.com/rena2damas/o365-notifications>`_: _pythonic_
-implementation for O365 notifications
+* `jira <https://pypi.org/project/jira/>`_: *pythonic* implementation for *Jira* REST
+  API
+* `O365 <https://pypi.org/project/o365/>`_: *pythonic* implementation for Microsoft
+  Graph & Office 365 REST API
+* `O365-notifications <https://github.com/rena2damas/o365-notifications>`_:
+  *pythonic* implementation for O365 notifications
 
 CLI Commands
 ------------
@@ -208,7 +218,7 @@ The list of available supported operations is given by running the command:
     > ...
 
 As any ``Flask`` application, the ``run`` and ``shell`` operations are present.
-Additionally, a set of commands to manage ``O365`` are also provided:
+Additionally, a set of commands to manage *O365* are also provided:
 
 .. code-block:: bash
 
