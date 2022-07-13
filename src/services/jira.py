@@ -28,7 +28,7 @@ class ProxyJIRA(JIRA):
             options={
                 "rest_path": "api",
                 "rest_api_version": 2,
-                "agile_rest_path": jira.resources.GreenHopperResource.AGILE_BASE_REST_PATH,
+                "agile_rest_path": jira.resources.AgileResource.AGILE_BASE_REST_PATH,
                 "agile_rest_api_version": "latest",
             },
             **kwargs,
