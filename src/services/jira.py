@@ -106,28 +106,6 @@ class ProxyJIRA(JIRA):
             params["permissions"] = permissions
         return self._get_json("mypermissions", params=params)
 
-    def search_users(
-        self, user, start_at=0, limit=50, include_active=True, include_inactive=False
-    ):
-        """Overridden method.
-
-        Change from 'username' to 'query' after some Jira API update:
-        "The query parameter 'username' is not supported in GDPR strict mode."
-        """
-        params = {
-            "query": user,
-            "includeActive": include_active,
-            "includeInactive": include_inactive,
-        }
-        return self._fetch_pages(
-            jira.resources.User,
-            None,
-            "user/search",
-            startAt=start_at,
-            maxResults=limit,
-            params=params,
-        )
-
     def search_boards(self, jira_name=None) -> typing.List[jira.resources.Board]:
         """Search for boards.
 
