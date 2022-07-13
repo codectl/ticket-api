@@ -1,4 +1,3 @@
-import flasgger
 import jira
 import marshmallow
 from flask import request, jsonify
@@ -13,8 +12,8 @@ from src.serialization.deserializers.TicketSearchCriteria import (
     TicketSearchCriteriaSchema,
 )
 from src.serialization.serializers.jira.Issue import IssueSchema
-from src.services.ticket import TicketService
-from src.services.jira import JiraService
+from src.services.jira import JiraSvc
+from src.services.ticket import TicketSvc
 
 
 @api.resource("/tickets", endpoint="tickets")
@@ -49,9 +48,9 @@ class Tickets(Resource):
         # read params and set defaults
         params = request.args.copy()
         filters = {
-            "boards": params.poplist("boards") or JiraService.supported_board_keys(),
+            "boards": params.poplist("boards") or JiraSvc.supported_board_keys(),
             "categories": params.poplist("categories")
-            or JiraService.supported_categories(),
+            or JiraSvc.supported_categories(),
             "fields": params.poplist("fields"),
             "limit": params.get("limit", 20),
             "sort": params.get("sort", "created"),
@@ -64,7 +63,7 @@ class Tickets(Resource):
             abort(400, status=400, message=errors)
 
         # consider default values
-        tickets = TicketService.find_by(**filters)
+        tickets = TicketSvc.find_by(**filters)
 
         return IssueSchema(many=True).dump(tickets)
 
@@ -138,7 +137,7 @@ class Tickets(Resource):
             abort(400, status=400, message=errors)
 
         try:
-            created = TicketService.create(**body, attachments=files)
+            created = TicketSvc.create(**body, attachments=files)
             return IssueSchema().dump(created), 201
         except jira.exceptions.JIRAError as ex:
             abort(400, status=400, message=ex.text)
@@ -181,10 +180,10 @@ class Ticket(Resource):
         # search for ticket across supported boards and categories
         result = next(
             iter(
-                TicketService.find_by(
+                TicketSvc.find_by(
                     key=key,
-                    boards=JiraService.supported_board_keys(),
-                    categories=JiraService.supported_categories(),
+                    boards=JiraSvc.supported_board_keys(),
+                    categories=JiraSvc.supported_categories(),
                     limit=1,
                 )
             ),
@@ -270,7 +269,7 @@ class Comment(Resource):
             abort(400, status=400, message=errors)
 
         try:
-            TicketService.create_comment(issue=key, **body, attachments=files)
+            TicketSvc.create_comment(issue=key, **body, attachments=files)
             return None, 204
         except jira.exceptions.JIRAError as ex:
             abort(400, status=400, message=ex.text)
@@ -294,7 +293,7 @@ class SupportedBoards(Resource):
                             items:
                                 type: string
         """
-        return jsonify(JiraService.supported_board_keys())
+        return jsonify(JiraSvc.supported_board_keys())
 
 
 @api.resource("/tickets/supported-categories", endpoint="supported-categories")
@@ -315,4 +314,4 @@ class SupportedCategories(Resource):
                             items:
                                 type: string
         """
-        return jsonify(JiraService.supported_categories())
+        return jsonify(JiraSvc.supported_categories())

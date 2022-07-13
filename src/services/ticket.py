@@ -6,10 +6,10 @@ from flask import current_app
 
 from src import db
 from src.models.Ticket import Ticket
-from src.services.jira import JiraService
+from src.services.jira import JiraSvc
 
 
-class TicketService:
+class TicketSvc:
     @classmethod
     def create(cls, attachments: list = None, **kwargs) -> dict:
         """Create a new ticket by calling Jira API to create a new
@@ -26,12 +26,12 @@ class TicketService:
             priority: severity of the ticket
             watchers: user emails to watch for ticket changes
         """
-        jira_service = JiraService()
+        svc = JiraSvc()
 
         # translate emails into jira.User objects
-        reporter = cls._email_to_user(kwargs.get("reporter"))
+        reporter = cls.user_by_email(kwargs.get("reporter"))
         watchers = [
-            cls._email_to_user(email, default=email)
+            cls.user_by_email(email, default=email)
             for email in kwargs.get("watchers") or []
         ]
 
@@ -39,12 +39,10 @@ class TicketService:
         body = cls.create_message_body(
             template="jira.j2",
             values={
-                "author": jira_service.markdown.mention(
+                "author": svc.markdown.mention(
                     user=reporter or kwargs.get("reporter")
                 ),
-                "cc": " ".join(
-                    jira_service.markdown.mention(user=watcher) for watcher in watchers
-                ),
+                "cc": " ".join(svc.markdown.mention(user=watcher) for watcher in watchers),
                 "body": kwargs.get("body"),
             },
         )
@@ -54,7 +52,7 @@ class TicketService:
 
         # set defaults
         board_key = kwargs.get("board")
-        project_key = jira_service.find_board(key=board_key).project["projectKey"]
+        project_key = svc.find_board(key=board_key).project["projectKey"]
         priority = (kwargs.get("priority") or "").lower()
         priority = priority if priority in ["high", "low"] else "None"
         priority = dict(name=priority.capitalize())
@@ -63,7 +61,7 @@ class TicketService:
         categories = category.split(",") + current_app.config["JIRA_TICKET_LABELS"]
 
         # create ticket in Jira
-        issue = jira_service.create_issue(
+        issue = svc.create_issue(
             summary=kwargs.get("title"),
             description=body,
             reporter=dict(id=reporter_id),
@@ -74,11 +72,11 @@ class TicketService:
         )
 
         # add watchers
-        jira_service.add_watchers(issue=issue.key, watchers=watchers)
+        svc.add_watchers(issue=issue.key, watchers=watchers)
 
         # adding attachments
         for attachment in attachments or []:
-            jira_service.add_attachment(issue=issue, attachment=attachment)
+            svc.add_attachment(issue=issue, attachment=attachment)
 
         # add new entry to the db
         local_fields = {k: v for k, v in kwargs.items() if k in Ticket.__dict__}
@@ -113,18 +111,17 @@ class TicketService:
         :param _model: whether to return a ticket model or cross results Jira data
         :param filters: the query filters
         """
+        svc = JiraSvc()
 
         # split filters
         local_filters = {k: v for k, v in filters.items() if k in Ticket.__dict__}
         jira_filters = {
-            k: v for k, v in filters.items() if JiraService.is_jira_filter(k)
+            k: v for k, v in filters.items() if svc.is_jira_filter(k)
         }
 
         if _model:
             return Ticket.query.filter_by(**local_filters).all()
         else:
-            jira_service = JiraService()
-
             # if any of the filter is not a Jira filter, then
             # apply local filter and pass on results to jql
             if local_filters:
@@ -137,7 +134,7 @@ class TicketService:
 
             # fetch tickets from Jira using jql while skipping jql
             # validation since local db might not be synched with Jira
-            query = jira_service.create_jql_query(
+            query = svc.create_jql_query(
                 summary=filters.pop("q", None),
                 labels=current_app.config["JIRA_TICKET_LABELS"],
                 tags=filters.pop("categories", []),
@@ -151,7 +148,7 @@ class TicketService:
             rendered = "renderedFields" if "rendered" in fields else "fields"
 
             # remove plurals in fields
-            issues = jira_service.search_issues(
+            issues = svc.search_issues(
                 jql_str=query,
                 maxResults=limit,
                 validate_query=False,
@@ -182,7 +179,7 @@ class TicketService:
 
                     # add watchers if requested
                     if "watchers" in fields:
-                        ticket["watchers"] = jira_service.watchers(issue.key).raw[
+                        ticket["watchers"] = svc.watchers(issue.key).raw[
                             "watchers"
                         ]
 
@@ -230,31 +227,31 @@ class TicketService:
         :param attachments: the files to attach to the comment which
                             are stored in Jira
         """
-        jira_service = JiraService()
+        svc = JiraSvc()
 
         # translate watchers into jira.User objects iff exists
         watchers = [
-            cls._email_to_user(email, default=email) for email in watchers or []
+            cls.user_by_email(email, default=email) for email in watchers or []
         ]
 
         body = cls.create_message_body(
             template="jira.j2",
             values={
-                "author": jira_service.markdown.mention(user=author),
+                "author": svc.markdown.mention(user=author),
                 "cc": " ".join(
-                    jira_service.markdown.mention(user=watcher) for watcher in watchers
+                    svc.markdown.mention(user=watcher) for watcher in watchers
                 ),
                 "body": body,
             },
         )
-        jira_service.add_comment(issue=issue, body=body, is_internal=True)
+        svc.add_comment(issue=issue, body=body, is_internal=True)
 
         # add watchers
-        jira_service.add_watchers(issue=issue, watchers=watchers)
+        svc.add_watchers(issue=issue, watchers=watchers)
 
         # adding attachments
         for attachment in attachments or []:
-            jira_service.add_attachment(issue=issue, attachment=attachment)
+            svc.add_attachment(issue=issue, attachment=attachment)
 
     @staticmethod
     def create_message_body(template=None, values=None):
@@ -279,7 +276,7 @@ class TicketService:
         return jinja2.Template(content).render(**values)
 
     @staticmethod
-    def _email_to_user(email, default=None):
+    def user_by_email(email, default=None):
         """Email translation to Jira user."""
-        jira_service = JiraService()
-        return next(iter(jira_service.search_users(query=email, maxResults=1)), default)
+        svc = JiraSvc()
+        return next(iter(svc.search_users(query=email, maxResults=1)), default)

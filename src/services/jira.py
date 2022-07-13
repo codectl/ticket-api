@@ -12,7 +12,7 @@ from src import cache
 from src.models import Ticket
 from src.models.jira import Board
 
-__all__ = ("JiraService",)
+__all__ = ("JiraSvc",)
 
 
 class ProxyJIRA(JIRA):
@@ -253,7 +253,7 @@ class JiraMarkdown(ProxyJIRA):
             return None
 
 
-class JiraService(ProxyJIRA):
+class JiraSvc(ProxyJIRA):
     """Service to handle Jira operations."""
 
     def __init__(self, **kwargs):
