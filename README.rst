@@ -57,7 +57,7 @@ A possible configuration is:
     SQLALCHEMY_DATABASE_URI=sqlite:///example.db
 
     # Application context
-    APPLICATION_CONTEXT=/api/tickets/v3
+    APPLICATION_CONTEXT=/api/tickets/v1
 
     # version of OpenAPI
     OPENAPI=3.0.3
