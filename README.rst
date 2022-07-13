@@ -255,4 +255,4 @@ Optionally, run coverage as well with:
 
 License
 =======
-GPLv3 licensed. See `LICENSE <LICENSE>`_.
+MIT licensed. See `LICENSE <LICENSE>`_.
