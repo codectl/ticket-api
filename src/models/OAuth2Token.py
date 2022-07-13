@@ -2,7 +2,7 @@ from src import db
 
 
 class OAuth2Token(db.Model):
-    __tablename__ = 'oauth2_tokens'
+    __tablename__ = "oauth2_tokens"
 
     id = db.Column(db.Integer, primary_key=True)
     token_type = db.Column(db.String, nullable=False)

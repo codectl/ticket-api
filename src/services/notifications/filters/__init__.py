@@ -9,5 +9,5 @@ __all__ = [
     RecipientsFilter,
     SenderEmailBlacklistFilter,
     SenderEmailDomainWhitelistedFilter,
-    ValidateMetadataFilter
+    ValidateMetadataFilter,
 ]

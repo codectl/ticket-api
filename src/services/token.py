@@ -7,7 +7,6 @@ from src.models.OAuth2Token import OAuth2Token
 
 
 class TokenService:
-
     @staticmethod
     def create(**kwargs) -> OAuth2Token:
         token = OAuth2Token(**kwargs)
@@ -15,7 +14,7 @@ class TokenService:
         db.session.add(token)
         db.session.commit()
 
-        current_app.logger.debug("Created token '{0}'.".format(token.access_token))
+        current_app.logger.debug(f"Created token '{token.access_token}'.")
 
         return token
 
@@ -24,7 +23,9 @@ class TokenService:
         return OAuth2Token.query.get(token_id)
 
     @staticmethod
-    def find_by(one=False, **filters) -> Union[List[OAuth2Token], Optional[OAuth2Token]]:
+    def find_by(
+        one=False, **filters
+    ) -> Union[List[OAuth2Token], Optional[OAuth2Token]]:
         query = OAuth2Token.query.filter_by(**filters)
         return query.all() if not one else query.one_or_none()
 
@@ -36,8 +37,11 @@ class TokenService:
                 setattr(token, key, value)
         db.session.commit()
 
-        current_app.logger.info("Updated token '{0}' with the following attributes: '{1}'."
-                                .format(token.access_token, kwargs))
+        current_app.logger.info(
+            "Updated token '{}' with the following attributes: '{}'.".format(
+                token.access_token, kwargs
+            )
+        )
 
     @classmethod
     def delete(cls, token_id):
@@ -46,4 +50,4 @@ class TokenService:
             db.session.delete(token)
             db.session.commit()
 
-            current_app.logger.debug("Deleted token '{0}'.".format(token.access_token))
+            current_app.logger.debug(f"Deleted token '{token.access_token}'.")

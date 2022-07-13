@@ -25,60 +25,58 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
         if not message:
             return None
 
-        if message.sender.address.split('@')[1] == 'automation.atlassian.com':
+        if message.sender.address.split("@")[1] == "automation.atlassian.com":
 
             # get json content from message
             data = O365MailboxManager.get_message_json(message)
 
-            model = TicketService.find_one(
-                key=data['ticket'],
-                _model=True
-            )
+            model = TicketService.find_one(key=data["ticket"], _model=True)
 
             # skip if ticket not defined
             if not model:
-                current_app.logger.warning('Commented on ticket that was not found.')
+                current_app.logger.warning("Commented on ticket that was not found.")
                 return None
 
             # locate last lent message
-            last_message_id = model.outlook_messages_id.split(',')[-1]
+            last_message_id = model.outlook_messages_id.split(",")[-1]
 
             try:
                 last_message = self.mailbox.get_message(object_id=last_message_id)
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code == requests.codes.not_found:
-                    current_app.logger.warning('Message to reply to was not found. No email was sent.')
+                    current_app.logger.warning(
+                        "Message to reply to was not found. No email was sent."
+                    )
             else:
 
                 # get the specific comment
                 comment = self._jira.comment(
-                    issue=data['ticket'],
-                    comment=data['id'],
-                    expand='renderedBody'
+                    issue=data["ticket"], comment=data["id"], expand="renderedBody"
                 )
 
                 # embed base64 images in message body
                 body = re.sub(
                     pattern=r'src="(.*?)"',
-                    repl=lambda x: r'src="data:image/jpeg;base64,{0}"'.format(
-                        converters.encode_content(self._jira.get_content(
-                            path=x.group(1),
-                            base='{server}{path}'
-                        ))),
-                    string=comment.renderedBody
+                    repl=lambda x: r'src="data:image/jpeg;base64,{}"'.format(
+                        converters.encode_content(
+                            self._jira.get_content(
+                                path=x.group(1), base="{server}{path}"
+                            )
+                        )
+                    ),
+                    string=comment.renderedBody,
                 )
 
                 # send out the comment message has a reply to the last sent message
                 reply = O365MailboxManager.create_reply(
                     message=last_message,
                     values={
-                        'body': body,
-                        'author': data['author']['name'],
-                        'metadata': [dict(
-                            name='message',
-                            content='relay jira comment'
-                        )]
-                    }
+                        "body": body,
+                        "author": data["author"]["name"],
+                        "metadata": [
+                            dict(name="message", content="relay jira comment")
+                        ],
+                    },
                 )
                 reply.send()
 

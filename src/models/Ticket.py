@@ -4,7 +4,7 @@ from src import db
 
 
 class Ticket(db.Model):
-    __tablename__ = 'tickets'
+    __tablename__ = "tickets"
 
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String, unique=True, nullable=False, index=True)

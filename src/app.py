@@ -19,7 +19,7 @@ def create_app(config_name=None):
     app = Flask(__name__)
 
     # load object-based default configuration
-    env = os.getenv('FLASK_ENV', config_name)
+    env = os.getenv("FLASK_ENV", config_name)
     app.config.from_object(config_by_name[env])
 
     # finalize app setups
@@ -33,8 +33,8 @@ def setup_app(app):
 
     # set app default logging to INFO
     app.logger.setLevel(logging.INFO)
-    logging.getLogger('o365_notifications').addHandler(flask_logging.default_handler)
-    logging.getLogger('o365_notifications').setLevel(logging.INFO)
+    logging.getLogger("o365_notifications").addHandler(flask_logging.default_handler)
+    logging.getLogger("o365_notifications").setLevel(logging.INFO)
 
     # link db to app
     db.init_app(app)
@@ -59,7 +59,7 @@ def setup_app(app):
         from src.serialization.serializers.jira.Issue import IssueSchema
 
     # initialize root blueprint
-    bp = Blueprint('api', __name__, url_prefix=app.config['APPLICATION_CONTEXT'])
+    bp = Blueprint("api", __name__, url_prefix=app.config["APPLICATION_CONTEXT"])
 
     # link api to blueprint
     api.init_app(bp)
@@ -71,27 +71,28 @@ def setup_app(app):
     swagger.init_app(app)
 
     # Redirect incomplete paths to app context root
-    app.add_url_rule('/', 'index', lambda: redirect(url_for('flasgger.apidocs')))
-    subs = app.config['APPLICATION_CONTEXT'].split('/')
+    app.add_url_rule("/", "index", lambda: redirect(url_for("flasgger.apidocs")))
+    subs = app.config["APPLICATION_CONTEXT"].split("/")
     for n in range(2, len(subs)):
-        rule = '/'.join(subs[:n] + ['/'])
-        app.add_url_rule(rule, ''.join(('index-', str(n-1))), lambda: redirect(url_for('flasgger.apidocs')))
+        rule = "/".join(subs[:n] + ["/"])
+        app.add_url_rule(
+            rule,
+            "".join(("index-", str(n - 1))),
+            lambda: redirect(url_for("flasgger.apidocs")),
+        )
 
     # define OAS3 base template
     swagger.template = flasgger.apispec_to_template(
         app=app,
         spec=APISpec(
-            title=app.config['OPENAPI_SPEC']['info']['title'],
-            version=app.config['OPENAPI_SPEC']['info']['version'],
-            openapi_version=app.config['OPENAPI_SPEC']['openapi'],
+            title=app.config["OPENAPI_SPEC"]["info"]["title"],
+            version=app.config["OPENAPI_SPEC"]["info"]["version"],
+            openapi_version=app.config["OPENAPI_SPEC"]["openapi"],
             plugins=(MarshmallowPlugin(),),
-            basePath=app.config['APPLICATION_CONTEXT'],
-            **app.config['OPENAPI_SPEC']
+            basePath=app.config["APPLICATION_CONTEXT"],
+            **app.config["OPENAPI_SPEC"]
         ),
-        definitions=[
-            HttpErrorSchema,
-            IssueSchema
-        ]
+        definitions=[HttpErrorSchema, IssueSchema],
     )
 
     # register cli commands

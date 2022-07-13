@@ -1,12 +1,9 @@
 from flask import current_app
-from o365_notifications.base import (
-    O365Notification,
-    O365NotificationsHandler
-)
+from o365_notifications.base import O365Notification, O365NotificationsHandler
 
 
 class JiraNotificationHandler(O365NotificationsHandler):
-    """ Handler for Jira """
+    """Handler for Jira"""
 
     def __init__(self, manager):
         self.manager = manager
@@ -28,10 +25,15 @@ class JiraNotificationHandler(O365NotificationsHandler):
 
             # log 'Missed' notifications
             if notification.change_type == O365Notification.ChangeType.MISSED.value:
-                current_app.logger.warning("Notification missed: {0}".format(vars(notification)))
+                current_app.logger.warning(f"Notification missed: {vars(notification)}")
 
             # create Jira ticket for 'Message' notifications
-            elif notification.resource_data.get('@odata.type') == O365Notification.ResourceType.O365_MESSAGE.value:
+            elif (
+                notification.resource_data.get("@odata.type")
+                == O365Notification.ResourceType.O365_MESSAGE.value
+            ):
 
                 # folder represents any folder from subscriptions list (inbox)
-                self.manager.process_message(message_id=notification.resource_data.get('Id'))
+                self.manager.process_message(
+                    message_id=notification.resource_data.get("Id")
+                )

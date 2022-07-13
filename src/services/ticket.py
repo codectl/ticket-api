@@ -10,13 +10,8 @@ from src.services.jira import JiraService
 
 
 class TicketService:
-
     @classmethod
-    def create(
-            cls,
-            attachments: list = None,
-            **kwargs
-    ) -> dict:
+    def create(cls, attachments: list = None, **kwargs) -> dict:
         """Create a new ticket by calling Jira API to create a new
         issue. A new local reference is also created.
 
@@ -34,48 +29,52 @@ class TicketService:
         jira_service = JiraService()
 
         # translate emails into jira.User objects
-        reporter = cls._email_to_user(kwargs.get('reporter'))
-        watchers = [cls._email_to_user(email, default=email) for email in kwargs.get('watchers') or []]
+        reporter = cls._email_to_user(kwargs.get("reporter"))
+        watchers = [
+            cls._email_to_user(email, default=email)
+            for email in kwargs.get("watchers") or []
+        ]
 
         # create ticket body with Jira markdown format
         body = cls.create_message_body(
-            template='jira.j2',
+            template="jira.j2",
             values={
-                'author': jira_service.markdown.mention(user=reporter or kwargs.get('reporter')),
-                'cc': ' '.join(jira_service.markdown.mention(user=watcher) for watcher in watchers),
-                'body': kwargs.get('body')
-            }
+                "author": jira_service.markdown.mention(
+                    user=reporter or kwargs.get("reporter")
+                ),
+                "cc": " ".join(
+                    jira_service.markdown.mention(user=watcher) for watcher in watchers
+                ),
+                "body": kwargs.get("body"),
+            },
         )
 
         # if reporter is not a Jira account, reporter is set to 'Anonymous'
-        reporter_id = getattr(reporter, 'accountId', None)
+        reporter_id = getattr(reporter, "accountId", None)
 
         # set defaults
-        board_key = kwargs.get('board')
-        project_key = jira_service.find_board(key=board_key).project['projectKey']
-        priority = (kwargs.get('priority') or '').lower()
-        priority = priority if priority in ['high', 'low'] else 'None'
+        board_key = kwargs.get("board")
+        project_key = jira_service.find_board(key=board_key).project["projectKey"]
+        priority = (kwargs.get("priority") or "").lower()
+        priority = priority if priority in ["high", "low"] else "None"
         priority = dict(name=priority.capitalize())
 
-        category = kwargs.pop('category')
-        categories = category.split(',') + current_app.config['JIRA_TICKET_LABELS']
+        category = kwargs.pop("category")
+        categories = category.split(",") + current_app.config["JIRA_TICKET_LABELS"]
 
         # create ticket in Jira
         issue = jira_service.create_issue(
-            summary=kwargs.get('title'),
+            summary=kwargs.get("title"),
             description=body,
             reporter=dict(id=reporter_id),
             project=dict(key=project_key),
-            issuetype=dict(name=current_app.config['JIRA_TICKET_TYPE']),
+            issuetype=dict(name=current_app.config["JIRA_TICKET_TYPE"]),
             labels=categories,
-            priority=priority
+            priority=priority,
         )
 
         # add watchers
-        jira_service.add_watchers(
-            issue=issue.key,
-            watchers=watchers
-        )
+        jira_service.add_watchers(issue=issue.key, watchers=watchers)
 
         # adding attachments
         for attachment in attachments or []:
@@ -88,7 +87,7 @@ class TicketService:
         db.session.add(ticket)
         db.session.commit()
 
-        current_app.logger.info("Created ticket '{0}'.".format(ticket.key))
+        current_app.logger.info(f"Created ticket '{ticket.key}'.")
 
         return TicketService.find_one(key=ticket.key)
 
@@ -103,11 +102,7 @@ class TicketService:
 
     @classmethod
     def find_by(
-            cls,
-            limit: int = 20,
-            fields: list = None,
-            _model: bool = False,
-            **filters
+        cls, limit: int = 20, fields: list = None, _model: bool = False, **filters
     ) -> typing.List[typing.Union[dict, Ticket]]:
         """Search for tickets based on several criteria.
 
@@ -121,7 +116,9 @@ class TicketService:
 
         # split filters
         local_filters = {k: v for k, v in filters.items() if k in Ticket.__dict__}
-        jira_filters = {k: v for k, v in filters.items() if JiraService.is_jira_filter(k)}
+        jira_filters = {
+            k: v for k, v in filters.items() if JiraService.is_jira_filter(k)
+        }
 
         if _model:
             return Ticket.query.filter_by(**local_filters).all()
@@ -136,30 +133,32 @@ class TicketService:
                 # skip routine if no local entries are found
                 if not tickets:
                     return []
-                jira_filters['key'] = [ticket.key for ticket in tickets]
+                jira_filters["key"] = [ticket.key for ticket in tickets]
 
             # fetch tickets from Jira using jql while skipping jql
             # validation since local db might not be synched with Jira
             query = jira_service.create_jql_query(
-                summary=filters.pop('q', None),
-                labels=current_app.config['JIRA_TICKET_LABELS'],
-                tags=filters.pop('categories', []),
-                **jira_filters
+                summary=filters.pop("q", None),
+                labels=current_app.config["JIRA_TICKET_LABELS"],
+                tags=filters.pop("categories", []),
+                **jira_filters,
             )
 
             # include additional fields
             fields = fields or []
-            if '*navigable' not in fields:
-                fields.append('*navigable')
-            rendered = 'renderedFields' if 'rendered' in fields else 'fields'
+            if "*navigable" not in fields:
+                fields.append("*navigable")
+            rendered = "renderedFields" if "rendered" in fields else "fields"
 
             # remove plurals in fields
             issues = jira_service.search_issues(
                 jql_str=query,
                 maxResults=limit,
                 validate_query=False,
-                fields=','.join([field[:-1] if field.endswith('s') else field for field in fields]),
-                expand=rendered
+                fields=",".join(
+                    [field[:-1] if field.endswith("s") else field for field in fields]
+                ),
+                expand=rendered,
             )
 
             tickets = []
@@ -169,21 +168,23 @@ class TicketService:
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
                 if model:
-                    ticket = issue.raw['fields']
-                    ticket['id'] = issue.id
-                    ticket['key'] = issue.key
-                    ticket['url'] = "{0}/browse/{1}".format(current_app.config['ATLASSIAN_URL'], issue.key)
-                    ticket['reporter'] = {
-                        'emailAddress': model.reporter
-                    }
+                    ticket = issue.raw["fields"]
+                    ticket["id"] = issue.id
+                    ticket["key"] = issue.key
+                    ticket["url"] = "{}/browse/{}".format(
+                        current_app.config["ATLASSIAN_URL"], issue.key
+                    )
+                    ticket["reporter"] = {"emailAddress": model.reporter}
 
                     # add rendered fields if requested
-                    if 'rendered' in fields:
-                        ticket['rendered'] = issue.raw['renderedFields']
+                    if "rendered" in fields:
+                        ticket["rendered"] = issue.raw["renderedFields"]
 
                     # add watchers if requested
-                    if 'watchers' in fields:
-                        ticket['watchers'] = jira_service.watchers(issue.key).raw['watchers']
+                    if "watchers" in fields:
+                        ticket["watchers"] = jira_service.watchers(issue.key).raw[
+                            "watchers"
+                        ]
 
                     tickets.append(ticket)
             return tickets
@@ -196,8 +197,11 @@ class TicketService:
                 setattr(ticket, key, value)
         db.session.commit()
 
-        current_app.logger.info("Updated ticket '{0}' with the following attributes: '{1}'."
-                                .format(ticket.key, kwargs))
+        current_app.logger.info(
+            "Updated ticket '{}' with the following attributes: '{}'.".format(
+                ticket.key, kwargs
+            )
+        )
 
     @classmethod
     def delete(cls, ticket_id):
@@ -206,16 +210,16 @@ class TicketService:
             db.session.delete(ticket)
             db.session.commit()
 
-            current_app.logger.info("Deleted ticket '{0}'.".format(ticket.key))
+            current_app.logger.info(f"Deleted ticket '{ticket.key}'.")
 
     @classmethod
     def create_comment(
-            cls,
-            issue: typing.Union[Ticket, str],
-            author: str,
-            body: str,
-            watchers: list = None,
-            attachments: list = None,
+        cls,
+        issue: typing.Union[Ticket, str],
+        author: str,
+        body: str,
+        watchers: list = None,
+        attachments: list = None,
     ):
         """Create the body of the ticket.
 
@@ -229,15 +233,19 @@ class TicketService:
         jira_service = JiraService()
 
         # translate watchers into jira.User objects iff exists
-        watchers = [cls._email_to_user(email, default=email) for email in watchers or []]
+        watchers = [
+            cls._email_to_user(email, default=email) for email in watchers or []
+        ]
 
         body = cls.create_message_body(
-            template='jira.j2',
+            template="jira.j2",
             values={
-                'author': jira_service.markdown.mention(user=author),
-                'cc': ' '.join(jira_service.markdown.mention(user=watcher) for watcher in watchers),
-                'body': body
-            }
+                "author": jira_service.markdown.mention(user=author),
+                "cc": " ".join(
+                    jira_service.markdown.mention(user=watcher) for watcher in watchers
+                ),
+                "body": body,
+            },
         )
         jira_service.add_comment(issue=issue, body=body, is_internal=True)
 
@@ -258,10 +266,12 @@ class TicketService:
         if not template:
             return None
 
-        template_path = os.path.join(current_app.root_path, 'templates', 'ticket', 'format')
+        template_path = os.path.join(
+            current_app.root_path, "templates", "ticket", "format"
+        )
         template_filepath = os.path.join(template_path, template)
         if not os.path.exists(template_filepath):
-            raise ValueError('Invalid template provided')
+            raise ValueError("Invalid template provided")
 
         with open(template_filepath) as file:
             content = file.read()
