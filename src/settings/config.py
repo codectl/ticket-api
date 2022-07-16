@@ -1,75 +1,22 @@
-import os
+from dataclasses import dataclass
 
-import environs
-import flasgger
-import yaml
+from src.settings.env import env
 
 
-def create_env():
-    """Create an env from local .env."""
-    dotenv = environs.Env()
-    dotenv.read_env()
-    return dotenv
-
-
-# load environment from .env
-env = create_env()
-
-
+@dataclass
 class BaseConfig:
     """Base configurations."""
 
     DEBUG = False
     TESTING = False
 
-    # Define host & port
-    HOST = env("FLASK_RUN_HOST", "0.0.0.0")
-    PORT = env.int("FLASK_RUN_PORT", 5000)
-
     # Application root context
     APPLICATION_CONTEXT = env("APPLICATION_CONTEXT", "/")
-
-    # Swagger properties
-    OPENAPI = env("OPENAPI", "3.0.3")
-    SWAGGER = {
-        "openapi": OPENAPI,
-        "specs": [
-            {
-                "endpoint": "swagger",
-                "route": APPLICATION_CONTEXT + "/swagger.json",
-                "rule_filter": lambda rule: True,
-                "model_filter": lambda tag: True,
-            }
-        ],
-        # where to find the docs (ensure trailing slash)
-        "specs_route": APPLICATION_CONTEXT + "/",
-        # swagger static files
-        "static_url_path": APPLICATION_CONTEXT + "/flasgger_static",
-        # hide the Swagger top bar
-        "hide_top_bar": True,
-    }
-
-    # OpenAPI 3 initial specs
-    OPENAPI_SPEC = yaml.safe_load(
-        flasgger.utils.load_from_file(
-            os.path.join("src", "settings", "oas3.yaml")
-        ).format(**{"OPENAPI": OPENAPI, "APPLICATION_CONTEXT": APPLICATION_CONTEXT})
-    )
 
     # Database settings
     SQLALCHEMY_DATABASE_URI = env("SQLALCHEMY_DATABASE_URI")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DATABASE_CONNECT_OPTIONS = {}
-
-    # Cache settings
-    CACHE_TYPE = "SimpleCache"
-    CACHE_DEFAULT_TIMEOUT: 300
-
-    # Application threads. A common general assumption is
-    # using 2 per available processor cores - to handle
-    # incoming requests using one and performing background
-    # operations using the other.
-    THREADS_PER_PAGE = 2
 
     # The application providing info about the ticket
     TICKET_CLIENT_APP = env("TICKET_CLIENT_APP", "localhost")
@@ -111,16 +58,14 @@ class BaseConfig:
     JIRA_TICKET_LABEL_DEFAULT_CATEGORY = env("JIRA_TICKET_LABEL_DEFAULT_CATEGORY", None)
 
     # Jira boards to fetch tickets from
-    JIRA_BOARDS = (
-        lambda env=env: [
-            {
-                "key": board.lower().replace("jira_", "").replace("_board", ""),
-                "jira_name": env(board),
-            }
-            for board in env.list("JIRA_BOARDS", [])
-            if env(board, None)
-        ]
-    )()
+    JIRA_BOARDS = [
+        {
+            "key": board.lower().replace("jira_", "").replace("_board", ""),
+            "jira_name": env(board),
+        }
+        for board in env.list("JIRA_BOARDS", [])
+        if env(board, None)
+    ]
     JIRA_DEFAULT_BOARD = (
         lambda env=env, boards=tuple(JIRA_BOARDS): next(
             board
@@ -134,23 +79,21 @@ class BaseConfig:
     EMAIL_BLACKLIST = env.list("EMAIL_BLACKLIST", [])
 
 
+@dataclass
 class ProductionConfig(BaseConfig):
     ENV = "production"
     LOG_LEVEL = "INFO"
 
 
+@dataclass
 class DevelopmentConfig(BaseConfig):
     ENV = "development"
     DEBUG = True
     LOG_LEVEL = "DEBUG"
 
 
+@dataclass
 class TestingConfig(BaseConfig):
     ENV = "test"
     TESTING = True
     LOG_LEVEL = "DEBUG"
-
-
-config_by_name = dict(
-    production=ProductionConfig, development=DevelopmentConfig, testing=TestingConfig
-)
