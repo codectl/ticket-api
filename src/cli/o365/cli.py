@@ -5,7 +5,7 @@ from O365 import Account, MSOffice365Protocol
 from o365_notifications.base import O365Notification
 from o365_notifications.streaming.mailbox import O365MailBoxStreamingNotifications
 
-from src.services.notifications.managers.o365_mailbox import O365MailboxManager
+from src.services.notifications.managers.mailbox import O365MailboxManager
 from src.services.notifications.filters import (
     JiraCommentNotificationFilter,
     RecipientsFilter,

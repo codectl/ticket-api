@@ -8,7 +8,7 @@ from src.utils import converters
 from src.services.jira import JiraSvc
 from src.services.ticket import TicketSvc
 from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
-from src.services.notifications.managers.o365_mailbox import O365MailboxManager
+from src.services.notifications.managers.mailbox import O365MailboxManager
 
 
 class JiraCommentNotificationFilter(OutlookMessageFilter):
@@ -80,7 +80,7 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
                 )
                 reply.send()
 
-            # delete Jira message since it serves no further purpose
+            # delete message since it serves no further purpose
             message.delete()
 
             return None
