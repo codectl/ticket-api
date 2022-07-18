@@ -6,7 +6,7 @@ import jira.resources
 from flask import current_app
 
 from src import db
-from src.models.Ticket import Ticket
+from src.models.ticket import Ticket
 from src.services.jira import JiraSvc
 
 

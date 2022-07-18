@@ -3,7 +3,7 @@ from typing import Optional, Union, List
 from flask import current_app
 
 from src import db
-from src.models.OAuth2Token import OAuth2Token
+from src.models.tokens import OAuth2Token
 
 
 class TokenService:

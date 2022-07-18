@@ -7,11 +7,11 @@ import mistune
 import O365.mailbox
 from flask import current_app
 
-from src.models.Ticket import Ticket
+from src.models.ticket import Ticket
 from src.services.notifications.handlers.JiraNotificationHandler import (
     JiraNotificationHandler,
 )
-from src.services.ticket import TicketService
+from src.services.ticket import TicketSvc
 
 
 class O365MailboxManager:
@@ -83,6 +83,7 @@ class O365MailboxManager:
 
     def process_message(self, message_id):
         """Process a message (given its Id) for the creation of a ticket."""
+        svc = TicketSvc()
 
         # reading message from the corresponding folder
         # and create Jira ticket for it.
@@ -117,7 +118,7 @@ class O365MailboxManager:
             return
 
         # check for local existing ticket
-        existing_ticket = TicketService.find_one(
+        existing_ticket = svc.find_one(
             outlook_conversation_id=message.conversation_id, _model=True
         )
 
@@ -127,16 +128,16 @@ class O365MailboxManager:
 
             # check whether the ticket exists in Jira
             result = next(
-                iter(TicketService.find_by(key=existing_ticket.key, limit=1)), None
+                iter(svc.find_by(key=existing_ticket.key, limit=1)), None
             )
 
             # delete local reference
             if not result:
-                TicketService.delete(ticket_id=existing_ticket.id)
+                svc.delete(ticket_id=existing_ticket.id)
 
             # only add comment if not added yet
             if message.object_id not in existing_ticket.outlook_messages_id:
-                TicketService.create_comment(
+                svc.create_comment(
                     issue=existing_ticket,
                     author=message.sender.address,
                     body=O365.message.bs(message.unique_body, "html.parser").body.text,
@@ -159,7 +160,7 @@ class O365MailboxManager:
         else:
 
             # create ticket in Jira and keep local reference
-            issue = TicketService.create(
+            issue = svc.create(
                 # Jira fields
                 title=message.subject,
                 body=O365.message.bs(message.unique_body, "html.parser").body.text,
@@ -177,7 +178,7 @@ class O365MailboxManager:
             )
 
             # get local ticket reference
-            model = TicketService.find_one(key=issue["key"], _model=True)
+            model = svc.find_one(key=issue["key"], _model=True)
 
             # notify ticket reporter about created ticket
             notification = self._notify_reporter(message=message, key=model.key)
@@ -235,7 +236,7 @@ class O365MailboxManager:
         # creating notification message to be sent to all recipients
         markdown = mistune.create_markdown(escape=False)
         body = markdown(
-            TicketService.create_message_body(
+            TicketSvc.create_message_body(
                 template="notification.j2",
                 values={
                     "summary": message.subject,
@@ -260,7 +261,7 @@ class O365MailboxManager:
         """Add a message to the ticket history."""
         messages_id = model.outlook_messages_id.split(",")
         if message.object_id not in messages_id:
-            TicketService.update(
+            TicketSvc.update(
                 ticket_id=model.id,
                 outlook_messages_id=",".join(messages_id + [message.object_id]),
                 updated_at=datetime.datetime.utcnow(),
@@ -284,7 +285,7 @@ class O365MailboxManager:
             reply_body = "\n".join(reply.body.splitlines()[2:])
             style = ""
 
-        body = TicketService.create_message_body(
+        body = TicketSvc.create_message_body(
             template="reply.j2", values={"reply": reply_body, "style": style, **values}
         )
 
