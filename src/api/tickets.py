@@ -145,44 +145,34 @@ class Tickets(Resource):
 
 @api.resource("/tickets/<key>", endpoint="ticket")
 class Ticket(Resource):
-    @flasgger.swag_from(
-        {
-            "parameters": flasgger.marshmallow_apispec.schema2parameters(
-                marshmallow.Schema.from_dict(
-                    {
-                        "key": marshmallow.fields.String(
-                            required=True,
-                            metadata=dict(description="ticket unique identifier"),
-                        )
-                    }
-                ),
-                location="path",
-            ),
-            "tags": ["tickets"],
-            "responses": {
-                200: {
-                    "description": "Ok",
-                    "content": {
-                        "application/json": {
-                            "schema": {"$ref": "#/components/schemas/Issue"}
-                        }
-                    },
-                },
-                404: {"$ref": "#/components/responses/NotFound"},
-            },
-        }
-    )
     def get(self, key):
         """
-        Get a ticket given its identifier
+        Get ticket given its identifier.
+        ---
+        tags:
+            - tickets
+        parameters:
+            - in: path
+              name: path
+              schema:
+                type: string
+              required: true
+              description: the ticket unique identifier
+        responses:
+            200:
+                description: Ok
+                content:
+                    application/json:
+                        schema: Issue
+            404:
+                $ref: "#/components/responses/NotFound"
         """
-
         # search for ticket across supported boards and categories
         result = next(
             iter(
                 TicketSvc.find_by(
                     key=key,
-                    boards=JiraSvc.supported_board_keys(),
+                    board_keys=(b.key for b in JiraSvc().boards()),
                     categories=JiraSvc.supported_categories(),
                     limit=1,
                 )
