@@ -1,7 +1,7 @@
 from flask_restful import abort
 from werkzeug.http import HTTP_STATUS_CODES
 
-from src.schemas.serlializers.http import HttpResponseSchema
+from src.schemas.serializers.http import HttpResponseSchema
 from src.settings import oas
 
 
