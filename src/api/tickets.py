@@ -4,6 +4,8 @@ from flask import request, jsonify
 from flask_restful import abort, Resource
 
 from src import api
+from src.schemas.deserializers import filemgr as dsl
+from src.schemas.serializers import jira as sl
 from src.serialization.deserializers.CreateTicket import CreateTicketSchema
 from src.serialization.deserializers.CreateTicketComment import (
     CreateTicketCommentSchema,
@@ -11,7 +13,6 @@ from src.serialization.deserializers.CreateTicketComment import (
 from src.serialization.deserializers.TicketSearchCriteria import (
     TicketSearchCriteriaSchema,
 )
-from src.serialization.serializers.jira.Issue import IssueSchema
 from src.services.jira import JiraSvc
 from src.services.ticket import TicketSvc
 
@@ -283,7 +284,7 @@ class SupportedBoards(Resource):
                             items:
                                 type: string
         """
-        return jsonify(JiraSvc.supported_board_keys())
+        return jsonify([b.key for b in JiraSvc().boards()])
 
 
 @api.resource("/tickets/supported-categories", endpoint="supported-categories")
