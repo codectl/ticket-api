@@ -1,26 +1,28 @@
 import logging
-import os
 
-import flasgger
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
-from flask import Flask, Blueprint, logging as flask_logging, redirect, url_for
+from apispec_plugins.webframeworks.flask import FlaskPlugin
+from apispec_ui.flask import Swagger
+from flask import Flask, Blueprint, redirect, url_for
+from werkzeug.exceptions import HTTPException
 
-from src import api, cache, db, swagger
+from src import __meta__, __version__, utils
 from src.cli.o365 import o365_cli
-from src.utils.converters import openapi3_converters
-from src.settings.config import config_by_name
+from src.settings import oas
+from src.settings.env import config_class, load_dotenv
 
 
-def create_app(config_name=None):
+def create_app(config_name="development", dotenv=True, configs=None):
     """Create a new app."""
 
     # define the WSGI application object
     app = Flask(__name__)
 
     # load object-based default configuration
-    env = os.getenv("FLASK_ENV", config_name)
-    app.config.from_object(config_by_name[env])
+    load_dotenv(dotenv)
+    app.config.from_object(config_class(config_name))
+    app.config.update(configs or {})
 
     # finalize app setups
     setup_app(app)
@@ -29,70 +31,63 @@ def create_app(config_name=None):
 
 
 def setup_app(app):
-    """Setup the app."""
+    """Initial setups."""
+    url_prefix = app.config["APPLICATION_ROOT"]
+    openapi_version = app.config["OPENAPI"]
 
-    # set app default logging to INFO
-    app.logger.setLevel(logging.INFO)
-    logging.getLogger("o365_notifications").addHandler(flask_logging.default_handler)
-    logging.getLogger("o365_notifications").setLevel(logging.INFO)
+    # initial blueprint wiring
+    index = Blueprint("index", __name__)
+    index.register_blueprint(health_checks)
+    app.register_blueprint(index, url_prefix=url_prefix)
+
+    # base template for OpenAPI specs
+    oas.converter = oas.create_spec_converter(openapi_version)
 
     # link db to app
     db.init_app(app)
 
-    # link api to app
-    api.init_app(app)
+    spec_template = oas.base_template(
+        openapi_version=openapi_version,
+        info={
+            "title": __meta__["name"],
+            "version": __version__,
+            "description": __meta__["summary"],
+        },
+        servers=[oas.Server(url=url_prefix, description=app.config["ENV"])],
+        tags=[
+            oas.Tag(
+                name="health-checks",
+                description="All operations involving health-checks",
+            )
+        ],
+        responses=[
+            utils.http_response(code=400, serialize=False),
+        ],
+    )
 
-    # link cache to app
-    cache.init_app(app)
+    spec = APISpec(
+        title=__meta__["name"],
+        version=__version__,
+        openapi_version=openapi_version,
+        plugins=(FlaskPlugin(), MarshmallowPlugin()),
+        basePath=url_prefix,
+        **spec_template
+    )
 
-    with app.app_context():
+    # create paths from app views
+    for view in app.view_functions.values():
+        spec.path(view=view, app=app, base_path=url_prefix)
 
-        # create tables if they do not exist already
-        db.create_all()
+    # create views for Swagger
+    Swagger(app=app, apispec=spec, config=oas.swagger_configs(app_root=url_prefix))
 
-        # make use of OAS3 schema converters
-        openapi3_converters()
+    # redirect root path to context root
+    app.add_url_rule("/", "index", view_func=lambda: redirect(url_for("swagger.ui")))
 
-        # use app context to load namespaces, blueprints and schemas
-        import src.resources.tickets
-        from src.serialization.serializers.HttpError import HttpErrorSchema
-        from src.serialization.serializers.jira.Issue import IssueSchema
-
-    # initialize root blueprint
-    bp = Blueprint("api", __name__, url_prefix=app.config["APPLICATION_CONTEXT"])
-
-    # link api to blueprint
-    api.init_app(bp)
-
-    # register blueprints
-    app.register_blueprint(bp)
-
-    # link swagger to app
-    swagger.init_app(app)
-
-    # Redirect incomplete paths to app context root
-    app.add_url_rule("/", "index", lambda: redirect(url_for("flasgger.apidocs")))
-    subs = app.config["APPLICATION_CONTEXT"].split("/")
-    for n in range(2, len(subs)):
-        rule = "/".join(subs[:n] + ["/"])
-        app.add_url_rule(
-            rule,
-            "".join(("index-", str(n - 1))),
-            lambda: redirect(url_for("flasgger.apidocs")),
-        )
-
-    # define OAS3 base template
-    swagger.template = flasgger.apispec_to_template(
-        app=app,
-        spec=APISpec(
-            title=app.config["OPENAPI_SPEC"]["info"]["title"],
-            version=app.config["OPENAPI_SPEC"]["info"]["version"],
-            openapi_version=app.config["OPENAPI_SPEC"]["openapi"],
-            plugins=(MarshmallowPlugin(),),
-            basePath=app.config["APPLICATION_CONTEXT"],
-            **app.config["OPENAPI_SPEC"]
-        ),
-        definitions=[HttpErrorSchema, IssueSchema],
+    # jsonify http errors
+    app.register_error_handler(
+        HTTPException,
+        lambda ex: (utils.http_response(ex.code, exclude=("message",)), ex.code),
     )
 
     # register cli commands
