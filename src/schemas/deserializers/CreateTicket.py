@@ -41,7 +41,7 @@ class CreateTicketSchema(Schema):
         metadata={"description": "users to be watching the ticket", "example": []},
     )
     priority = fields.String(
-        validate=validate.OneOf(["low", "high"]),
+        validate=validate.OneOf(("low", "high")),
         allow_none=True,
         load_default=None,
         metadata={"description": "define a higher or lower ticket priority"},
