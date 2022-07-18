@@ -1,7 +1,7 @@
 from O365.utils import BaseTokenBackend
 
+from src.schemas.token import TokenSchema
 from src.services.token import TokenService
-from src.serialization.token import TokenSchema
 
 
 class DatabaseTokenBackend(BaseTokenBackend):
@@ -48,7 +48,5 @@ class DatabaseTokenBackend(BaseTokenBackend):
 
     def check_token(self):
         """Check if a token exists in database.
-
-        :return bool: True if exists, False otherwise
         """
         return TokenService.find_by(one=True) is not None
