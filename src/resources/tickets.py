@@ -226,10 +226,10 @@ class Comment(Resource):
                                     **CreateTicketCommentSchema().fields,
                                     "attachments": marshmallow.fields.List(
                                         marshmallow.fields.Raw(
-                                            metadata=dict(
-                                                type="file",
-                                                description="files to attach",
-                                            )
+                                            metadata={
+                                                "type": "file",
+                                                "description": "files to attach",
+                                            }
                                         )
                                     ),
                                 }

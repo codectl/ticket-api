@@ -2,6 +2,7 @@ import os
 import typing
 
 import jinja2
+import jira.resources
 from flask import current_app
 
 from src import db
@@ -21,7 +22,7 @@ class TicketSvc:
             title: title of the ticket
             description: body of the ticket
             reporter: email of the author's ticket
-            board: which board the ticket belongs to
+            board: board key which the ticket belongs to
             category: which category to assign ticket to
             priority: severity of the ticket
             watchers: user emails to watch for ticket changes
@@ -39,10 +40,8 @@ class TicketSvc:
         body = cls.create_message_body(
             template="jira.j2",
             values={
-                "author": svc.markdown.mention(
-                    user=reporter or kwargs.get("reporter")
-                ),
-                "cc": " ".join(svc.markdown.mention(user=watcher) for watcher in watchers),
+                "author": svc.markdown.mention(user=reporter or kwargs.get("reporter")),
+                "cc": " ".join(svc.markdown.mention(user=w) for w in watchers),
                 "body": kwargs.get("body"),
             },
         )
@@ -51,8 +50,8 @@ class TicketSvc:
         reporter_id = getattr(reporter, "accountId", None)
 
         # set defaults
-        board_key = kwargs.get("board")
-        project_key = svc.find_board(key=board_key).project["projectKey"]
+        board = next(b for b in svc.boards() if b.key == kwargs.get("board"))
+        project_key = board.raw["location"]["projectKey"]
         priority = (kwargs.get("priority") or "").lower()
         priority = priority if priority in ["high", "low"] else "None"
         priority = dict(name=priority.capitalize())
@@ -104,7 +103,7 @@ class TicketSvc:
     ) -> typing.List[typing.Union[dict, Ticket]]:
         """Search for tickets based on several criteria.
 
-        Jira filters are also supported.
+        Jira's filters are also supported.
 
         :param limit: the max number of results retrieved
         :param fields: additional fields to include in results schema
@@ -115,9 +114,7 @@ class TicketSvc:
 
         # split filters
         local_filters = {k: v for k, v in filters.items() if k in Ticket.__dict__}
-        jira_filters = {
-            k: v for k, v in filters.items() if svc.is_jira_filter(k)
-        }
+        jira_filters = {k: v for k, v in filters.items() if svc.is_jira_filter(k)}
 
         if _model:
             return Ticket.query.filter_by(**local_filters).all()
@@ -152,9 +149,7 @@ class TicketSvc:
                 jql_str=query,
                 maxResults=limit,
                 validate_query=False,
-                fields=",".join(
-                    [field[:-1] if field.endswith("s") else field for field in fields]
-                ),
+                fields=",".join([f[:-1] if f.endswith("s") else f for f in fields]),
                 expand=rendered,
             )
 
@@ -179,9 +174,7 @@ class TicketSvc:
 
                     # add watchers if requested
                     if "watchers" in fields:
-                        ticket["watchers"] = svc.watchers(issue.key).raw[
-                            "watchers"
-                        ]
+                        ticket["watchers"] = svc.watchers(issue.key).raw["watchers"]
 
                     tickets.append(ticket)
             return tickets
@@ -230,9 +223,7 @@ class TicketSvc:
         svc = JiraSvc()
 
         # translate watchers into jira.User objects iff exists
-        watchers = [
-            cls.user_by_email(email, default=email) for email in watchers or []
-        ]
+        watchers = [cls.user_by_email(email, default=email) for email in watchers or []]
 
         body = cls.create_message_body(
             template="jira.j2",
@@ -254,7 +245,7 @@ class TicketSvc:
             svc.add_attachment(issue=issue, attachment=attachment)
 
     @staticmethod
-    def create_message_body(template=None, values=None):
+    def create_message_body(template=None, values=None) -> typing.Optional[str]:
         """Create the body of the ticket.
 
         :param template: the template to build ticket body from
@@ -276,7 +267,7 @@ class TicketSvc:
         return jinja2.Template(content).render(**values)
 
     @staticmethod
-    def user_by_email(email, default=None):
+    def user_by_email(email, default=None) -> jira.resources.User:
         """Email translation to Jira user."""
         svc = JiraSvc()
         return next(iter(svc.search_users(query=email, maxResults=1)), default)

@@ -209,13 +209,9 @@ class JiraSvc(ProxyJIRA):
 
     @functools.cache
     def boards(self) -> list[Board]:
-
         def from_env(envar):
             regex = r"^JIRA_|_BOARD$"
-            return {
-                "key": re.sub(regex, "", envar).lower(),
-                "name": env(envar)
-            }
+            return {"key": re.sub(regex, "", envar).lower(), "name": env(envar)}
 
         def make_board(v):
             name = v["name"]
