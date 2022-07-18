@@ -6,7 +6,7 @@ from src import db
 from src.models.tokens import OAuth2Token
 
 
-class TokenService:
+class TokenSvc:
     @staticmethod
     def create(**kwargs) -> OAuth2Token:
         token = OAuth2Token(**kwargs)
