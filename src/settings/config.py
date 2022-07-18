@@ -58,21 +58,8 @@ class BaseConfig:
     JIRA_TICKET_LABEL_DEFAULT_CATEGORY = env("JIRA_TICKET_LABEL_DEFAULT_CATEGORY", None)
 
     # Jira boards to fetch tickets from
-    JIRA_BOARDS = [
-        {
-            "key": board.lower().replace("jira_", "").replace("_board", ""),
-            "jira_name": env(board),
-        }
-        for board in env.list("JIRA_BOARDS", [])
-        if env(board, None)
-    ]
-    JIRA_DEFAULT_BOARD = (
-        lambda env=env, boards=tuple(JIRA_BOARDS): next(
-            board
-            for board in boards
-            if board["jira_name"] == env(env("JIRA_DEFAULT_BOARD"))
-        )
-    )()
+    JIRA_BOARDS = env.list("JIRA_BOARDS", [])
+    JIRA_DEFAULT_BOARD = env("JIRA_DEFAULT_BOARD")
 
     # Filter settings
     EMAIL_WHITELISTED_DOMAINS = env.list("EMAIL_WHITELISTED_DOMAINS", [])
