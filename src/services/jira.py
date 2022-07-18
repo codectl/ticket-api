@@ -1,4 +1,6 @@
 import base64
+import functools
+import re
 import typing
 
 import jira.resources
@@ -8,9 +10,10 @@ import werkzeug.datastructures
 from flask import current_app
 from jira import JIRA
 
-from src import cache
 from src.models import Ticket
 from src.models.jira import Board
+from src.settings.env import env
+
 
 __all__ = ("JiraSvc",)
 
@@ -42,18 +45,14 @@ class ProxyJIRA(JIRA):
     ) -> bytes:
         """Get content bytes for a given path and params.
 
-        :param path: The subpath required
-        :param params: Parameters to filter the json query.
-        :param base: The Base Jira URL, defaults to the instance base.
+        :param path: sub-path required
+        :param params: parameters to filter the json query.
+        :param base: base Jira URL, defaults to the instance base.
         """
         url = self._get_url(path, base or self.JIRA_BASE_URL)
         return self._session.get(url, params=params).content
 
-    def exists_issue(self, issue_id):
-        """Check if issue exists.
-
-        :param issue_id: the ticket id or key
-        """
+    def exists_issue(self, issue_id) -> bool:
         try:
             self.issue(id=issue_id)
         except jira.exceptions.JIRAError as ex:
@@ -62,19 +61,9 @@ class ProxyJIRA(JIRA):
         else:
             return True
 
-    def comment(self, issue, comment, expand=None):
-        """Method overloaded to include expand field."""
-        return self._find_for_resource(jira.Comment, (issue, comment), expand=expand)
-
-    def has_permissions(self, permissions, **kwargs):
-        """Check whether the signed user has the given permissions."""
-        jira_permissions = self.my_permissions(
-            permissions=",".join(permissions), **kwargs
-        )
-        return all(
-            jira_permissions["permissions"][permission]["havePermission"]
-            for permission in permissions
-        )
+    def has_permissions(self, permissions: list[str], **kwargs) -> bool:
+        perms = self.my_permissions(permissions=",".join(permissions), **kwargs)
+        return all(perms["permissions"][p]["havePermission"] for p in permissions)
 
     def my_permissions(
         self,
@@ -106,45 +95,7 @@ class ProxyJIRA(JIRA):
             params["permissions"] = permissions
         return self._get_json("mypermissions", params=params)
 
-    def search_boards(self, jira_name=None) -> typing.List[jira.resources.Board]:
-        """Search for boards.
-
-        :param jira_name: the Jira board name
-        """
-        params = {"name": jira_name}
-        return self._fetch_pages(
-            jira.resources.Board,
-            "values",
-            "board",
-            params=params,
-            base=self.AGILE_BASE_URL,
-        )
-
-    def find_board(self, key=None) -> typing.Optional[jira.resources.Board]:
-        """Get single board.
-
-        :param key: the board key
-        """
-        jira_board_name = next(
-            (
-                board["jira_name"]
-                for board in current_app.config["JIRA_BOARDS"]
-                if board["key"] == key
-            ),
-            None,
-        )
-        if jira_board_name is None:
-            return None
-        return next(
-            (
-                board
-                for board in self.search_boards(jira_name=jira_board_name)
-                if board.name == jira_board_name
-            ),
-            None,
-        )
-
-    def get_board_configuration(self, board_id) -> dict:
+    def board_configuration(self, board_id) -> dict:
         """Get the configuration from a given board
 
         :param board_id: the Jira id of the board
@@ -153,33 +104,33 @@ class ProxyJIRA(JIRA):
         url = self._get_url(f"board/{board_id}/configuration", base=self.AGILE_BASE_URL)
         return self._session.get(url).json()
 
-    def get_board_filter(self, board_id):
+    def board_filter(self, board_id):
         """Get the filter from a board's configuration
 
         :param board_id: the Jira id of the board
         :return: the board filter
         """
-        configuration = self.get_board_configuration(board_id=board_id)
-        return self.filter(configuration.get("filter", {}).get("id"))
+        configuration = self.board_configuration(board_id=board_id)
+        return self.filter(configuration["filter"]["id"])
 
     def create_jql_query(
         self,
         assignee: str = None,
-        boards: typing.List[str] = None,
-        expand: typing.List[str] = None,
-        key: typing.Union[str, typing.List[str]] = None,
-        labels: typing.List[str] = None,
+        filters: list[str] = None,
+        expand: list[str] = None,
+        key: typing.Union[str, list[str]] = None,
+        labels: list[str] = None,
         sort: str = None,
         status: str = None,
         summary: str = None,
-        tags: typing.List[str] = None,
+        tags: list[str] = None,
         watcher: str = None,
         **_,
     ):
         """Build jql query based on a provided searching parameters.
 
         :param assignee: the assignee key (e.g. email)
-        :param boards: the board keys to get tickets from
+        :param filters: the filter ids to apply
         :param expand: the expand fields (enum: ['renderedFields'])
         :param key: the Jira ticket key
         :param labels: base labels to search for
@@ -190,16 +141,8 @@ class ProxyJIRA(JIRA):
         :param watcher: the watcher key (e.g. email)
         """
         jql = ""
-        if boards:
-            boards_ = (self.find_board(key=board_key) for board_key in boards)
-            board_ids = [
-                getattr(board, "id", getattr(board, "board_id", None))
-                for board in boards_
-            ]
-
-            # translate boards into filters
-            filters = [self.get_board_filter(board_id=bid) for bid in board_ids]
-            jql = f"{jql}&filter in ({', '.join((f.id for f in filters))})"
+        if filters:
+            jql = f"{jql}&filter in ({', '.join(filters)})"
         if summary:
             jql = f"{jql}&summary ~ '{summary}'"
         if key:
@@ -264,20 +207,40 @@ class JiraSvc(ProxyJIRA):
             **kwargs,
         )
 
-    @cache.cached(key_prefix="_boards")
-    def boards(self):
-        return [self.find_board(key=key) for key in self.supported_board_keys()]
+    @functools.cache
+    def boards(self) -> list[Board]:
 
-    @cache.memoize(timeout=7200)
-    def find_board(self, key=None):
-        board = super().find_board(key=key)
-        if not board:
-            return None
+        def from_env(envar):
+            regex = r"^JIRA_|_BOARD$"
+            return {
+                "key": re.sub(regex, "", envar).lower(),
+                "name": env(envar)
+            }
 
-        raw = board.raw
-        raw.pop("self")
+        def make_board(v):
+            name = v["name"]
+            data = next((b for b in super().boards(name=name) if b.name == name), None)
+            return Board(key=v["key"], raw=data["raw"])
 
-        return Board(key=key, **raw)
+        envs = [from_env(v) for v in current_app.config["JIRA_BOARDS"]]
+        return [make_board(v) for v in envs]
+
+    def create_jql_query(
+        self,
+        board_keys: list[str] = None,
+        **kwargs,
+    ):
+        def find_board(key):
+            return next(b for b in self.boards() if b.key == key)
+
+        if board_keys:
+            boards = [find_board(key=key) for key in board_keys]
+
+            # translate boards into filters
+            filters = [self.board_filter(board_id=b.id) for b in boards]
+            kwargs["filters"] = (str(f.id) for f in filters)
+
+        return super().create_jql_query(**kwargs)
 
     def add_attachment(
         self,
@@ -309,7 +272,7 @@ class JiraSvc(ProxyJIRA):
             )
 
     def add_watchers(
-        self, issue: typing.Union[Ticket, str], watchers: typing.List[jira.User] = None
+        self, issue: typing.Union[Ticket, str], watchers: list[jira.User] = None
     ):
         """Add a list of watchers to a ticket.
 
@@ -330,17 +293,18 @@ class JiraSvc(ProxyJIRA):
                             raise e
                         else:
                             name = watcher.displayName
-                            msg = f"Watcher '{name}' has no permission to watch issue "
-                            f"'{str(issue)}'."
-                            current_app.logger.warning(msg)
+                            current_app.logger.warning(
+                                f"Watcher '{name}' has no permission to watch issue "
+                                f"'{str(issue)}'."
+                            )
         else:
             msg = "The 'me' user has no permission to manage watchers."
             current_app.logger.warning(msg)
 
     @staticmethod
-    def is_jira_filter(filter_):
+    def is_jira_filter(filter_name):
         """Check whether given filter is a Jira only filter."""
-        return filter_ in [
+        return filter_name in [
             "assignee",
             "boards",
             "category",
@@ -350,10 +314,6 @@ class JiraSvc(ProxyJIRA):
             "status",
             "watcher",
         ]
-
-    @staticmethod
-    def supported_board_keys():
-        return [board["key"] for board in current_app.config["JIRA_BOARDS"]]
 
     @staticmethod
     def supported_categories():
