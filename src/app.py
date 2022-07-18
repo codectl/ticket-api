@@ -1,5 +1,3 @@
-import logging
-
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_plugins.webframeworks.flask import FlaskPlugin
@@ -8,7 +6,8 @@ from flask import Flask, Blueprint, redirect, url_for
 from werkzeug.exceptions import HTTPException
 
 from src import __meta__, __version__, utils
-from src.cli.o365 import o365_cli
+from src.api.tickets import api as tickets
+from src.cli.o365.cli import cli as o365_cli
 from src.settings import oas
 from src.settings.env import config_class, load_dotenv
 
@@ -37,7 +36,7 @@ def setup_app(app):
 
     # initial blueprint wiring
     index = Blueprint("index", __name__)
-    index.register_blueprint(health_checks)
+    index.register_blueprint(tickets)
     app.register_blueprint(index, url_prefix=url_prefix)
 
     # base template for OpenAPI specs

@@ -1,9 +1,9 @@
 import jira
 import marshmallow
-from flask import request, jsonify
-from flask_restful import abort, Resource
+from flask import Blueprint, request
+from flask_restful import Api, Resource
 
-from src import api
+from src import utils
 from src.schemas.deserializers import filemgr as dsl
 from src.schemas.serializers import jira as sl
 from src.serialization.deserializers.CreateTicket import CreateTicketSchema
@@ -16,8 +16,11 @@ from src.serialization.deserializers.TicketSearchCriteria import (
 from src.services.jira import JiraSvc
 from src.services.ticket import TicketSvc
 
+blueprint = Blueprint("tickets", __name__, url_prefix="/tickets")
+api = Api(blueprint)
 
-@api.resource("/tickets", endpoint="tickets")
+
+@api.resource("/", endpoint="tickets")
 class Tickets(Resource):
     @flasgger.swag_from(
         {
@@ -48,8 +51,9 @@ class Tickets(Resource):
 
         # read params and set defaults
         params = request.args.copy()
+        boards = params.poplist("boards") or (b.key for b in JiraSvc().boards())
         filters = {
-            "boards": params.poplist("boards") or JiraSvc.supported_board_keys(),
+            "boards": boards,
             "categories": params.poplist("categories")
             or JiraSvc.supported_categories(),
             "fields": params.poplist("fields"),
@@ -61,7 +65,7 @@ class Tickets(Resource):
         # validate parameters
         errors = TicketSearchCriteriaSchema().validate(filters)
         if errors:
-            abort(400, status=400, message=errors)
+            utils.abort_with(400, message=errors)
 
         # consider default values
         tickets = TicketSvc.find_by(**filters)
@@ -130,21 +134,21 @@ class Tickets(Resource):
             body = {"watchers": form.poplist("watchers"), **form}
             files = request.files.to_dict(flat=False).get("attachments", [])
         else:
-            abort(415, status=415, message="Unsupported media type")
+            utils.abort_with(415, message="Unsupported media type")
 
         # validate body
         errors = CreateTicketSchema().validate(body)
         if errors:
-            abort(400, status=400, message=errors)
+            utils.abort_with(400, message=errors)
 
         try:
             created = TicketSvc.create(**body, attachments=files)
             return IssueSchema().dump(created), 201
         except jira.exceptions.JIRAError as ex:
-            abort(400, status=400, message=ex.text)
+            utils.abort_with(400, message=ex.text)
 
 
-@api.resource("/tickets/<key>", endpoint="ticket")
+@api.resource("/<key>", endpoint="ticket")
 class Ticket(Resource):
     def get(self, key):
         """
@@ -181,12 +185,12 @@ class Ticket(Resource):
             None,
         )
         if not result:
-            abort(404, status=404, message="Ticket not found")
+            utils.abort_with(404, message="Ticket not found")
         else:
             return IssueSchema().dump(result)
 
 
-@api.resource("/tickets/<key>/comment", endpoint="comment")
+@api.resource("/<key>/comment", endpoint="comment")
 class Comment(Resource):
     @flasgger.swag_from(
         {
@@ -252,21 +256,21 @@ class Comment(Resource):
             body = request.form.to_dict(flat=True)
             files = request.files.to_dict(flat=False).get("attachments", [])
         else:
-            abort(415, status=415, message="Unsupported media type")
+            utils.abort_with(415, message="Unsupported media type")
 
         # validate body
         errors = CreateTicketCommentSchema().validate(body)
         if errors:
-            abort(400, status=400, message=errors)
+            utils.abort_with(400, message=errors)
 
         try:
             TicketSvc.create_comment(issue=key, **body, attachments=files)
             return None, 204
         except jira.exceptions.JIRAError as ex:
-            abort(400, status=400, message=ex.text)
+            utils.abort_with(400, message=ex.text)
 
 
-@api.resource("/tickets/supported-boards", endpoint="supported-boards")
+@api.resource("/supported-boards", endpoint="supported-boards")
 class SupportedBoards(Resource):
     def get(self):
         """
@@ -284,10 +288,10 @@ class SupportedBoards(Resource):
                             items:
                                 type: string
         """
-        return jsonify([b.key for b in JiraSvc().boards()])
+        return [b.key for b in JiraSvc().boards()]
 
 
-@api.resource("/tickets/supported-categories", endpoint="supported-categories")
+@api.resource("/supported-categories", endpoint="supported-categories")
 class SupportedCategories(Resource):
     def get(self):
         """
@@ -305,4 +309,4 @@ class SupportedCategories(Resource):
                             items:
                                 type: string
         """
-        return jsonify(JiraSvc.supported_categories())
+        return JiraSvc.supported_categories()

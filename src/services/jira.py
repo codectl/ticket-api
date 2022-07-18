@@ -10,8 +10,8 @@ import werkzeug.datastructures
 from flask import current_app
 from jira import JIRA
 
-from src.models import Ticket
 from src.models.jira import Board
+from src.models.ticket import Ticket
 from src.settings.env import env
 
 
@@ -37,7 +37,7 @@ class ProxyJIRA(JIRA):
             **kwargs,
         )
 
-    def get_content(
+    def content(
         self,
         path: str,
         params: typing.Optional[str] = None,
@@ -216,7 +216,8 @@ class JiraSvc(ProxyJIRA):
         def make_board(v):
             name = v["name"]
             data = next((b for b in super().boards(name=name) if b.name == name), None)
-            return Board(key=v["key"], raw=data["raw"])
+            default = from_env(env(current_app.config["JIRA_DEFAULT_BOARD"]))
+            return Board(key=v["key"], raw=data["raw"], is_default=(default == v))
 
         envs = [from_env(v) for v in current_app.config["JIRA_BOARDS"]]
         return [make_board(v) for v in envs]
@@ -310,6 +311,10 @@ class JiraSvc(ProxyJIRA):
             "status",
             "watcher",
         ]
+
+    @classmethod
+    def default_board(cls):
+        return next(b for b in cls().boards() if b.is_default)
 
     @staticmethod
     def supported_categories():

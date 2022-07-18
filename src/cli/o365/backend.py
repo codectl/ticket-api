@@ -7,9 +7,6 @@ from src.services.token import TokenSvc
 class DatabaseTokenBackend(BaseTokenBackend):
     """A token backend based on database entry."""
 
-    def __init__(self):
-        super().__init__()
-
     def load_token(self):
         token = TokenSvc.find_by(one=True)
         if token is not None:

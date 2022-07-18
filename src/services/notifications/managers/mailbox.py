@@ -8,9 +8,8 @@ import O365.mailbox
 from flask import current_app
 
 from src.models.ticket import Ticket
-from src.services.notifications.handlers.JiraNotificationHandler import (
-    JiraNotificationHandler,
-)
+from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
+from src.services.notifications.handlers.jira import JiraNotificationHandler
 from src.services.ticket import TicketSvc
 
 
@@ -22,12 +21,12 @@ class O365MailboxManager:
         self._subscriber = None
         self._filters = None
 
-    def subscriber(self, subscriber_):
-        self._subscriber = subscriber_
+    def subscriber(self, subs):
+        self._subscriber = subs
         return self
 
-    def filters(self, filters_):
-        self._filters = filters_
+    def filters(self, fltr: list[OutlookMessageFilter]):
+        self._filters = fltr
         return self
 
     def check_for_missing_tickets(self, days):
@@ -46,12 +45,9 @@ class O365MailboxManager:
             .on_attribute("receivedDateTime")
             .greater_equal(daytime)
         )
-        messages = list(
-            itertools.chain(
-                inbox_folder.get_messages(limit=None, query=query),
-                sent_folder.get_messages(limit=None, query=query),
-            )
-        )
+        inbox_msgs = inbox_folder.get_messages(limit=None, query=query)
+        sent_msgs = sent_folder.get_messages(limit=None, query=query)
+        messages = list(itertools.chain(inbox_msgs, sent_msgs))
 
         # sort messages by age (older first)
         messages.sort(key=lambda e: e.received)
@@ -65,24 +61,22 @@ class O365MailboxManager:
     def start_streaming(self, **kwargs):
         handler = JiraNotificationHandler(manager=self)
 
-        # set inbox/sent folder
+        # create subscriptions from inbox & sent folders
         inbox_folder = self._mailbox.inbox_folder()
         sent_folder = self._mailbox.sent_folder()
-
-        # define subscriptions
         inbox_subscription_id = self._subscriber.subscribe(resource=inbox_folder)
         sent_subscription_id = self._subscriber.subscribe(resource=sent_folder)
         subscriptions = [inbox_subscription_id, sent_subscription_id]
 
-        current_app.logger.info(
-            f"Start streaming connection for '{self._mailbox.main_resource}' ..."
-        )
+        msg = f"Start streaming connection for '{self._mailbox.main_resource}' ..."
+        current_app.logger.info(msg)
+
         self._subscriber.create_event_channel(
             subscriptions=subscriptions, notification_handler=handler, **kwargs
         )
 
     def process_message(self, message_id):
-        """Process a message (given its Id) for the creation of a ticket."""
+        """Process a message and create/update ticket."""
         svc = TicketSvc()
 
         # reading message from the corresponding folder
@@ -90,13 +84,11 @@ class O365MailboxManager:
         message = self._get_message(message_id=message_id)
 
         # watchers list
-        emails = list(
-            itertools.chain(
-                (e.address for e in message.cc), (e.address for e in message.bcc)
-            )
-        )
+        ccs = (e.address for e in message.cc)
+        bccs = (e.address for e in message.bcc)
+        emails = list(itertools.chain(ccs, bccs))
 
-        current_app.logger.info("*** Processing new message ***")
+        current_app.logger.info("\n*** Processing new message ***")
         current_app.logger.info(
             json.dumps(
                 {
@@ -110,10 +102,7 @@ class O365MailboxManager:
         )
 
         # skip message processing if message is filtered
-        if any(
-            not e
-            for e in list(map(lambda filter_: filter_.apply(message), self._filters))
-        ):
+        if any(not e for e in list(map(lambda f: f.apply(message), self._filters))):
             current_app.logger.info(f"Message '{message.subject}' filtered.")
             return
 
@@ -126,13 +115,9 @@ class O365MailboxManager:
         # create new ticket otherwise.
         if existing_ticket:
 
-            # check whether the ticket exists in Jira
-            result = next(
-                iter(svc.find_by(key=existing_ticket.key, limit=1)), None
-            )
-
-            # delete local reference
-            if not result:
+            # delete local reference if ticket no longer exists in Jira
+            exists = next(iter(svc.find_by(key=existing_ticket.key, limit=1)), None)
+            if not exists:
                 svc.delete(ticket_id=existing_ticket.id)
 
             # only add comment if not added yet
@@ -148,15 +133,11 @@ class O365MailboxManager:
                 # append message to history
                 self.add_message_to_history(message, existing_ticket)
 
-                current_app.logger.info(
-                    f"New comment added to Jira ticket '{existing_ticket.key}'."
-                )
+                msg = f"New comment added to Jira ticket '{existing_ticket.key}'."
             else:
-                current_app.logger.info(
-                    "Skip comment to Jira ticket '{}' since it has already been added.".format(
-                        existing_ticket.key
-                    )
-                )
+                key = existing_ticket.key
+                msg = f"Comment on ticket '{key}' has already been added."
+            current_app.logger.info(msg)
         else:
 
             # create ticket in Jira and keep local reference
@@ -297,7 +278,7 @@ class O365MailboxManager:
         return reply
 
     @staticmethod
-    def get_message_json(message: O365.Message):
+    def message_json(message: O365.Message):
         """Get json information from message."""
         soup = O365.message.bs(message.unique_body, "html.parser")
 

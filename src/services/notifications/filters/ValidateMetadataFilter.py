@@ -2,7 +2,7 @@ from flask import current_app
 
 from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
 from src.services.notifications.managers.mailbox import O365MailboxManager
-from src.services.ticket import TicketService
+from src.services.ticket import TicketSvc
 
 
 class ValidateMetadataFilter(OutlookMessageFilter):
@@ -19,7 +19,7 @@ class ValidateMetadataFilter(OutlookMessageFilter):
         else:
 
             # append message to history if jira metadata is present
-            model = TicketService.find_one(
+            model = TicketSvc.find_one(
                 outlook_conversation_id=message.conversation_id, _model=True
             )
 
