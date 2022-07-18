@@ -5,8 +5,8 @@ import O365.mailbox
 from flask import current_app
 
 from src.utils import converters
-from src.services.jira import JiraService
-from src.services.ticket import TicketService
+from src.services.jira import JiraSvc
+from src.services.ticket import TicketSvc
 from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
 from src.services.notifications.managers.o365_mailbox import O365MailboxManager
 
@@ -19,7 +19,7 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
 
     def __init__(self, mailbox: O365.mailbox):
         self.mailbox = mailbox
-        self._jira = JiraService()
+        self._jira = JiraSvc()
 
     def apply(self, message):
         if not message:
@@ -30,7 +30,7 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
             # get json content from message
             data = O365MailboxManager.get_message_json(message)
 
-            model = TicketService.find_one(key=data["ticket"], _model=True)
+            model = TicketSvc.find_one(key=data["ticket"], _model=True)
 
             # skip if ticket not defined
             if not model:

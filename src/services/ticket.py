@@ -87,7 +87,7 @@ class TicketSvc:
 
         current_app.logger.info(f"Created ticket '{ticket.key}'.")
 
-        return TicketService.find_one(key=ticket.key)
+        return TicketSvc.find_one(key=ticket.key)
 
     @staticmethod
     def get(ticket_id) -> typing.Optional[Ticket]:
