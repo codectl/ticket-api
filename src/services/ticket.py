@@ -30,9 +30,9 @@ class TicketSvc:
         svc = JiraSvc()
 
         # translate emails into jira.User objects
-        reporter = cls.user_by_email(kwargs.get("reporter"))
+        reporter = cls.resolve_email(email=kwargs.get("reporter"))
         watchers = [
-            cls.user_by_email(email, default=email)
+            cls.resolve_email(email, default=email)
             for email in kwargs.get("watchers") or []
         ]
 
@@ -54,7 +54,7 @@ class TicketSvc:
         project_key = board.raw["location"]["projectKey"]
         priority = (kwargs.get("priority") or "").lower()
         priority = priority if priority in ["high", "low"] else "None"
-        priority = dict(name=priority.capitalize())
+        priority = {"name": priority.capitalize()}
 
         category = kwargs.pop("category")
         categories = category.split(",") + current_app.config["JIRA_TICKET_LABELS"]
@@ -63,9 +63,9 @@ class TicketSvc:
         issue = svc.create_issue(
             summary=kwargs.get("title"),
             description=body,
-            reporter=dict(id=reporter_id),
-            project=dict(key=project_key),
-            issuetype=dict(name=current_app.config["JIRA_TICKET_TYPE"]),
+            reporter={"id": reporter_id},
+            project={"key": project_key},
+            issuetype={"name": current_app.config["JIRA_TICKET_TYPE"]},
             labels=categories,
             priority=priority,
         )
@@ -160,12 +160,11 @@ class TicketSvc:
                 # prevent cases where local db is not synched with Jira
                 # for cases where Jira tickets are not yet locally present
                 if model:
+                    url = current_app.config["ATLASSIAN_URL"]
                     ticket = issue.raw["fields"]
                     ticket["id"] = issue.id
                     ticket["key"] = issue.key
-                    ticket["url"] = "{}/browse/{}".format(
-                        current_app.config["ATLASSIAN_URL"], issue.key
-                    )
+                    ticket["url"] = f"{url}/browse/{issue.key}"
                     ticket["reporter"] = {"emailAddress": model.reporter}
 
                     # add rendered fields if requested
@@ -187,11 +186,8 @@ class TicketSvc:
                 setattr(ticket, key, value)
         db.session.commit()
 
-        current_app.logger.info(
-            "Updated ticket '{}' with the following attributes: '{}'.".format(
-                ticket.key, kwargs
-            )
-        )
+        msg = f"Updated ticket '{ticket.key}' with the attributes: '{kwargs}'."
+        current_app.logger.info(msg)
 
     @classmethod
     def delete(cls, ticket_id):
@@ -223,7 +219,7 @@ class TicketSvc:
         svc = JiraSvc()
 
         # translate watchers into jira.User objects iff exists
-        watchers = [cls.user_by_email(email, default=email) for email in watchers or []]
+        watchers = [cls.resolve_email(email, default=email) for email in watchers or []]
 
         body = cls.create_message_body(
             template="jira.j2",
@@ -267,7 +263,6 @@ class TicketSvc:
         return jinja2.Template(content).render(**values)
 
     @staticmethod
-    def user_by_email(email, default=None) -> jira.resources.User:
+    def resolve_email(email, default=None) -> jira.resources.User:
         """Email translation to Jira user."""
-        svc = JiraSvc()
-        return next(iter(svc.search_users(query=email, maxResults=1)), default)
+        return next(iter(JiraSvc().search_users(query=email, maxResults=1)), default)

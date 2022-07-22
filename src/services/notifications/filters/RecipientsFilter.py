@@ -3,7 +3,7 @@ import itertools
 from flask import current_app
 
 from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
-from src.services.ticket import TicketService
+from src.services.ticket import TicketSvc
 
 
 class RecipientsFilter(OutlookMessageFilter):
@@ -19,7 +19,7 @@ class RecipientsFilter(OutlookMessageFilter):
 
         # exclude case where recipient is both present in the 'from' recipient field
         # and in any of the other recipient fields. This case will cause a duplicate
-        # notification. Therefore exclude the event where the message is sent because
+        # notification. Therefore, exclude the event where the message is sent because
         # the event will be triggered upon message delivery.
         other_recipients = itertools.chain(
             (e.address for e in message.cc),
@@ -31,26 +31,20 @@ class RecipientsFilter(OutlookMessageFilter):
             and self.recipient_reference in other_recipients
             and self.sent_folder.folder_id == message.folder_id
         ):
-            current_app.logger.info(
-                "Message filtered as the notification is a duplicate.".format(
-                    self.recipient_reference
-                )
-            )
+            msg = "Message filtered as the notification is a duplicate."
+            current_app.logger.info(msg)
             return None
 
         # check for existing ticket
-        existing_ticket = TicketService.find_one(
-            outlook_conversation_id=message.conversation_id, _model=True
-        )
+        cid = message.conversation_id
+        existing_ticket = TicketSvc.find_one(outlook_conversation_id=cid, _model=True)
 
         if not existing_ticket:
             # exclude if new message initiated by the recipient
             if self.recipient_reference == message.sender.address:
                 current_app.logger.info(
-                    "Message filtered as the recipient '{}' "
-                    "is the sender of a new conversation.".format(
-                        self.recipient_reference
-                    )
+                    f"Message filtered as the recipient '{self.recipient_reference}' "
+                    "is the sender of a new conversation."
                 )
                 return None
 
@@ -58,10 +52,8 @@ class RecipientsFilter(OutlookMessageFilter):
             # and is not directly sent 'to' recipient (must be in cc or bcc)
             elif self.recipient_reference not in (e.address for e in message.to):
                 current_app.logger.info(
-                    "Message filtered as the recipient '{}' "
-                    "is not in the senders list of a new conversation.".format(
-                        self.recipient_reference
-                    )
+                    f"Message filtered as the recipient '{self.recipient_reference}' "
+                    "is not in the senders list of a new conversation."
                 )
                 return None
 

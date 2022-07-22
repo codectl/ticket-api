@@ -37,11 +37,9 @@ class TokenSvc:
                 setattr(token, key, value)
         db.session.commit()
 
-        current_app.logger.info(
-            "Updated token '{}' with the following attributes: '{}'.".format(
-                token.access_token, kwargs
-            )
-        )
+        access_token = token.access_token
+        msg = f"Updated token '{access_token}' with the attributes: '{kwargs}'."
+        current_app.logger.info(msg)
 
     @classmethod
     def delete(cls, token_id):

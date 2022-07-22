@@ -227,13 +227,8 @@ class O365MailboxManager:
             )
         )
 
-        reply = cls.create_reply(
-            message,
-            values={
-                "body": body,
-                "metadata": [dict(name="message", content="jira ticket notification")],
-            },
-        )
+        metadata = {"name": "message", "content": "jira ticket notification"}
+        reply = cls.create_reply(message, values={"body": body, "metadata": [metadata]})
         reply.send()
         return reply
 

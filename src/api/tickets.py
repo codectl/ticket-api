@@ -1,18 +1,10 @@
 import jira
-import marshmallow
 from flask import Blueprint, request
 from flask_restful import Api, Resource
 
 from src import utils
-from src.schemas.deserializers import filemgr as dsl
-from src.schemas.serializers import jira as sl
-from src.serialization.deserializers.CreateTicket import CreateTicketSchema
-from src.serialization.deserializers.CreateTicketComment import (
-    CreateTicketCommentSchema,
-)
-from src.serialization.deserializers.TicketSearchCriteria import (
-    TicketSearchCriteriaSchema,
-)
+from src.schemas.serializers.jira import Issue
+from src.schemas.deserializers import tickets as dsl
 from src.services.jira import JiraSvc
 from src.services.ticket import TicketSvc
 
@@ -22,34 +14,26 @@ api = Api(blueprint)
 
 @api.resource("/", endpoint="tickets")
 class Tickets(Resource):
-    @flasgger.swag_from(
-        {
-            "parameters": flasgger.marshmallow_apispec.schema2parameters(
-                TicketSearchCriteriaSchema, location="query"
-            ),
-            "tags": ["tickets"],
-            "responses": {
-                200: {
-                    "description": "Ok",
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "array",
-                                "items": {"$ref": "#/components/schemas/Issue"},
-                            }
-                        },
-                    },
-                },
-                400: {"$ref": "#/components/responses/BadRequest"},
-            },
-        }
-    )
     def get(self):
         """
         Get service tickets based on search criteria
+        ---
+        tags:
+            - tickets
+        parameters:
+            - in: query
+              schema: TicketSearchCriteriaSchema
+        responses:
+            200:
+                description: Ok
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items: Issue
+            404:
+                $ref: "#/components/responses/NotFound"
         """
-
-        # read params and set defaults
         params = request.args.copy()
         boards = params.poplist("boards") or (b.key for b in JiraSvc().boards())
         filters = {
@@ -63,66 +47,46 @@ class Tickets(Resource):
         }
 
         # validate parameters
-        errors = TicketSearchCriteriaSchema().validate(filters)
+        errors = dsl.TicketSearchCriteriaSchema().validate(filters)
         if errors:
             utils.abort_with(400, message=errors)
 
         # consider default values
         tickets = TicketSvc.find_by(**filters)
 
-        return IssueSchema(many=True).dump(tickets)
+        return Issue.IssueSchema(many=True).dump(tickets)
 
-    @flasgger.swag_from(
-        {
-            "requestBody": {
-                "required": True,
-                "content": {
-                    "application/json": {
-                        "schema": flasgger.marshmallow_apispec.schema2jsonschema(
-                            CreateTicketSchema
-                        )
-                    },
-                    "multipart/form-data": {
-                        "schema": flasgger.marshmallow_apispec.schema2jsonschema(
-                            marshmallow.Schema.from_dict(
-                                {
-                                    **CreateTicketSchema().fields,
-                                    "attachments": marshmallow.fields.List(
-                                        marshmallow.fields.Raw(
-                                            metadata=dict(
-                                                type="file",
-                                                description="files to attach",
-                                            )
-                                        )
-                                    ),
-                                }
-                            )
-                        ),
-                        "encoding": {
-                            "watchers": {"style": "form", "explode": True},
-                            "attachments": {"style": "form", "explode": True},
-                        },
-                    },
-                },
-            },
-            "tags": ["tickets"],
-            "responses": {
-                201: {
-                    "description": "Created",
-                    "content": {
-                        "application/json": {
-                            "schema": {"$ref": "#/components/schemas/Issue"}
-                        }
-                    },
-                },
-                400: {"$ref": "#/components/responses/BadRequest"},
-                415: {"$ref": "#/components/responses/UnsupportedMediaType"},
-            },
-        }
-    )
     def post(self):
         """
-        Create a new ticket
+        Create a new ticket.
+        ---
+        tags:
+            - tickets
+        requestBody:
+            description: ticket properties
+            required: true
+            content:
+                application/json:
+                    schema: CreateTicketSchema
+                multipart/form-data:
+                    schema: CreateTicketSchemaAttachments
+                    encoding:
+                        watchers:
+                            style: form
+                            explode: true
+                        attachments:
+                            style: form
+                            explode: true
+        responses:
+            201:
+                content:
+                    application/json:
+                        schema: Issue
+
+            400:
+                $ref: "#/components/responses/BadRequest"
+            415:
+                $ref: "#/components/responses/UnsupportedMediaType"
         """
         body = {}
         files = []
@@ -137,13 +101,13 @@ class Tickets(Resource):
             utils.abort_with(415, message="Unsupported media type")
 
         # validate body
-        errors = CreateTicketSchema().validate(body)
+        errors = dsl.CreateTicketSchema().validate(body)
         if errors:
             utils.abort_with(400, message=errors)
 
         try:
             created = TicketSvc.create(**body, attachments=files)
-            return IssueSchema().dump(created), 201
+            return Issue.IssueSchema().dump(created), 201
         except jira.exceptions.JIRAError as ex:
             utils.abort_with(400, message=ex.text)
 
@@ -187,66 +151,46 @@ class Ticket(Resource):
         if not result:
             utils.abort_with(404, message="Ticket not found")
         else:
-            return IssueSchema().dump(result)
+            return Issue.IssueSchema().dump(result)
 
 
 @api.resource("/<key>/comment", endpoint="comment")
 class Comment(Resource):
-    @flasgger.swag_from(
-        {
-            "parameters": flasgger.marshmallow_apispec.schema2parameters(
-                marshmallow.Schema.from_dict(
-                    {
-                        "key": marshmallow.fields.String(
-                            required=True,
-                            metadata=dict(description="ticket unique identifier"),
-                        )
-                    }
-                ),
-                location="path",
-            ),
-            "tags": ["tickets"],
-            "requestBody": {
-                "required": True,
-                "content": {
-                    "application/json": {
-                        "schema": flasgger.marshmallow_apispec.schema2jsonschema(
-                            CreateTicketCommentSchema
-                        )
-                    },
-                    "multipart/form-data": {
-                        "schema": flasgger.marshmallow_apispec.schema2jsonschema(
-                            marshmallow.Schema.from_dict(
-                                {
-                                    **CreateTicketCommentSchema().fields,
-                                    "attachments": marshmallow.fields.List(
-                                        marshmallow.fields.Raw(
-                                            metadata={
-                                                "type": "file",
-                                                "description": "files to attach",
-                                            }
-                                        )
-                                    ),
-                                }
-                            )
-                        ),
-                        "encoding": {
-                            "watchers": {"style": "form", "explode": True},
-                            "attachments": {"style": "form", "explode": True},
-                        },
-                    },
-                },
-            },
-            "responses": {
-                204: {"description": "No Content"},
-                400: {"$ref": "#/components/responses/BadRequest"},
-                415: {"$ref": "#/components/responses/UnsupportedMediaType"},
-            },
-        }
-    )
     def post(self, key):
         """
         Create a new ticket comment
+        ---
+        tags:
+            - tickets
+        parameters:
+            - in: path
+              name: path
+              schema:
+                type: string
+              required: true
+              description: the ticket unique identifier
+        requestBody:
+            description: comment properties
+            required: true
+            content:
+                application/json:
+                    schema: CreateTicketCommentSchema
+                multipart/form-data:
+                    schema: CreateTicketCommentSchemaAttachments
+                    encoding:
+                        watchers:
+                            style: form
+                            explode: true
+                        attachments:
+                            style: form
+                            explode: true
+        responses:
+            204:
+                description: The resource was created successfully.
+            400:
+                $ref: "#/components/responses/BadRequest"
+            415:
+                $ref: "#/components/responses/UnsupportedMediaType"
         """
         body = {}
         files = []
@@ -259,7 +203,7 @@ class Comment(Resource):
             utils.abort_with(415, message="Unsupported media type")
 
         # validate body
-        errors = CreateTicketCommentSchema().validate(body)
+        errors = dsl.CreateTicketCommentSchema().validate(body)
         if errors:
             utils.abort_with(400, message=errors)
 
