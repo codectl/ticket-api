@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields
 
-from src.serialization.serializers.jira.Comment import CommentSchema
+from src.schemas.serializers.jira.Comment import CommentSchema
 
 
 class RenderedSchema(Schema):

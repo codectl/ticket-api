@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields
 
-from src.serialization.serializers.jira.User import UserSchema
+from src.schemas.serializers.jira.User import UserSchema
 
 
 class AttachmentSchema(Schema):
