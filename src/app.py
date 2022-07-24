@@ -3,7 +3,6 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_plugins.webframeworks.flask import FlaskPlugin
 from apispec_ui.flask import Swagger
 from flask import Flask, Blueprint, redirect, url_for
-from werkzeug.exceptions import HTTPException
 
 from src import __meta__, __version__, utils
 from src.api.tickets import api as tickets
@@ -83,12 +82,6 @@ def setup_app(app):
 
     # redirect root path to context root
     app.add_url_rule("/", "index", view_func=lambda: redirect(url_for("swagger.ui")))
-
-    # jsonify http errors
-    app.register_error_handler(
-        HTTPException,
-        lambda ex: (utils.http_response(ex.code, exclude=("message",)), ex.code),
-    )
 
     # register cli commands
     app.cli.add_command(o365_cli)
