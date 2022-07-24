@@ -9,6 +9,7 @@ from src import __meta__, __version__, utils
 from src.api.tickets import api as tickets
 from src.cli.o365.cli import cli as o365_cli
 from src.settings import oas
+from src.settings.ctx import db
 from src.settings.env import config_class, load_dotenv
 
 
