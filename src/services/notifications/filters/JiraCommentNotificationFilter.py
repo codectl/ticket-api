@@ -64,14 +64,13 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
                 )
 
                 # send out the comment message has a reply to the last sent message
+                metadata = {"name": "message", "content": "relay jira comment"}
                 reply = O365MailboxManager.create_reply(
                     message=last_message,
                     values={
                         "body": body,
                         "author": payload["author"]["name"],
-                        "metadata": [
-                            {"name": "message", "content": "relay jira comment"}
-                        ],
+                        "metadata": [metadata],
                     },
                 )
                 reply.send()

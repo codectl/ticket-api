@@ -1,4 +1,4 @@
-from typing import Optional, Union, List
+import typing
 
 from flask import current_app
 
@@ -19,13 +19,13 @@ class TokenSvc:
         return token
 
     @staticmethod
-    def get(token_id) -> Optional[OAuth2Token]:
+    def get(token_id) -> typing.Optional[OAuth2Token]:
         return OAuth2Token.query.get(token_id)
 
     @staticmethod
     def find_by(
         one=False, **filters
-    ) -> Union[List[OAuth2Token], Optional[OAuth2Token]]:
+    ) -> typing.Union[list[OAuth2Token], typing.Optional[OAuth2Token]]:
         query = OAuth2Token.query.filter_by(**filters)
         return query.all() if not one else query.one_or_none()
 

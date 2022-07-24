@@ -100,7 +100,7 @@ class TicketSvc:
     @classmethod
     def find_by(
         cls, limit: int = 20, fields: list = None, _model: bool = False, **filters
-    ) -> typing.List[typing.Union[dict, Ticket]]:
+    ) -> list[typing.Union[dict, Ticket]]:
         """Search for tickets based on several criteria.
 
         Jira's filters are also supported.
