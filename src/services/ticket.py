@@ -5,9 +5,9 @@ import jinja2
 import jira.resources
 from flask import current_app
 
-from src import db
 from src.models.ticket import Ticket
 from src.services.jira import JiraSvc
+from src.settings.ctx import db
 
 
 class TicketSvc:

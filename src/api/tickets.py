@@ -38,8 +38,7 @@ class Tickets(Resource):
         boards = params.poplist("boards") or (b.key for b in JiraSvc().boards())
         filters = {
             "boards": boards,
-            "categories": params.poplist("categories")
-            or JiraSvc.allowed_categories(),
+            "categories": params.poplist("categories") or JiraSvc.allowed_categories(),
             "fields": params.poplist("fields"),
             "limit": params.get("limit", 20),
             "sort": params.get("sort", "created"),

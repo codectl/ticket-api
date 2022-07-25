@@ -19,8 +19,7 @@ class CreateTicketSchema(Schema):
         required=True, metadata={"description": "ticket reporter email", "example": ""}
     )
     board = fields.String(
-        required=True,
-        metadata={"description": "boards to fetch tickets from"}
+        required=True, metadata={"description": "boards to fetch tickets from"}
     )
     category = fields.String(
         required=True,
@@ -47,8 +46,9 @@ class CreateTicketSchema(Schema):
 
     @pre_load
     def lazy_loader(self, data, **_):
+        default_board = JiraSvc.default_board()
         default_category = current_app.config["JIRA_TICKET_LABEL_DEFAULT_CATEGORY"]
-        data["board"] = data.get("board", JiraSvc.default_board())
+        data["board"] = data.get("board", default_board)
         data["category"] = data.get("category", default_category)
         return data
 

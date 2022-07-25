@@ -9,7 +9,7 @@ from src import utils
 db = SQLAlchemy()
 
 
-def register_events(app):
+def ctx_settings(app):
 
     # redirect root path to context root
     app.add_url_rule("/", "index", view_func=lambda: redirect(url_for("swagger.ui")))

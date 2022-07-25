@@ -8,7 +8,7 @@ from src import __meta__, __version__, utils
 from src.api.tickets import api as tickets
 from src.cli.o365.cli import cli as o365_cli
 from src.settings import oas
-from src.settings.ctx import db, register_events
+from src.settings.ctx import ctx_settings, db
 from src.settings.env import config_class, load_dotenv
 
 
@@ -31,11 +31,11 @@ def create_app(config_name="development", dotenv=True, configs=None):
 
 def setup_app(app):
     """Initial setups."""
-    # link db to app
-    db.init_app(app)
-
     url_prefix = app.config["APPLICATION_ROOT"]
     openapi_version = app.config["OPENAPI"]
+
+    # link db to app
+    db.init_app(app)
 
     # initial blueprint wiring
     index = Blueprint("index", __name__)
@@ -80,8 +80,8 @@ def setup_app(app):
     # create views for Swagger
     Swagger(app=app, apispec=spec, config=oas.swagger_configs(app_root=url_prefix))
 
-    # register handlers and events
-    register_events(app)
+    # settings within app ctx
+    ctx_settings(app)
 
     # register cli commands
     app.cli.add_command(o365_cli)
