@@ -1,5 +1,5 @@
 from flask import current_app
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, pre_load, validate, validates_schema
 
 from src.services.jira import JiraSvc
 
@@ -20,19 +20,11 @@ class CreateTicketSchema(Schema):
     )
     board = fields.String(
         required=True,
-        metadata={
-            "description": "boards to fetch tickets from",
-            "default": JiraSvc.default_board(),
-        },
-        validate=validate.OneOf(b.key for b in JiraSvc().boards()),
+        metadata={"description": "boards to fetch tickets from"}
     )
     category = fields.String(
         required=True,
-        metadata={
-            "description": "category the ticket belongs to",
-            "default": current_app.config["JIRA_TICKET_LABEL_DEFAULT_CATEGORY"],
-        },
-        validate=validate.OneOf(JiraSvc.supported_categories()),
+        metadata={"description": "category the ticket belongs to"},
     )
     watchers = fields.List(
         fields.Email(),
@@ -46,6 +38,19 @@ class CreateTicketSchema(Schema):
         load_default=None,
         metadata={"description": "define a higher or lower ticket priority"},
     )
+
+    @validates_schema
+    def lazy_validator(self, data):
+        validate.OneOf(choices=(b.key for b in JiraSvc.boards()))(data["board"])
+        validate.OneOf(choices=JiraSvc.allowed_categories())(data["category"])
+        return True
+
+    @pre_load
+    def lazy_loader(self, data, **_):
+        default_category = current_app.config["JIRA_TICKET_LABEL_DEFAULT_CATEGORY"]
+        data["board"] = data.get("board", JiraSvc.default_board())
+        data["category"] = data.get("category", default_category)
+        return data
 
 
 class CreateTicketSchemaAttachments(CreateTicketSchema):
@@ -79,11 +84,11 @@ class CreateTicketCommentAttachmentsSchema(CreateTicketCommentSchema):
 
 class TicketSearchCriteriaSchema(Schema):
     boards = fields.List(
-        fields.String(validate=validate.OneOf(JiraSvc.supported_board_keys())),
+        fields.String(),
         metadata={"description": "boards to fetch tickets from"},
     )
     categories = fields.List(
-        fields.String(validate=validate.OneOf(JiraSvc.supported_categories())),
+        fields.String(),
         metadata={"description": "categories the tickets belongs to"},
     )
     reporter = fields.Email(metadata={"description": "ticket reporter email"})
@@ -96,7 +101,7 @@ class TicketSearchCriteriaSchema(Schema):
     watcher = fields.Email(metadata={"description": "tickets user has subscribed to"})
     q = fields.String(metadata={"description": "search for text occurrences"})
     fields_ = fields.List(
-        fields.String(validate=validate.OneOf(JiraSvc.supported_fields())),
+        fields.String(),
         data_key="fields",
         metadata={"description": "additional fields to include in the results"},
     )
@@ -108,3 +113,10 @@ class TicketSearchCriteriaSchema(Schema):
         load_default="created",
         metadata={"description": "sort tickets by"},
     )
+
+    @validates_schema
+    def lazy_validator(self, data):
+        validate.OneOf(choices=(b.key for b in JiraSvc.boards()))(data["boards"])
+        validate.OneOf(choices=JiraSvc.allowed_fields())(data["fields"])
+        validate.OneOf(choices=JiraSvc.allowed_categories())(data["category"])
+        return True
