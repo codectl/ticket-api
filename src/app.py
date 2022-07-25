@@ -2,13 +2,13 @@ from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_plugins.webframeworks.flask import FlaskPlugin
 from apispec_ui.flask import Swagger
-from flask import Flask, Blueprint, redirect, url_for
+from flask import Flask, Blueprint
 
 from src import __meta__, __version__, utils
 from src.api.tickets import api as tickets
 from src.cli.o365.cli import cli as o365_cli
 from src.settings import oas
-from src.settings.ctx import db
+from src.settings.ctx import db, register_events
 from src.settings.env import config_class, load_dotenv
 
 
@@ -31,6 +31,9 @@ def create_app(config_name="development", dotenv=True, configs=None):
 
 def setup_app(app):
     """Initial setups."""
+    # link db to app
+    db.init_app(app)
+
     url_prefix = app.config["APPLICATION_ROOT"]
     openapi_version = app.config["OPENAPI"]
 
@@ -41,9 +44,6 @@ def setup_app(app):
 
     # base template for OpenAPI specs
     oas.converter = oas.create_spec_converter(openapi_version)
-
-    # link db to app
-    db.init_app(app)
 
     spec_template = oas.base_template(
         openapi_version=openapi_version,
@@ -80,8 +80,8 @@ def setup_app(app):
     # create views for Swagger
     Swagger(app=app, apispec=spec, config=oas.swagger_configs(app_root=url_prefix))
 
-    # redirect root path to context root
-    app.add_url_rule("/", "index", view_func=lambda: redirect(url_for("swagger.ui")))
+    # register handlers and events
+    register_events(app)
 
     # register cli commands
     app.cli.add_command(o365_cli)
