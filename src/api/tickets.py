@@ -39,7 +39,7 @@ class Tickets(Resource):
         filters = {
             "boards": boards,
             "categories": params.poplist("categories")
-            or JiraSvc.supported_categories(),
+            or JiraSvc.allowed_categories(),
             "fields": params.poplist("fields"),
             "limit": params.get("limit", 20),
             "sort": params.get("sort", "created"),
@@ -142,7 +142,7 @@ class Ticket(Resource):
                 TicketSvc.find_by(
                     key=key,
                     board_keys=(b.key for b in JiraSvc().boards()),
-                    categories=JiraSvc.supported_categories(),
+                    categories=JiraSvc.allowed_categories(),
                     limit=1,
                 )
             ),
@@ -253,4 +253,4 @@ class SupportedCategories(Resource):
                             items:
                                 type: string
         """
-        return JiraSvc.supported_categories()
+        return JiraSvc.allowed_categories()

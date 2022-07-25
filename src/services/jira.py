@@ -317,9 +317,9 @@ class JiraSvc(ProxyJIRA):
         return next(b for b in cls().boards() if b.is_default)
 
     @staticmethod
-    def supported_categories():
+    def allowed_categories():
         return current_app.config["JIRA_TICKET_LABEL_CATEGORIES"]
 
     @staticmethod
-    def supported_fields():
+    def allowed_fields():
         return ["watchers", "comments", "attachments", "rendered"]
