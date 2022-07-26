@@ -5,6 +5,7 @@ import re
 
 import mistune
 import O365.mailbox
+import O365.utils.utils
 from flask import current_app
 
 from src.models.ticket import Ticket
@@ -79,9 +80,30 @@ class O365MailboxManager:
         """Process a message and create/update ticket."""
         svc = TicketSvc()
 
-        # reading message from the corresponding folder
-        # and create Jira ticket for it.
-        message = self._get_message(message_id=message_id)
+        # force certain properties from the message to be present
+        select = (
+            "CreatedDateTime",
+            "Subject",
+            "Body",
+            "UniqueBody",
+            "From",
+            "ToRecipients",
+            "BccRecipients",
+            "CcRecipients",
+            "Flag",
+            "Importance",
+            "HasAttachments",
+            "Id",
+            "ParentFolderId",
+            "ConversationId",
+            "ConversationIndex",
+        )
+
+        # use any folder to get message from
+        query = self._mailbox.new_query().select(*select)
+        message = self._mailbox.inbox_folder().get_message(
+            object_id=message_id, query=query, download_attachments=True
+        )
 
         # watchers list
         ccs = (e.address for e in message.cc)
@@ -168,43 +190,6 @@ class O365MailboxManager:
             self.add_message_to_history(message=notification, model=model)
 
             current_app.logger.info(f"New ticket created with Jira key '{model.key}'.")
-
-    def _get_message(self, message_id):
-        """Custom implementation for getting message from id.
-
-        Headers must be included in the request and original implementation
-        does not allow.
-
-        Remove this if future implementation of Folder.get_message
-        allow kwargs to be passed on to connection.get method.
-        """
-
-        # fields to retrieve
-        params = {
-            "$select": "CreatedDateTime,Subject,"
-            "Body,UniqueBody,"
-            "From,ToRecipients,"
-            "BccRecipients,CcRecipients,"
-            "Flag,Importance,"
-            "HasAttachments,Id,ParentFolderId,"
-            "ConversationId,ConversationIndex"
-        }
-
-        # create a dummy folder to get message
-        folder = O365.mailbox.Folder(parent=self._mailbox)
-
-        url = folder.build_url(folder._endpoints.get("message").format(id=message_id))
-        message = folder.con.get(url, params=params).json()
-        message_object = folder.message_constructor(
-            parent=folder,
-            is_draft=False,
-            download_attachments=True,
-            **{folder._cloud_data_key: message},
-        )
-
-        message_object.folder = folder
-        message_object.resource_namespace = message["@odata.id"]
-        return message_object
 
     @classmethod
     def _notify_reporter(cls, *, message: O365.Message, key: str):
