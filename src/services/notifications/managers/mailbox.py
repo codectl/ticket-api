@@ -175,7 +175,6 @@ class O365MailboxManager:
                 attachments=message.attachments,
                 # local fields
                 outlook_message_id=message.object_id,
-                outlook_message_url=message.resource_namespace,
                 outlook_conversation_id=message.conversation_id,
                 outlook_messages_id=message.object_id,
             )
