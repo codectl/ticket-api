@@ -155,7 +155,7 @@ class O365MailboxManager:
                 # append message to history
                 self.add_message_to_history(message, existing_ticket)
 
-                msg = f"New comment added to Jira ticket '{existing_ticket.key}'."
+                msg = f"New comment added on ticket '{existing_ticket.key}'."
             else:
                 key = existing_ticket.key
                 msg = f"Comment on ticket '{key}' has already been added."
