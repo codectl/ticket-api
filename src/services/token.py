@@ -2,14 +2,14 @@ import typing
 
 from flask import current_app
 
-from src import db
-from src.models.tokens import OAuth2Token
+from src.models.tokens import AccessToken
+from src.settings.ctx import db
 
 
 class TokenSvc:
     @staticmethod
-    def create(**kwargs) -> OAuth2Token:
-        token = OAuth2Token(**kwargs)
+    def create(**kwargs) -> AccessToken:
+        token = AccessToken(**kwargs)
 
         db.session.add(token)
         db.session.commit()
@@ -19,14 +19,14 @@ class TokenSvc:
         return token
 
     @staticmethod
-    def get(token_id) -> typing.Optional[OAuth2Token]:
-        return OAuth2Token.query.get(token_id)
+    def get(token_id) -> typing.Optional[AccessToken]:
+        return AccessToken.query.get(token_id)
 
     @staticmethod
     def find_by(
         one=False, **filters
-    ) -> typing.Union[list[OAuth2Token], typing.Optional[OAuth2Token]]:
-        query = OAuth2Token.query.filter_by(**filters)
+    ) -> typing.Union[list[AccessToken], typing.Optional[AccessToken]]:
+        query = AccessToken.query.filter_by(**filters)
         return query.all() if not one else query.one_or_none()
 
     @classmethod

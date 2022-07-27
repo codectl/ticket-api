@@ -1,4 +1,4 @@
-from src import db
+from src.settings.ctx import db
 
 
 class AccessToken(db.Model):
