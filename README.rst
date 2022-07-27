@@ -117,31 +117,40 @@ Note ⚠️: one should use ``configmap`` and ``secret`` instead when configurin
 
 O365 Auth
 ^^^^^^^^^
-Because the service relies on *O365* services, one should start off by requesting
-permissions against the *O365* service:
+Because the service relies on *O365* services, the access is done through *oauth2*
+protocol. The services runs best with the "client credentials" flow, which in that
+case one simply sets the environment variables ``O365_CLIENT_ID`` and
+``O365_CLIENT_SECRET``. To generate an *access token*, run the following:
 
 .. code-block:: bash
 
-    $ flask o365 authenticate
-    > ... INFO in o365: Account not yet authenticated.
+    $ flask o365 authorize
+
+At this point, a new *access token* is issued and stored in the default backend
+provider, which is the SQL table ``access_tokens``. For each token, a *refresh token*
+is also issued with an expiration date of 90 days, at which point one must issue a
+new one.
+
+Alternatively, and less recommended, the "authorization code" flow can be used. See
+file ``src/cli/o365/cli.py`` and apply changes mentioned there. Then run the same
+instruction:
+
+    $ flask o365 authorize
+    > ... INFO in o365: Authorizing account ...
     > Visit the following url to give consent:
-    > https://login.microsoftonline.com/<tenant-id>/oauth2/v2.0/authorize?response_type=code&...
+    > https://.../oauth2/v2.0/authorize?response_type=code&...
     > Paste the authenticated url here:
     > ...
 
-As seen above, the *O365* user must provide proper consent for this service to
-perform certain actions (see scopes) on behalf of the user, as per defined in OAuth2
-authorization flow. For the use case previously mentioned, the service would require
-access to the *O365* user's inbox to read its content.
+In this flow, the *O365* user must provide proper consent for this service to
+perform certain actions (see scopes) on behalf of the user, as per defined in *OAuth2*
+authorization flow. For instance, the service requires access to the *O365* user's
+inbox to read its content, and therefore user must consent those permissions.
 
 The best way to go about it is simply to open the link in a browser and accept the
-requested consents. The *O365* will redirect to a link containing the so desired
-authorization code. Simply paste that response link back to the terminal, and it's done.
-
-A new file ``o365_token.txt`` will be created which contains all the important
-*OAuth2* parameters such as the ``access_token`` and ``refresh_token``. The
-``refresh_token`` has a duration of 90 days after which it expires, so one must
-repeat the process just described to request new access codes.
+requested consents. The *O365* will redirect to a link containing the *authorization
+code*. Simply paste that response link back to the terminal, and the service handles
+the rest.
 
 Run 🚀
 ====
