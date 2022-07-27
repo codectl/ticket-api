@@ -85,7 +85,7 @@ def create_mailbox_manager(email: str = None, **kwargs):
 @click.option("--mailbox", "-m", default=None, help="the mailbox to manage events")
 @click.option("--retries", "-r", default=0, help="number of retries when request fails")
 def authorize(mailbox=None, retries=0):
-    """Set code used for OAuth2 authorization."""
+    """Grant service authorization to O365 resources."""
     return authorize_account(email=mailbox, retries=retries)
 
 

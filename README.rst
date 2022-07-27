@@ -159,7 +159,7 @@ To start listening for incoming events (aka emails), it would go like this:
 .. code-block:: bash
 
     $ flask o365 handle-incoming-email
-    > ... INFO in o365: Account already authenticated.
+    > ... INFO in o365: Account already authorized.
     > ... INFO in o365_mailbox: Start streaming connection for 'users/me@example.com' ...
     > ... INFO in base: Open new events channel ...
     > ...
@@ -233,8 +233,8 @@ Additionally, a set of commands to manage *O365* are also provided:
 
     $ flask o365
     ...
-    > authenticate               Set code used for OAuth2 authentication.
-    > check-for-missing-tickets  Check for possible tickets that went missing...
+    > authorize                  Grant service authorization to O365 resources.
+    > check-for-missing-tickets  Check for possible tickets that went missing ...
     > handle-incoming-email      Handle incoming email.
 
 Each command contains its own instructions and properties. Enable ``--help`` flag to get
