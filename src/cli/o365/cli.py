@@ -25,6 +25,10 @@ def authorize_account(email=None, retries=0):
     config = current_app.config
     credentials = (config["O365_CLIENT_ID"], config["O365_CLIENT_SECRET"])
     protocol = MSOffice365Protocol(api_version="beta")
+
+    # for authorization code flow:
+    #   * set auth_flow_type="authorization"
+    #   * add scopes (env "O365_SCOPES")
     account = Account(
         credentials,
         protocol=protocol,
@@ -38,7 +42,6 @@ def authorize_account(email=None, retries=0):
     if account.is_authenticated:
         current_app.logger.info("Account already authorized.")
     else:
-        # add scopes (env "O365_SCOPES") for "authorization" flow
         current_app.logger.info("Authorizing account ...")
         account.authenticate(tenant_id=config["O365_TENANT_ID"])
         current_app.logger.info("Authorization done.")
