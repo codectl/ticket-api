@@ -22,13 +22,15 @@ cli = AppGroup(
 
 def authenticate_account(email=None, retries=0):
     """Authenticate an O365 account."""
-    credentials = (current_app.config["O365_CLIENT_ID"], None)
+    config = current_app.config
+    credentials = (config["O365_CLIENT_ID"], config["O365_CLIENT_SECRET"])
     protocol = MSOffice365Protocol(api_version="beta")
     account = Account(
         credentials,
         protocol=protocol,
-        tenant_id=current_app.config["O365_TENANT_ID"],
-        main_resource=email or current_app.config["MAILBOX"],
+        tenant_id=config["O365_TENANT_ID"],
+        main_resource=email or config["MAILBOX"],
+        auth_flow_type="credentials",
         request_retries=retries,
         token_backend=DatabaseTokenBackend(),
     )
@@ -36,11 +38,9 @@ def authenticate_account(email=None, retries=0):
     if account.is_authenticated:
         current_app.logger.info("Account already authenticated.")
     else:
+        # add "O365_SCOPES" for "authorization" flow
         current_app.logger.info("Account not yet authenticated.")
-        account.authenticate(
-            tenant_id=current_app.config["O365_TENANT_ID"],
-            scopes=current_app.config["O365_SCOPES"],
-        )
+        account.authenticate(tenant_id=config["O365_TENANT_ID"])
         current_app.logger.info("Authenticated successfully.")
     return account
 
