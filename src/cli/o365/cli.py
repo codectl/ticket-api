@@ -20,8 +20,8 @@ cli = AppGroup(
 )
 
 
-def authenticate_account(email=None, retries=0):
-    """Authenticate an O365 account."""
+def authorize_account(email=None, retries=0):
+    """Authorize an O365 account."""
     config = current_app.config
     credentials = (config["O365_CLIENT_ID"], config["O365_CLIENT_SECRET"])
     protocol = MSOffice365Protocol(api_version="beta")
@@ -36,25 +36,25 @@ def authenticate_account(email=None, retries=0):
     )
 
     if account.is_authenticated:
-        current_app.logger.info("Account already authenticated.")
+        current_app.logger.info("Account already authorized.")
     else:
-        # add "O365_SCOPES" for "authorization" flow
-        current_app.logger.info("Account not yet authenticated.")
+        # add scopes (env "O365_SCOPES") for "authorization" flow
+        current_app.logger.info("Authorizing account ...")
         account.authenticate(tenant_id=config["O365_TENANT_ID"])
-        current_app.logger.info("Authenticated successfully.")
+        current_app.logger.info("Authorization done.")
     return account
 
 
 def create_mailbox_manager(email: str = None, **kwargs):
     """Create the mailbox manager."""
     email = email or current_app.config["MAILBOX"]
-    account = authenticate_account(email=email, **kwargs)
+    account = authorize_account(email=email, **kwargs)
     mailbox = account.mailbox()
 
     ct = O365Notification.ChangeType.CREATED.value
     notif = O365MailBoxStreamingNotifications(parent=mailbox, change_type=ct)
 
-    # Change id alias to the real id for the 'RecipientsFilter' object
+    # Change id alias to the real id for the "RecipientsFilter" object
     sent_folder = mailbox.sent_folder()
     sent_folder = sent_folder.get_folder(folder_id=sent_folder.folder_id)
 
@@ -81,9 +81,9 @@ def create_mailbox_manager(email: str = None, **kwargs):
 @cli.command()
 @click.option("--mailbox", "-m", default=None, help="the mailbox to manage events")
 @click.option("--retries", "-r", default=0, help="number of retries when request fails")
-def authenticate(mailbox=None, retries=0):
-    """Set code used for OAuth2 authentication."""
-    return authenticate_account(email=mailbox, retries=retries)
+def authorize(mailbox=None, retries=0):
+    """Set code used for OAuth2 authorization."""
+    return authorize_account(email=mailbox, retries=retries)
 
 
 @cli.command()
