@@ -14,7 +14,7 @@ documentation = ""
 keywords = [
     "ticket-api",
     "jira",
-    "o365",
+    "O365",
     "swagger",
     "openapi",
     "oas3",
