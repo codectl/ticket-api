@@ -78,19 +78,12 @@ A possible configuration is:
     # O365 registered tenant
     O365_TENANT_ID=...
 
-    # O365 OAuth2 properties
-
-    # O365 client id & secret for this application
+    # O365 client credentials
     O365_CLIENT_ID=...
     O365_CLIENT_SECRET=...
 
-    #   * 'offline_access': to be eligible to retrieve a refresh_token.
-    #      Otherwise user only has access to resources for a single hour.
-    #   * 'message_all': alias for 'mail.readwrite' + 'mail.send'
-    #      for own user mailbox actions
-    #   * 'message_all_shared': alias for 'mail.read.shared' + 'mail.readwrite.shared'
-    #      for shared mailbox actions
-    O365_SCOPES=offline_access,message_all,message_all_shared
+    # O365 scopes (optional)
+    O365_SCOPES=...
 
     # Atlassian credentials
     ATLASSIAN_URL=https://atlassian.net
