@@ -418,6 +418,21 @@ stringcase = ">=1.2.0"
 tzlocal = ">=4.0"
 
 [[package]]
+name = "o365-notifications"
+version = "0.1.1"
+description = "Pythonic handler for O365 Streaming & Push Notifications"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+
+[package.dependencies]
+marshmallow = ">=3.17.0,<4.0.0"
+requests = ">=2.28.1,<3.0.0"
+
+[package.extras]
+O365 = ["O365 (>=2.0.19,<3.0.0)"]
+
+[[package]]
 name = "oauthlib"
 version = "3.2.0"
 description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
@@ -791,7 +806,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "52b6d1ff6cf762970151ab3e56a0b822f7bf381e45b9334efd3c235bcb87eb4a"
+content-hash = "1f28027abebcd72f41bab04f3a44ff853710c4702ac9f67e818ff84b916a341a"
 
 [metadata.files]
 aniso8601 = [
@@ -1047,6 +1062,10 @@ nodeenv = [
 o365 = [
     {file = "O365-2.0.19-py3-none-any.whl", hash = "sha256:fdcc38c5fa3ee11f2d1774058881b2e8333f7df6eb81962693ead856f1233ba0"},
     {file = "O365-2.0.19.tar.gz", hash = "sha256:725238a0362343bd84c426ee5d282a862a603f62de454d01c5f9dfaf9cdf98f9"},
+]
+o365-notifications = [
+    {file = "O365-notifications-0.1.1.tar.gz", hash = "sha256:d5970decae24e659abafca64b0c18740303a298dce9ee99d31904b0c16d79200"},
+    {file = "O365_notifications-0.1.1-py3-none-any.whl", hash = "sha256:8820b9cca8119ae7e9ab4f063ee93253dc13c879e7695b7ecf8f55ddbf6c5599"},
 ]
 oauthlib = [
     {file = "oauthlib-3.2.0-py3-none-any.whl", hash = "sha256:6db33440354787f9b7f3a6dbd4febf5d0f93758354060e802f6c06cb493022fe"},
