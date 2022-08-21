@@ -30,7 +30,7 @@ def authorize_account(email=None, retries=0):
     #   * set auth_flow_type="authorization"
     #   * add scopes (env "O365_SCOPES")
     account = Account(
-        credentials,
+        credentials=credentials,
         protocol=protocol,
         tenant_id=config["O365_TENANT_ID"],
         main_resource=email or config["MAILBOX"],
