@@ -60,19 +60,19 @@ A possible configuration is:
 
 .. code-block:: bash
 
-    # Database
+    # database
     SQLALCHEMY_DATABASE_URI=sqlite:///example.db
 
-    # Application context
+    # application context
     APPLICATION_CONTEXT=/api/tickets/v1
 
     # version of OpenAPI
     OPENAPI=3.0.3
 
-    # The application providing info about the ticket
+    # the application providing info about the ticket
     TICKET_CLIENT_APP=https://example.com/
 
-    # The mailbox to manage
+    # the mailbox to manage
     MAILBOX=mailbox@example.com
 
     # O365 registered tenant
@@ -101,7 +101,7 @@ A possible configuration is:
     JIRA_BOARDS=JIRA_SUPPORT_BOARD
     JIRA_DEFAULT_BOARD=JIRA_SUPPORT_BOARD
 
-    # Filter settings
+    # filter settings
     EMAIL_WHITELISTED_DOMAINS=example.com
     EMAIL_BLACKLIST=malicious@example.com
 

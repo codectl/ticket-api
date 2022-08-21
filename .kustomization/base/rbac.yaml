@@ -2,21 +2,21 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: ticket-service
+  name: ticket-api
 rules:
   - apiGroups: [ policy ]
     resources: [ podsecuritypolicies ]
     verbs: [ use ]
-    resourceNames: [ ticket-service ]
+    resourceNames: [ ticket-api ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: ticket-service
+  name: ticket-api
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: ticket-service
+  name: ticket-api
 subjects:
   - kind: ServiceAccount
-    name: ticket-service
+    name: ticket-api

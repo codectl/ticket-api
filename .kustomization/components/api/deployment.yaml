@@ -7,7 +7,7 @@ metadata:
     app: ticket-api
     framework: flask
   annotations:
-    a8r.io/description: "API service for CRUD operations on tickets"
+    a8r.io/description: API service for CRUD operations on tickets
     a8r.io/owner: renatodamas
 
 spec:
@@ -18,8 +18,6 @@ spec:
       app: ticket-api
 
   strategy:
-    # Update each pod at a time and prevent
-    # additional pods from created
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 50%
@@ -32,17 +30,17 @@ spec:
     spec:
       containers:
         - name: ticket-api
-          image: ticket-service:latest
+          image: ticket-api:latest
           imagePullPolicy: Always
           envFrom:
             - secretRef:
                 name: proxy
             - secretRef:
-                name: ticket-service-postgres
+                name: ticket-api-db
             - secretRef:
-                name: ticket-service
+                name: ticket-api
             - configMapRef:
-                name: ticket-service
+                name: ticket-api
           resources:
             requests:
               cpu: 500m
@@ -53,5 +51,5 @@ spec:
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000
-      serviceAccountName: ticket-service
+      serviceAccountName: ticket-api
       restartPolicy: Always
