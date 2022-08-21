@@ -338,7 +338,7 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "jira"
-version = "3.3.1"
+version = "3.4.0"
 description = "Python library for interacting with JIRA via REST APIs."
 category = "main"
 optional = false
@@ -806,7 +806,7 @@ docs = ["jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "jaraco.packaging (>=9)
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "6264d00f1aae6be388c0e026a372032a0cb918c839b2be3f28236206dde410d9"
+content-hash = "f41e5cace2c99f5c9e8b76a5dba5918bc053b3a7753d0bc40b167e637276737b"
 
 [metadata.files]
 aniso8601 = [
@@ -1013,8 +1013,8 @@ jinja2 = [
     {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
 ]
 jira = [
-    {file = "jira-3.3.1-py3-none-any.whl", hash = "sha256:0214b066e126a3ec0e041526f781478224136d98676ff2442f1edd9da81374d9"},
-    {file = "jira-3.3.1.tar.gz", hash = "sha256:8492d9671694a16f6cdd5fed1ba8bf767acc86b547e2e34b9705168f084c4b14"},
+    {file = "jira-3.4.0-py3-none-any.whl", hash = "sha256:118278e913232a0040886a052b3035146782bdfa37dd247672dfcc42edf5008c"},
+    {file = "jira-3.4.0.tar.gz", hash = "sha256:dd1f5b8f068b408ffa8d43cb593e5207199f853203ce7c9e46f12c18706b647a"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.1.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:86b1f75c4e7c2ac2ccdaec2b9022845dbb81880ca318bb7a0a01fbf7813e3812"},
