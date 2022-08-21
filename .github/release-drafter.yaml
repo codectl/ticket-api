@@ -1,0 +1,73 @@
+name-template: "$RESOLVED_VERSION"
+tag-template: "$RESOLVED_VERSION"
+change-template: "* $TITLE (#$NUMBER) @$AUTHOR"
+categories:
+  - title: "🔥 major changes"
+    labels:
+      - major         # C6476B
+      - breaking      # C6476B
+  - title: "🚀 what's new"
+    labels:
+      - feature       # 006B75
+      - enhancement   # EDEDED
+  - title: "🐛 bug fixes"
+    labels:
+      - bug           # D73A4A
+      - fix           # FBCA04
+  - title: "⬆️ dependencies"
+    collapse-after: 3
+    labels:
+      - dependencies  # 0025FF
+  - title: "🔚 deprecations"
+    label:
+      - deprecated    # FEF2C0
+exclude-labels:
+  - skip-changelog    # EEEEEE
+version-resolver:
+  major:
+    labels:
+      - "type: major"
+      - "type: breaking"
+  minor:
+    labels:
+      - "type: feature"
+      - "type: enhancement"
+  patch:
+    labels:
+      - "type: bug"
+      - "type: chore"
+      - "type: deprecated"
+      - "type: dependencies"
+      - "type: documentation"
+      - "type: maintenance"
+      - "type: security"
+      - "type: refactoring"
+  default: patch
+exclude-contributors:
+  - dependabot[bot]
+  - github-actions[bot]
+autolabeler:
+  - label: bug
+    branch: [ "/^(hot)?fix\/.+/" ]
+    title: [ "/^(hot)?fix:/" ]
+  - label: deprecated
+    title: [ "/\\(deprecat(ed|ion)\\)/i" ]
+  - label: dependencies
+    title: [ "/\\((dev-)?dep(s|endenc(y|ies))(-dev)?\\)/i" ]
+  - label: documentation
+    title: [ "/^docs/", "/\\(docs\\)/i" ]
+    files: [ "*.\\.md", "*.\\.rst" ]
+  - label: feature
+    branch: [ "/^feat(ure)?\/.+/" ]
+    title: [ "/^feat(ure)?/" ]
+  - label: refactoring
+    title: [ "/^refactor/" ]
+  - label: skip-changelog
+    title:
+      - "/^build(?!\\((dev-)?dep(s|endenc(y|ies))(-dev)?\\))/i"
+      - "/^(chore|style|test)/i"
+      - "/pre-commit autoupdate/i"
+template: |
+  ## changes
+
+  $CHANGES

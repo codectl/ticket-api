@@ -1,0 +1,58 @@
+---
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - feature/**
+      - fix/**
+    tags: [ "[0-9]+.[0-9]+.[0-9]+*" ]
+
+jobs:
+
+  linters:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/poetry-setup
+        with:
+          python-version: "3.9"
+      - name: Run linter with tox
+        shell: bash
+        run: tox -e lint
+
+  tests:
+    name: ${{ matrix.os }}/${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python-version: [ "3.9", "3.10" ]
+        experimental: [ false ]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/poetry-setup
+        with:
+          python-version: ${{ matrix.python-version }}
+          os: ${{ matrix.os }}
+      - name: Run test suite with tox
+        shell: bash
+        run: tox -e py -- -p no:sugar -p no:warnings -q
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/poetry-setup
+        with:
+          python-version: "3.9"
+          os: ubuntu-latest
+      - name: Run coverage with tox
+        shell: bash
+        run: tox -e coverage -- -p no:sugar -p no:warnings -q
+      - name: Submit coverage to codecov
+        uses: codecov/codecov-action@v3

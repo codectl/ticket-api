@@ -1,0 +1,36 @@
+---
+name: version
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: install & configure poetry
+        uses: ./.github/actions/poetry-setup
+        with:
+          python-version: "3.9"
+
+      - name: get current version
+        id: current-version
+        run: echo "::set-output name=value::$(poetry version)"
+
+      - name: bump version
+        if: ${{ steps.current-version.value != inputs.tag }}
+        run: poetry version ${{ inputs.tag }}
+
+      # create a commit with bumped version
+      - name: commit bumped version
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: pyproject.toml
+          message: "build(release): bump version to ${{ inputs.tag }}"
+          default_author: github_actions
