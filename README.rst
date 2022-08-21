@@ -34,7 +34,7 @@ One can run it directly on the system with ``python`` or get it running on a
 
 Python
 ------
-The project uses `poetry <https://python-poetry.org/>`_ for dependency management
+The project uses `poetry <https://python-poetry.org/>`__ for dependency management
 . Therefore to set up the project (recommended):
 
 .. code-block:: bash
@@ -48,7 +48,7 @@ dependencies, which is particular useful during development stage.
 
 Kubernetes
 ----------
-Refer to `README <.kustomization/README.rst>`_ under ``.kustomization/``.
+Refer to `README <.kustomization/README.rst>`__ under ``.kustomization/``.
 
 Configuration 📄
 -------------
@@ -117,7 +117,7 @@ case one simply sets the environment variables ``O365_CLIENT_ID`` and
 
 .. code-block:: bash
 
-    $ flask o365 authorize
+    $ flask O365 authorize
 
 At this point, a new *access token* is issued and stored in the default backend
 provider, which is the SQL table ``access_tokens``. For each token, a *refresh token*
@@ -128,8 +128,8 @@ Alternatively, and less recommended, the "authorization code" flow can be used. 
 file ``src/cli/o365/cli.py`` and apply changes mentioned there. Then run the same
 instruction:
 
-    $ flask o365 authorize
-    > ... INFO in o365: Authorizing account ...
+    $ flask O365 authorize
+    > ... INFO in O365: Authorizing account ...
     > Visit the following url to give consent:
     > https://.../oauth2/v2.0/authorize?response_type=code&...
     > Paste the authenticated url here:
@@ -151,9 +151,9 @@ To start listening for incoming events (aka emails), it would go like this:
 
 .. code-block:: bash
 
-    $ flask o365 handle-incoming-email
-    > ... INFO in o365: Account already authorized.
-    > ... INFO in o365_mailbox: Start streaming connection for 'users/me@example.com' ...
+    $ flask O365 handle-incoming-email
+    > ... INFO in O365: Account already authorized.
+    > ... INFO in O365_mailbox: Start streaming connection for 'users/me@example.com'...
     > ... INFO in base: Open new events channel ...
     > ...
 
@@ -162,13 +162,14 @@ notification service. From this moment on, as soon as a new email reaches the in
 folder, a *Jira* API request is performed, and a new ticket is created.
 
 A thorough explanation on how the notification streaming mechanism works, can be
-found `here <https://github.com/rena2damas/o365-notifications>`_.
+found `here <https://github.com/rena2damas/O365-notifications>`__.
 
 REST API
 --------
-This project also comprises a ``Flask`` RESTful web server where a user can query to create, update and manage
-tickets. Each endpoint is properly documented under `OpenAPI 3 standard <https://swagger.io/specification/>`_ which makes
-easy for humans and third party services to understand and talk to.
+This project also comprises a ``Flask`` RESTful web server where a user can query to
+create, update and manage tickets. Each endpoint is properly documented under
+`OpenAPI 3 standard <https://swagger.io/specification/>`__ which makes easy for
+humans and third party services to understand and talk to.
 
 For a quick run with ``Flask``, run it like:
 
@@ -193,21 +194,22 @@ project.
 
 Core packages
 --------------
-This project takes advantage of several python packages that leverage the service implementation. The core packages are:
+This project takes advantage of several python packages that leverage the service
+implementation. The core packages are:
 
-* `Flask <https://pypi.org/project/Flask/>`_ : famous application web framework based
+* `Flask <https://pypi.org/project/Flask/>`__ : famous application web framework based
   on ``werkzeug`` WSGI
-* `Flask-RESTful <https://pypi.org/project/Flask-RESTful/>`_: serve RESTful endpoints
+* `Flask-RESTful <https://pypi.org/project/Flask-RESTful/>`__: serve RESTful endpoints
   in ``Flask``
-* `Flask-SQLAlchemy <https://pypi.org/project/Flask-SQLAlchemy/>`_: enable
-* `APISpec <https://pypi.org/project/apispec/>`_: the OpenAPI standard
+* `Flask-SQLAlchemy <https://pypi.org/project/Flask-SQLAlchemy/>`__: enable
   ``SQLAlchemy`` support for ``Flask``
-* `marshmallow <https://pypi.org/project/marshmallow/>`_: for API data serialization
-* `jira <https://pypi.org/project/jira/>`_: *pythonic* implementation for *Jira* REST
+* `APISpec <https://pypi.org/project/apispec/>`__: the OpenAPI standard
+* `marshmallow <https://pypi.org/project/marshmallow/>`__: for API data serialization
+* `jira <https://pypi.org/project/jira/>`__: *pythonic* implementation for *Jira* REST
   API
-* `O365 <https://pypi.org/project/o365/>`_: *pythonic* implementation for Microsoft
+* `O365 <https://pypi.org/project/O365/>`__: *pythonic* implementation for Microsoft
   Graph & Office 365 REST API
-* `O365-notifications <https://github.com/rena2damas/o365-notifications>`_:
+* `O365-notifications <https://github.com/rena2damas/O365-notifications>`__:
   *pythonic* implementation for O365 notifications
 
 CLI Commands
@@ -235,8 +237,8 @@ for more information on a command. Take the example below:
 
 .. code-block:: bash
 
-    $ flask o365 check-for-missing-tickets --help
-    > Usage: flask o365 check-for-missing-tickets [OPTIONS]
+    $ flask O365 check-for-missing-tickets --help
+    > Usage: flask O365 check-for-missing-tickets [OPTIONS]
     >
     >   Check for possible tickets that went missing in the last days.
     >
@@ -267,4 +269,4 @@ Optionally, run coverage as well with:
 
 License
 =======
-MIT licensed. See `LICENSE <LICENSE>`_.
+MIT licensed. See `LICENSE <LICENSE>`__.
