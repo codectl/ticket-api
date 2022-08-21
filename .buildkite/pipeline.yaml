@@ -33,5 +33,5 @@ steps:
 env:
   REGISTRY: renatodamas.jfrog.io
   REGISTRY_REPOSITORY: local-docker
-  IMAGE_NAME: ticket-service
+  IMAGE_NAME: ticket-api
   IMAGE_TAG: latest

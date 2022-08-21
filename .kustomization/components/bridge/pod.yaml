@@ -7,23 +7,23 @@ metadata:
     app: ticket-bridge
     framework: flask
   annotations:
-    a8r.io/description: "Batch service for creating tickets out of mailbox events"
+    a8r.io/description: Batch service for creating tickets out of mailbox events
     a8r.io/owner: renatodamas
 spec:
   containers:
     - name: ticket-bridge
-      image: ticket-service:latest
+      image: ticket-api:latest
       imagePullPolicy: Always
-      command: [ "flask", "o365", "handle-incoming-email" ]
+      command: [ flask, O365, handle-incoming-email ]
       envFrom:
         - secretRef:
             name: proxy
         - secretRef:
-            name: ticket-service-postgres
+            name: ticket-api-db
         - secretRef:
-            name: ticket-service
+            name: ticket-api
         - configMapRef:
-            name: ticket-service
+            name: ticket-api
       resources:
         requests:
           cpu: 300m
@@ -34,5 +34,5 @@ spec:
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
-  serviceAccountName: ticket-service
+  serviceAccountName: ticket-api
   restartPolicy: OnFailure

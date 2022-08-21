@@ -2,11 +2,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ticket-service
+  name: ticket-api
 data:
 
   # application context
-  APPLICATION_CONTEXT: /api/tickets/v3
+  APPLICATION_CONTEXT: /api/tickets/v1
 
   # version of OpenAPI
   OPENAPI: 3.0.3
@@ -17,13 +17,8 @@ data:
   # The mailbox to manage
   MAILBOX: mailbox@example.com
 
-  #   * 'offline_access': to be eligible to retrieve a refresh_token.
-  #      Otherwise user only has access to resources for a single hour.
-  #   * 'message_all': alias for 'mail.readwrite' + 'mail.send'.
-  #      For own user mailbox actions
-  #   * 'message_all_shared': alias for 'mail.read.shared' + 'mail.readwrite.shared'.
-  #      For shared mailbox actions
-  O365_SCOPES: offline_access,message_all,message_all_shared
+  # O365 scopes (optional)
+  O365_SCOPES: ...
 
   # atlassian website
   ATLASSIAN_URL: https://atlassian.net
@@ -35,9 +30,8 @@ data:
   JIRA_TICKET_LABEL_DEFAULT_CATEGORY: general
 
   # Jira supported boards
-  JIRA_BOARDS: JIRA_SPRINT_BOARD,JIRA_SUPPORT_BOARD
-  JIRA_SPRINT_BOARD: HPC
-  JIRA_SUPPORT_BOARD: HPC-support
+  JIRA_SUPPORT_BOARD: support
+  JIRA_BOARDS: JIRA_SUPPORT_BOARD
   JIRA_DEFAULT_BOARD: JIRA_SUPPORT_BOARD
 
   # filter settings
