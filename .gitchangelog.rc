@@ -1,0 +1,38 @@
+ignore_regexps = [
+    r"^(?![a-z]{2,}(\([a-z-]+\))?\s*:).*$",
+    r"^style(\([a-z-]+\))?\s*:.*$",
+    r"#minor",
+    r"#wip",
+    r"#skip",
+    r"^$",
+]
+
+section_regexps = [
+    ("breaking",        [r"^maj(or)?(\([a-z-]+\))?\s*:.*$"]),
+    ("features",        [r"^(feat(ure)?)(\([a-z-]+\))?\s*:.*$"]),
+    ("fixes",           [r"^fix(\([a-z-]+\))?\s*:.*$"]),
+    ("refactorings",    [r"^refactor(\([a-z-]+\))?\s*:.*$"]),
+    ("chores",          [r"^chore(\([a-z-]+\))?\s*:.*$"]),
+    ("builds",          [r"^build(\([a-z-]+\))?\s*:.*$"]),
+    ("docs",            [r"^docs(\([a-z-]+\))?\s*:.*$"]),
+    ("tests",           [r"^test(\([a-z-]+\))?\s*:.*$"]),
+    ("other",           None),
+]
+
+body_process = ReSub(r"(.|\n)*", "")
+
+subject_process = (
+    strip
+    | ReSub(r"^([a-z]{2,}(\([a-z-]+\))?\s*:\s*)(.*)$", r"\2 \3")  # remove type & scope
+    | ReSub(r"^([a-z]{2,}\s*:\s*)?(.*)$",              r"\2")     # remove audience
+    | ReSub(r"^([^#]*)(#[a-z-]+\s*)*$",                r"\1")     # remove tags
+    | ReSub(r"^\s*(.*?)\s*$",                          r"\1.")    # strip & final dot
+)
+
+tag_filter_regexp = r"^[0-9]+\.[0-9]+(\.[0-9]+)?$"
+
+unreleased_version_label = "(unreleased)"
+
+output_engine = rest_py
+
+include_merge = True
