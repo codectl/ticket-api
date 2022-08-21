@@ -806,7 +806,7 @@ docs = ["jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "jaraco.packaging (>=9)
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "f41e5cace2c99f5c9e8b76a5dba5918bc053b3a7753d0bc40b167e637276737b"
+content-hash = "40df0a33c0fdf64102b60e36afcd4298cf1cf47f74deb4f7cf9a78a0b3d6abe4"
 
 [metadata.files]
 aniso8601 = [
