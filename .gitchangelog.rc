@@ -14,6 +14,7 @@ section_regexps = [
     ("refactorings",    [r"^refactor(\([a-z-]+\))?\s*:.*$"]),
     ("chores",          [r"^chore(\([a-z-]+\))?\s*:.*$"]),
     ("builds",          [r"^build(\([a-z-]+\))?\s*:.*$"]),
+    ("ops",             [r"^ops(\([a-z-]+\))?\s*:.*$"]),
     ("docs",            [r"^docs(\([a-z-]+\))?\s*:.*$"]),
     ("tests",           [r"^test(\([a-z-]+\))?\s*:.*$"]),
     ("other",           None),
