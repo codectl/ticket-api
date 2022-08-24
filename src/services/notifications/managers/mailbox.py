@@ -7,6 +7,7 @@ import mistune
 import O365.mailbox
 import O365.utils.utils
 from flask import current_app
+from O365_notifications.streaming import O365StreamingSubscriber
 
 from src.models.ticket import Ticket
 from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
@@ -14,41 +15,35 @@ from src.services.notifications.handlers.jira import JiraNotificationHandler
 from src.services.ticket import TicketSvc
 
 
-class O365MailboxManager:
-    """Manager for O365 mailbox events."""
-
-    def __init__(self, mailbox: O365.mailbox.MailBox):
-        self._mailbox = mailbox
-        self._subscriber = None
-        self._filters = None
-
-    def subscriber(self, subs):
-        self._subscriber = subs
-        return self
-
-    def filters(self, fltr: list[OutlookMessageFilter]):
-        self._filters = fltr
-        return self
+class O365SubscriberMgr:
+    def __init__(
+        self,
+        subscriber: O365StreamingSubscriber,
+        filters: list[OutlookMessageFilter] = (),
+    ):
+        self.subscriber = subscriber
+        self.filters = filters
 
     def check_for_missing_tickets(self, days):
         """Sweep the messages received in the last days to create tickets out of
         of the possible messages that were missed.
         """
 
-        # set inbox/sent folder
-        inbox_folder = self._mailbox.inbox_folder()
-        sent_folder = self._mailbox.sent_folder()
-
         # build query for O365
         daytime = datetime.datetime.now() - datetime.timedelta(days=days)
         query = (
-            self._mailbox.new_query()
+            self.subscriber.new_query()
             .on_attribute("receivedDateTime")
             .greater_equal(daytime)
         )
-        inbox_msgs = inbox_folder.get_messages(limit=None, query=query)
-        sent_msgs = sent_folder.get_messages(limit=None, query=query)
-        messages = list(itertools.chain(inbox_msgs, sent_msgs))
+
+        folders = [
+            sub.resource
+            for sub in self.subscriber.subscriptions
+            if isinstance(sub.resource, O365.mailbox.Folder)
+        ]
+        data = [folder.get_messages(limit=None, query=query) for folder in folders]
+        messages = list(itertools.chain(data))
 
         # sort messages by age (older first)
         messages.sort(key=lambda e: e.received)
@@ -62,19 +57,10 @@ class O365MailboxManager:
     def start_streaming(self, **kwargs):
         handler = JiraNotificationHandler(manager=self)
 
-        # create subscriptions from inbox & sent folders
-        inbox_folder = self._mailbox.inbox_folder()
-        sent_folder = self._mailbox.sent_folder()
-        inbox_subscription_id = self._subscriber.subscribe(resource=inbox_folder)
-        sent_subscription_id = self._subscriber.subscribe(resource=sent_folder)
-        subscriptions = [inbox_subscription_id, sent_subscription_id]
-
-        msg = f"Start streaming connection for '{self._mailbox.main_resource}' ..."
+        msg = f"Start streaming connection for '{self.subscriber.main_resource}' ..."
         current_app.logger.info(msg)
 
-        self._subscriber.create_event_channel(
-            subscriptions=subscriptions, notification_handler=handler, **kwargs
-        )
+        self.subscriber.start_streaming(notification_handler=handler, **kwargs)
 
     def process_message(self, message_id):
         """Process a message and create/update ticket."""
@@ -100,8 +86,13 @@ class O365MailboxManager:
         )
 
         # use any folder to get message from
-        query = self._mailbox.new_query().select(*select)
-        message = self._mailbox.inbox_folder().get_message(
+        query = self.subscriber.new_query().select(*select)
+        folder = next(
+            sub.resource
+            for sub in self.subscriber.subscriptions
+            if isinstance(sub.resource, O365.mailbox.Folder)
+        )
+        message = folder.get_message(
             object_id=message_id, query=query, download_attachments=True
         )
 
@@ -124,7 +115,7 @@ class O365MailboxManager:
         )
 
         # skip message processing if message is filtered
-        if any(not e for e in list(map(lambda f: f.apply(message), self._filters))):
+        if any(not e for e in list(map(lambda f: f.apply(message), self.filters))):
             current_app.logger.info(f"Message '{message.subject}' filtered.")
             return
 

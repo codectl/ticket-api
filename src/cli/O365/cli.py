@@ -2,8 +2,8 @@ import click
 from flask import current_app
 from flask.cli import AppGroup
 from O365 import Account, MSOffice365Protocol
-from o365_notifications.base import O365Notification
-from o365_notifications.streaming.mailbox import O365MailBoxStreamingNotifications
+from O365_notifications.constants import O365EventType
+from O365_notifications.streaming import O365StreamingSubscriber
 
 from src.cli.O365.backend import DatabaseTokenBackend
 from src.services.notifications.filters import (
@@ -13,7 +13,7 @@ from src.services.notifications.filters import (
     SenderEmailDomainWhitelistedFilter,
     ValidateMetadataFilter,
 )
-from src.services.notifications.managers.mailbox import O365MailboxManager
+from src.services.notifications.managers.mailbox import O365SubscriberMgr
 
 cli = AppGroup(
     "o365", short_help="Handle O365 operations, mostly to handle Outlook events"
@@ -48,37 +48,30 @@ def authorize_account(email=None, retries=0):
     return account
 
 
-def create_mailbox_manager(email: str = None, **kwargs):
-    """Create the mailbox manager."""
+def subscriber_mgr(email: str = None, **kwargs):
     email = email or current_app.config["MAILBOX"]
     account = authorize_account(email=email, **kwargs)
     mailbox = account.mailbox()
 
-    ct = O365Notification.ChangeType.CREATED.value
-    notif = O365MailBoxStreamingNotifications(parent=mailbox, change_type=ct)
+    # create a new streaming subscriber
+    subscriber = O365StreamingSubscriber(parent=account)
 
-    # Change id alias to the real id for the "RecipientsFilter" object
-    sent_folder = mailbox.sent_folder()
-    sent_folder = sent_folder.get_folder(folder_id=sent_folder.folder_id)
+    # subscribe to inbox and sent items folder events
+    events = [O365EventType.CREATED]
+    subscriber.subscribe(resource=mailbox.inbox_folder(), events=events)
+    subscriber.subscribe(resource=mailbox.sent_folder(), events=events)
 
     # the O365 mailbox manager
     whitelist = current_app.config["EMAIL_WHITELISTED_DOMAINS"]
     blacklist = current_app.config["EMAIL_BLACKLIST"]
-    manager = (
-        O365MailboxManager(mailbox=mailbox)
-        .subscriber(notif)
-        .filters(
-            [
-                JiraCommentNotificationFilter(mailbox=mailbox),
-                RecipientsFilter(recipient_reference=mailbox, sent_folder=sent_folder),
-                SenderEmailBlacklistFilter(blacklist=blacklist),
-                SenderEmailDomainWhitelistedFilter(whitelisted_domains=whitelist),
-                ValidateMetadataFilter(),
-            ]
-        )
-    )
-
-    return manager
+    filters = [
+        JiraCommentNotificationFilter(mailbox=mailbox),
+        RecipientsFilter(email=email, sent_folder=mailbox.sent_folder()),
+        SenderEmailBlacklistFilter(blacklist=blacklist),
+        SenderEmailDomainWhitelistedFilter(whitelisted_domains=whitelist),
+        ValidateMetadataFilter(),
+    ]
+    return O365SubscriberMgr(subscriber=subscriber, filters=filters)
 
 
 @cli.command()
@@ -94,11 +87,11 @@ def authorize(mailbox=None, retries=0):
 @click.option("--retries", "-r", default=0, help="number of retries when request fails")
 def handle_incoming_email(mailbox, retries):
     """Handle incoming email."""
-    manager = create_mailbox_manager(email=mailbox, retries=retries)
+    mgr = subscriber_mgr(email=mailbox, retries=retries)
 
     # Start listening for incoming notifications...
     config = current_app.config
-    manager.start_streaming(
+    mgr.start_streaming(
         connection_timeout=config["CONNECTION_TIMEOUT_IN_MINUTES"],
         keep_alive_interval=config["KEEP_ALIVE_NOTIFICATION_INTERVAL_IN_SECONDS"],
         refresh_after_expire=True,
@@ -109,7 +102,7 @@ def handle_incoming_email(mailbox, retries):
 @click.option("--days", "-d", default=1, help="number of days to search back")
 def check_for_missing_tickets(days):
     """Check for possible tickets that went missing in the last days."""
-    manager = create_mailbox_manager()
+    mgr = subscriber_mgr()
 
     # Start listening for incoming notifications...
-    manager.check_for_missing_tickets(days=days)
+    mgr.check_for_missing_tickets(days=days)
