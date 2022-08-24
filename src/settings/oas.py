@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from apispec.ext.marshmallow import OpenAPIConverter, resolver
 
-from src.schemas.serlializers.http import HttpResponseSchema
+from src.schemas.serializers.http import HttpResponseSchema
 
 __all__ = (
     "Tag",
