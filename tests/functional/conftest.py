@@ -9,6 +9,7 @@ def app():
         config_name="testing",
         dotenv=False,
         configs={
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
             "FLASK_RUN_HOST": "localhost",
             "FLASK_RUN_PORT": 5000,
             "APPLICATION_ROOT": "/",
