@@ -18,13 +18,10 @@ from src.services.notifications.filters import (
 )
 from src.services.notifications.handlers.jira import JiraNotificationHandler
 
-cli = AppGroup(
-    "O365", short_help="Handle O365 operations, mostly to handle Outlook events"
-)
+cli = AppGroup("O365", short_help="Handle O365 events")
 
 
 def authorize_account(email=None, retries=0):
-    """Authorize an O365 account."""
     config = current_app.config
     credentials = (config["O365_CLIENT_ID"], config["O365_CLIENT_SECRET"])
     protocol = MSOffice365Protocol(api_version="beta")

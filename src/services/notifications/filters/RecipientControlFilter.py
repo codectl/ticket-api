@@ -3,7 +3,7 @@ import itertools
 
 from flask import current_app
 
-from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
+from src.services.notifications.filters.base import OutlookMessageFilter
 from src.services.ticket import TicketSvc
 
 

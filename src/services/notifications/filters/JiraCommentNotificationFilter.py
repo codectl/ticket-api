@@ -7,15 +7,14 @@ from flask import current_app
 
 from src import utils
 from src.services.jira import JiraSvc
-from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
+from src.services.notifications.filters.base import OutlookMessageFilter
 from src.services.notifications.handlers.jira import JiraNotificationHandler
 from src.services.ticket import TicketSvc
 
 
 class JiraCommentNotificationFilter(OutlookMessageFilter):
-    """Filter for messages that represent comments added to tickets.
-    The email recipient get notified that a new comment was added to
-    the ticket.
+    """Filter for messages that represent comments added to tickets. The email
+    recipient gets notified whenever a new comment has been added to the ticket.
     """
 
     def __init__(self, folder: O365.mailbox.Folder):
