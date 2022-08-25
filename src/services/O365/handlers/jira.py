@@ -11,7 +11,7 @@ from O365_notifications.base import O365Notification, O365NotificationHandler
 from O365_notifications.constants import O365EventType, O365Namespace
 
 from src.models.ticket import Ticket
-from src.services.notifications.filters.base import OutlookMessageFilter
+from src.services.O365.filters.base import OutlookMessageFilter
 from src.services.ticket import TicketSvc
 
 

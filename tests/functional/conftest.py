@@ -14,7 +14,6 @@ def app():
             "FLASK_RUN_PORT": 5000,
             "APPLICATION_ROOT": "/",
             "OPENAPI": "3.0.3",  # default version
-            "SUPPORTED_MEASURABLES": ["foo", "bar"],
         },
     )
     with app.test_request_context():

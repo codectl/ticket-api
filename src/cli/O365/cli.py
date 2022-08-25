@@ -9,14 +9,14 @@ from O365_notifications.constants import O365EventType
 from O365_notifications.streaming import O365StreamingSubscriber
 
 from src.cli.O365.backend import DatabaseTokenBackend
-from src.services.notifications.filters import (
+from src.services.O365.filters import (
     JiraCommentNotificationFilter,
     RecipientControlFilter,
     SenderEmailBlacklistFilter,
     SenderEmailDomainWhitelistedFilter,
     ValidateMetadataFilter,
 )
-from src.services.notifications.handlers.jira import JiraNotificationHandler
+from src.services.O365.handlers.jira import JiraNotificationHandler
 
 cli = AppGroup("O365", short_help="Handle O365 events")
 

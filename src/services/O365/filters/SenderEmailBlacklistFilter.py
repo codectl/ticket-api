@@ -1,6 +1,6 @@
 from flask import current_app
 
-from src.services.notifications.filters.base import OutlookMessageFilter
+from src.services.O365.filters.base import OutlookMessageFilter
 
 
 class SenderEmailBlacklistFilter(OutlookMessageFilter):
