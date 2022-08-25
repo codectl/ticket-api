@@ -5,7 +5,7 @@ from apispec_ui.flask import Swagger
 from flask import Flask, Blueprint
 
 from src import __meta__, __version__, utils
-from src.api.tickets import api as tickets
+from src.api.tickets import blueprint as tickets
 from src.cli.O365.cli import cli as o365_cli
 from src.settings import oas
 from src.settings.ctx import ctx_settings, db
