@@ -1,12 +1,12 @@
 from .JiraCommentNotificationFilter import JiraCommentNotificationFilter
-from .RecipientsFilter import RecipientsFilter
+from .RecipientControlFilter import RecipientControlFilter
 from .SenderEmailBlacklistFilter import SenderEmailBlacklistFilter
 from .SenderEmailDomainWhitelistFilter import SenderEmailDomainWhitelistedFilter
 from .ValidateMetadataFilter import ValidateMetadataFilter
 
 __all__ = [
     JiraCommentNotificationFilter,
-    RecipientsFilter,
+    RecipientControlFilter,
     SenderEmailBlacklistFilter,
     SenderEmailDomainWhitelistedFilter,
     ValidateMetadataFilter,

@@ -1,3 +1,4 @@
+import O365.mailbox
 import itertools
 
 from flask import current_app
@@ -6,12 +7,12 @@ from src.services.notifications.filters.OutlookMessageFilter import OutlookMessa
 from src.services.ticket import TicketSvc
 
 
-class RecipientsFilter(OutlookMessageFilter):
+class RecipientControlFilter(OutlookMessageFilter):
     """Filter for message validating its recipients"""
 
-    def __init__(self, email, sent_folder):
+    def __init__(self, email, ignore: list[O365.mailbox.Folder] = ()):
         self.email = email
-        self.sent_folder = sent_folder
+        self.ignore = ignore
 
     def apply(self, message):
         if not message:
@@ -29,7 +30,7 @@ class RecipientsFilter(OutlookMessageFilter):
         if (
             self.email == message.sender.address
             and self.email in other_recipients
-            and self.sent_folder.folder_id == message.folder_id
+            and any(comp.folder_id == message.folder_id for comp in self.ignore)
         ):
             msg = "Message filtered as the notification is a duplicate."
             current_app.logger.info(msg)

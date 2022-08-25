@@ -8,7 +8,7 @@ from flask import current_app
 from src import utils
 from src.services.jira import JiraSvc
 from src.services.notifications.filters.OutlookMessageFilter import OutlookMessageFilter
-from src.services.notifications.managers.mailbox import O365MailboxManager
+from src.services.notifications.handlers.jira import JiraNotificationHandler
 from src.services.ticket import TicketSvc
 
 
@@ -18,8 +18,8 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
     the ticket.
     """
 
-    def __init__(self, mailbox: O365.mailbox):
-        self.mailbox = mailbox
+    def __init__(self, folder: O365.mailbox.Folder):
+        self.folder = folder
 
     def apply(self, message):
         if not message:
@@ -29,7 +29,7 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
             svc = JiraSvc()
 
             # load message json payload
-            payload = O365MailboxManager.message_json(message)
+            payload = utils.message_json(message)
 
             model = TicketSvc.find_one(key=payload["ticket"], _model=True)
             if not model:
@@ -39,7 +39,7 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
             # locate last lent message to reply on
             last_message_id = model.outlook_messages_id.split(",")[-1]
             try:
-                last_message = self.mailbox.get_message(object_id=last_message_id)
+                last_message = self.folder.get_message(object_id=last_message_id)
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code == requests.codes.not_found:
                     msg = "Message to reply to was not found. No email was sent."
@@ -65,7 +65,7 @@ class JiraCommentNotificationFilter(OutlookMessageFilter):
 
                 # send out the comment message has a reply to the last sent message
                 metadata = {"name": "message", "content": "relay jira comment"}
-                reply = O365MailboxManager.create_reply(
+                reply = JiraNotificationHandler.create_reply(
                     message=last_message,
                     values={
                         "body": body,

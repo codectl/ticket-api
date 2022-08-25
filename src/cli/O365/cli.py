@@ -1,3 +1,6 @@
+import datetime
+import itertools
+
 import click
 from flask import current_app
 from flask.cli import AppGroup
@@ -8,15 +11,15 @@ from O365_notifications.streaming import O365StreamingSubscriber
 from src.cli.O365.backend import DatabaseTokenBackend
 from src.services.notifications.filters import (
     JiraCommentNotificationFilter,
-    RecipientsFilter,
+    RecipientControlFilter,
     SenderEmailBlacklistFilter,
     SenderEmailDomainWhitelistedFilter,
     ValidateMetadataFilter,
 )
-from src.services.notifications.managers.mailbox import O365SubscriberMgr
+from src.services.notifications.handlers.jira import JiraNotificationHandler
 
 cli = AppGroup(
-    "o365", short_help="Handle O365 operations, mostly to handle Outlook events"
+    "O365", short_help="Handle O365 operations, mostly to handle Outlook events"
 )
 
 
@@ -48,7 +51,7 @@ def authorize_account(email=None, retries=0):
     return account
 
 
-def subscriber_mgr(email: str = None, **kwargs):
+def create_subscriber(email: str = None, **kwargs):
     email = email or current_app.config["MAILBOX"]
     account = authorize_account(email=email, **kwargs)
     mailbox = account.mailbox()
@@ -60,18 +63,26 @@ def subscriber_mgr(email: str = None, **kwargs):
     events = [O365EventType.CREATED]
     subscriber.subscribe(resource=mailbox.inbox_folder(), events=events)
     subscriber.subscribe(resource=mailbox.sent_folder(), events=events)
+    return subscriber
+
+
+def create_handler(subscriber):
 
     # the O365 mailbox manager
     whitelist = current_app.config["EMAIL_WHITELISTED_DOMAINS"]
     blacklist = current_app.config["EMAIL_BLACKLIST"]
+    resources = [sub.resource for sub in subscriber.subscriptions]
+    main_resource = subscriber.main_resource
     filters = [
-        JiraCommentNotificationFilter(mailbox=mailbox),
-        RecipientsFilter(email=email, sent_folder=mailbox.sent_folder()),
+        JiraCommentNotificationFilter(folder=resources[0]),
+        RecipientControlFilter(email=main_resource, ignore=[resources[1]]),
         SenderEmailBlacklistFilter(blacklist=blacklist),
         SenderEmailDomainWhitelistedFilter(whitelisted_domains=whitelist),
         ValidateMetadataFilter(),
     ]
-    return O365SubscriberMgr(subscriber=subscriber, filters=filters)
+    return JiraNotificationHandler(
+        parent=subscriber, namespace=subscriber.namespace, filters=filters
+    )
 
 
 @cli.command()
@@ -87,22 +98,37 @@ def authorize(mailbox=None, retries=0):
 @click.option("--retries", "-r", default=0, help="number of retries when request fails")
 def handle_incoming_email(mailbox, retries):
     """Handle incoming email."""
-    mgr = subscriber_mgr(email=mailbox, retries=retries)
+    subscriber = create_subscriber(email=mailbox)
+    handler = create_handler(subscriber)
 
-    # Start listening for incoming notifications...
-    config = current_app.config
-    mgr.start_streaming(
-        connection_timeout=config["CONNECTION_TIMEOUT_IN_MINUTES"],
-        keep_alive_interval=config["KEEP_ALIVE_NOTIFICATION_INTERVAL_IN_SECONDS"],
+    # start listening for incoming notifications ...
+    subscriber.start_streaming(
+        notification_handler=handler,
+        connection_timeout=current_app.config["CONNECTION_TIMEOUT_IN_MINUTES"],
+        keep_alive_interval=current_app.config["KEEP_ALIVE_INTERVAL_IN_SECONDS"],
         refresh_after_expire=True,
     )
 
 
 @cli.command()
+@click.option("--mailbox", "-m", default=None, help="the mailbox to verify")
 @click.option("--days", "-d", default=1, help="number of days to search back")
-def check_for_missing_tickets(days):
+def check_for_missing_tickets(mailbox, days):
     """Check for possible tickets that went missing in the last days."""
-    mgr = subscriber_mgr()
+    subscriber = create_subscriber(email=mailbox)
+    handler = create_handler(subscriber)
 
-    # Start listening for incoming notifications...
-    mgr.check_for_missing_tickets(days=days)
+    daytime = datetime.datetime.now() - datetime.timedelta(days=days)
+    query = (
+        subscriber.new_query().on_attribute("receivedDateTime").greater_equal(daytime)
+    )
+
+    folders = [sub.resource for sub in subscriber.subscriptions]
+    data = [folder.get_messages(limit=None, query=query) for folder in folders]
+    messages = list(itertools.chain(data))
+    messages.sort(key=lambda msg: msg.received)  # sort by date
+
+    # process each individual message
+    current_app.logger.info(f"Found {str(len(messages))} messages to process.")
+    for message in messages:
+        handler.process_message(message.object_id)

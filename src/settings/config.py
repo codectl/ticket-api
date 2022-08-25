@@ -41,10 +41,8 @@ class BaseConfig:
 
     # Streaming connection settings
     # See https://bit.ly/3eqDsGs for details
-    CONNECTION_TIMEOUT_IN_MINUTES = env.int("CONNECTION_TIMEOUT_IN_MINUTES", 120)  # 2h
-    KEEP_ALIVE_NOTIFICATION_INTERVAL_IN_SECONDS = env.int(
-        "KEEP_ALIVE_NOTIFICATION_INTERVAL_IN_SECONDS", 300
-    )  # 5m
+    CONNECTION_TIMEOUT_IN_MINUTES = env.int("CONNECTION_TIMEOUT_IN_MINUTES", 120)
+    KEEP_ALIVE_INTERVAL_IN_SECONDS = env.int("KEEP_ALIVE_INTERVAL_IN_SECONDS", 300)
 
     # Atlassian credentials
     ATLASSIAN_URL = env("ATLASSIAN_URL")
