@@ -75,3 +75,9 @@ class TestJiraSvc:
         assert "summary ~ 'test summary'" in query
         assert "watcher=test" in query
         assert "ORDER BY created" in query
+
+    def test_mention(self, svc):
+        email = "user@xyz.com"
+        user = jira.User({}, svc._session, raw={"self": {}, "accountId": "123"})
+        assert svc.markdown.mention(email) == f"[{email};|mailto:{email}]"
+        assert svc.markdown.mention(user) == f"[~accountid:123]"
