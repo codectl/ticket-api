@@ -121,11 +121,10 @@ class ProxyJIRA(JIRA):
         expand: list[str] = None,
         key: typing.Union[str, list[str]] = None,
         labels: list[str] = None,
-        sort: str = None,
         status: str = None,
         summary: str = None,
-        tags: list[str] = None,
         watcher: str = None,
+        sort: str = None,
         **_,
     ):
         """Build jql query based on a provided searching parameters.
@@ -135,11 +134,10 @@ class ProxyJIRA(JIRA):
         :param filters: the filter ids to apply
         :param key: the Jira ticket key
         :param labels: base labels to search for
-        :param sort: sorting criteria (enum: ['created'])
         :param status: the status key
         :param summary: the text search
-        :param tags: ticket categorization
         :param watcher: the watcher key (e.g. email)
+        :param sort: sorting criteria (enum: ['created'])
         """
         jql = ""
         if assignee:
@@ -152,19 +150,16 @@ class ProxyJIRA(JIRA):
             joined_keys = ", ".join(key) if isinstance(key, list) else key
             jql = f"{jql}&key in ({joined_keys})"
         if labels:
-            for label in labels:
-                jql = f"{jql}&labels={label}"
-        if sort:
-            jql = f"{jql} ORDER BY {sort}"
+            joined_labels = ", ".join(labels)
+            jql = f"{jql}&labels in ({joined_labels})"
         if status:
             jql = f"{jql}&status='{status}'"
         if summary:
             jql = f"{jql}&summary ~ '{summary}'"
-        if tags:
-            joined_tags = ", ".join(tags)
-            jql = f"{jql}&labels in ({joined_tags})"
         if watcher:
             jql = f"{jql}&watcher=" + watcher
+        if sort:
+            jql = f"{jql} ORDER BY {sort}"
 
         # remove trailing url character
         jql = jql.lstrip("&")
