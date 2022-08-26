@@ -114,8 +114,8 @@ class ProxyJIRA(JIRA):
         configuration = self.board_configuration(board_id=board_id)
         return self.filter(configuration["filter"]["id"])
 
+    @staticmethod
     def create_jql_query(
-        self,
         assignee: str = None,
         filters: list[str] = None,
         expand: list[str] = None,
@@ -131,8 +131,8 @@ class ProxyJIRA(JIRA):
         """Build jql query based on a provided searching parameters.
 
         :param assignee: the assignee key (e.g. email)
-        :param filters: the filter ids to apply
         :param expand: the expand fields (enum: ['renderedFields'])
+        :param filters: the filter ids to apply
         :param key: the Jira ticket key
         :param labels: base labels to search for
         :param sort: sorting criteria (enum: ['created'])
@@ -142,29 +142,29 @@ class ProxyJIRA(JIRA):
         :param watcher: the watcher key (e.g. email)
         """
         jql = ""
+        if assignee:
+            jql = f"{jql}&assignee={assignee}"
+        if expand:
+            jql = f"{jql}&expand={','.join(expand)}"
         if filters:
             jql = f"{jql}&filter in ({', '.join(filters)})"
-        if summary:
-            jql = f"{jql}&summary ~ '{summary}'"
         if key:
             joined_keys = ", ".join(key) if isinstance(key, list) else key
             jql = f"{jql}&key in ({joined_keys})"
-        if assignee:
-            jql = f"{jql}&assignee={assignee}"
-        if status:
-            jql = f"{jql}&status='{status}'"
         if labels:
             for label in labels:
                 jql = f"{jql}&labels={label}"
+        if sort:
+            jql = f"{jql} ORDER BY {sort}"
+        if status:
+            jql = f"{jql}&status='{status}'"
+        if summary:
+            jql = f"{jql}&summary ~ '{summary}'"
         if tags:
             joined_tags = ", ".join(tags)
             jql = f"{jql}&labels in ({joined_tags})"
         if watcher:
             jql = f"{jql}&watcher=" + watcher
-        if expand:
-            jql = f"{jql}&expand={','.join(expand)}"
-        if sort:
-            jql = f"{jql} ORDER BY {sort}"
 
         # remove trailing url character
         jql = jql.lstrip("&")
