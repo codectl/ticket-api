@@ -53,3 +53,25 @@ class TestJiraSvc:
         assert svc.has_permissions(permissions=["perm1"]) is True
         assert svc.has_permissions(permissions=["perm2"]) is False
         assert svc.has_permissions(permissions=["perm1", "perm2"]) is False
+
+    def test_jql_builder(self, svc):
+        query = svc.create_jql_query(
+            assignee="user",
+            expand=["renderedFields"],
+            filters=["filter1", "filter2"],
+            key="JIRA-123",
+            labels=["test", "label"],
+            sort="created",
+            status="open",
+            summary="test summary",
+            watcher="test",
+        )
+        assert "assignee=user" in query
+        assert "expand=renderedFields" in query
+        assert "filter in (filter1, filter2)" in query
+        assert "key in (JIRA-123)" in query
+        assert "labels in (test, label)" in query
+        assert "status='open'" in query
+        assert "summary ~ 'test summary'" in query
+        assert "watcher=test" in query
+        assert "ORDER BY created" in query
