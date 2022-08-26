@@ -14,7 +14,6 @@ from src.models.jira import Board
 from src.models.ticket import Ticket
 from src.settings.env import env
 
-
 __all__ = ("JiraSvc",)
 
 
@@ -199,11 +198,20 @@ class JiraMarkdown(ProxyJIRA):
 class JiraSvc(ProxyJIRA):
     """Service to handle Jira operations."""
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        url=None,
+        user=None,
+        token=None,
+        **kwargs,
+    ):
+        url = url or current_app.config["ATLASSIAN_URL"]
+        user = user or current_app.config["ATLASSIAN_USER"]
+        token = token or current_app.config["ATLASSIAN_API_TOKEN"]
         super().__init__(
-            url=current_app.config["ATLASSIAN_URL"],
-            user=current_app.config["ATLASSIAN_USER"],
-            token=current_app.config["ATLASSIAN_API_TOKEN"],
+            url=url,
+            user=user,
+            token=token,
             **kwargs,
         )
 
