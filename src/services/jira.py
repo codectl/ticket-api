@@ -61,8 +61,10 @@ class ProxyJIRA(JIRA):
             return True
 
     def has_permissions(self, permissions: list[str], **kwargs) -> bool:
-        perms = self.my_permissions(permissions=",".join(permissions), **kwargs)
-        return all(perms["permissions"][p]["havePermission"] for p in permissions)
+        data = self.my_permissions(permissions=",".join(permissions), **kwargs)
+        return all(p in data["permissions"] for p in permissions) and all(
+            data["permissions"][p]["havePermission"] for p in permissions
+        )
 
     def my_permissions(
         self,
