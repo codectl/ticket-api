@@ -1,3 +1,3 @@
 class TestJiraSvc:
-    def test_content(self, svc, adapter):
-        assert svc.content("test") == b"data"
+    def test_content(self, svc):
+        assert svc.content("version") == b"data"
