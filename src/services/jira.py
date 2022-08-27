@@ -36,21 +36,6 @@ class ProxyJIRA(JIRA):
             **kwargs,
         )
 
-    def content(
-        self,
-        path: str,
-        params: typing.Optional[str] = None,
-        base: typing.Optional[str] = None,
-    ) -> bytes:
-        """Get content bytes for a given path and params.
-
-        :param path: sub-path required
-        :param params: parameters to filter the json query.
-        :param base: base Jira URL, defaults to the instance base.
-        """
-        url = self._get_url(path, base or self.JIRA_BASE_URL)
-        return self._session.get(url, params=params).content
-
     def exists_issue(self, issue_id) -> bool:
         try:
             self.issue(id=issue_id)

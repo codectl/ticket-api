@@ -26,11 +26,6 @@ def svc(adapter):
 
 
 class TestJiraSvc:
-    def test_content(self, svc, adapter):
-        path = svc._get_url("test")
-        adapter.register_uri("GET", path, text="data")
-        assert svc.content("test") == b"data"
-
     def test_exists_issue(self, svc, mocker):
         mocker.patch.object(svc, "issue", return_value="")
         assert svc.exists_issue("Jira-123") is True
@@ -80,4 +75,4 @@ class TestJiraSvc:
         email = "user@xyz.com"
         user = jira.User({}, svc._session, raw={"self": {}, "accountId": "123"})
         assert svc.markdown.mention(email) == f"[{email};|mailto:{email}]"
-        assert svc.markdown.mention(user) == f"[~accountid:123]"
+        assert svc.markdown.mention(user) == "[~accountid:123]"
