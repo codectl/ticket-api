@@ -12,7 +12,6 @@ from jira import JIRA
 
 from src.models.jira import Board
 from src.models.ticket import Ticket
-from src.settings.env import env
 
 __all__ = ("JiraSvc",)
 
@@ -46,10 +45,14 @@ class ProxyJIRA(JIRA):
             return True
 
     def has_permissions(self, permissions: list[str], **kwargs) -> bool:
-        data = self.my_permissions(permissions=",".join(permissions), **kwargs)
-        return all(p in data["permissions"] for p in permissions) and all(
-            data["permissions"][p]["havePermission"] for p in permissions
-        )
+        try:
+            data = self.my_permissions(permissions=",".join(permissions), **kwargs)
+        except jira.JIRAError:
+            return False
+        else:
+            return all(p in data["permissions"] for p in permissions) and all(
+                data["permissions"][p]["havePermission"] for p in permissions
+            )
 
     def my_permissions(
         self,
@@ -199,18 +202,22 @@ class JiraSvc(ProxyJIRA):
 
     @functools.cache
     def boards(self) -> list[Board]:
-        def from_env(envar):
+        def from_config(var):
             regex = r"^JIRA_|_BOARD$"
-            return {"key": re.sub(regex, "", envar).lower(), "name": env(envar)}
+            return {
+                "key": re.sub(regex, "", var).lower(),
+                "name": current_app.config[var],
+            }
 
-        def make_board(v):
-            name = v["name"]
-            data = next((b for b in super().boards(name=name) if b.name == name), None)
-            default = from_env(env(current_app.config["JIRA_DEFAULT_BOARD"]))
-            return Board(key=v["key"], raw=data["raw"], is_default=(default == v))
+        def make_board(conf):
+            name = conf["name"]
+            boards = super(ProxyJIRA, self).boards(name=name)
+            board = next((board for board in boards if board.name == name), None)
+            default = from_config(current_app.config["JIRA_DEFAULT_BOARD"])
+            return Board(key=conf["key"], raw=board.raw, is_default=(default == conf))
 
-        envs = [from_env(v) for v in current_app.config["JIRA_BOARDS"]]
-        return [make_board(v) for v in envs]
+        configs = [from_config(var) for var in current_app.config["JIRA_BOARDS"]]
+        return [make_board(config) for config in configs]
 
     def create_jql_query(
         self,
