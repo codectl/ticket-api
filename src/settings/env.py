@@ -7,7 +7,7 @@ def create_env():
 
 
 def load_dotenv(dotenv: bool):
-    """Load enviroment from given file or dict."""
+    """Load environment from given file or dict."""
     if dotenv:
         env.read_env(".env")
 
