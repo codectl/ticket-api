@@ -9,7 +9,15 @@ class TestJiraSvc(JiraTestCase):
             issuetype=self.issue_type,
         )  # create dummy issue
 
-        assert self.svc.exists_issue(issue.id)
+        assert self.svc.exists_issue(issue.id) is True
         issue.delete()
-        assert not self.svc.exists_issue(issue.id)
-        assert not self.svc.exists_issue("000")
+        assert self.svc.exists_issue(issue.id) is False
+        assert self.svc.exists_issue("000") is False
+
+    def test_has_permissions(self):
+        assert self.svc.has_permissions(["BROWSE_PROJECTS", "CREATE_ISSUES"]) is True
+        assert self.svc.has_permissions(["INVALID_PERMISSION"]) is False
+
+    def test_board_configuration(self):
+        print(self.svc.boards())
+        assert False
