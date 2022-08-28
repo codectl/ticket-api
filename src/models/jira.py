@@ -5,6 +5,7 @@ class Board:
         self.is_default = is_default
         self.id = raw["id"]
         self.name = raw["name"]
+        self.project = raw["location"]["projectKey"]
 
     @property
     def filter(self):
