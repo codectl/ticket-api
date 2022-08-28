@@ -1,6 +1,5 @@
 import base64
 import functools
-import io
 import re
 import typing
 
@@ -13,6 +12,7 @@ from jira import JIRA
 
 from src.models.jira import Board
 from src.models.ticket import Ticket
+from src.settings.env import env
 
 __all__ = ("JiraSvc",)
 
@@ -198,7 +198,7 @@ class JiraSvc(ProxyJIRA):
             regex = r"^JIRA_|_BOARD$"
             return {
                 "key": re.sub(regex, "", var).lower(),
-                "name": current_app.config[var],
+                "name": current_app.config.get(var, env(var)),
             }
 
         def make_board(conf):
@@ -240,7 +240,7 @@ class JiraSvc(ProxyJIRA):
         content = None
         if isinstance(attachment, werkzeug.datastructures.FileStorage):
             filename = filename or attachment.filename
-            content = attachment.stream.read()
+            content = attachment.stream
         elif isinstance(attachment, O365.message.MessageAttachment):
             filename = filename or attachment.name
             if not attachment.content:
