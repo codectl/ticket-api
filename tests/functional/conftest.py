@@ -3,7 +3,6 @@ import unittest
 
 from src.app import create_app
 from src.services.jira import JiraSvc
-from src.settings.env import env, load_dotenv
 
 
 @pytest.fixture(scope="module")
@@ -28,18 +27,25 @@ def app():
 
 @pytest.fixture(scope="class")
 def svc(app, request):
-    svc = JiraSvc(
-        url=env.str("JIRA_CLOUD_CI_URL"),
-        user=env.str("JIRA_CLOUD_CI_USER"),
-        token=env.str("JIRA_CLOUD_CI_TOKEN"),
-    )
+    svc = JiraSvc()
     request.cls.svc = svc
     return svc
 
 
-@pytest.mark.usefixtures("svc")
+@pytest.fixture(scope="class")
+def board(app, svc, request):
+    board = next(iter(svc.boards()))
+    request.cls.board = board
+    return board
+
+
+@pytest.fixture(scope="class")
+def issue_type(app, svc, request):
+    issue_type = app.config["JIRA_TICKET_TYPE"]
+    request.cls.issue_type = issue_type
+    return issue_type
+
+
+@pytest.mark.usefixtures("svc", "board", "issue_type")
 class JiraTestCase(unittest.TestCase):
-    def setUp(self):
-        self.project = self.svc.project(env.str("JIRA_CLOUD_CI_PROJECT_KEY"))
-        self.board = next(iter(self.svc.boards()))
-        self.issue_type = env.str("JIRA_CLOUD_CI_ISSUE_TYPE")
+    pass
