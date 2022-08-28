@@ -39,9 +39,10 @@ class CreateTicketSchema(Schema):
     )
 
     @validates_schema
-    def lazy_validator(self, data):
-        validate.OneOf(choices=(b.key for b in JiraSvc.boards()))(data["board"])
-        validate.OneOf(choices=JiraSvc.allowed_categories())(data["category"])
+    def lazy_validator(self, data, **_):
+        svc = JiraSvc()
+        validate.OneOf(choices=[b.key for b in svc.boards()])(data["board"])
+        validate.OneOf(choices=svc.allowed_categories())(data["category"])
         return True
 
     @pre_load
