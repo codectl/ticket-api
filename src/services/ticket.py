@@ -51,10 +51,9 @@ class TicketSvc:
 
         # set defaults
         board = next(b for b in svc.boards() if b.key == kwargs.get("board"))
-        project_key = board.raw["location"]["projectKey"]
+        priority_opt = ["high", "low"]
         priority = (kwargs.get("priority") or "").lower()
-        priority = priority if priority in ["high", "low"] else "None"
-        priority = {"name": priority.capitalize()}
+        priority = {"name": priority.capitalize()} if priority in priority_opt else None
 
         category = kwargs.pop("category")
         categories = category.split(",") + current_app.config["JIRA_TICKET_LABELS"]
@@ -64,10 +63,10 @@ class TicketSvc:
             summary=kwargs.get("title"),
             description=body,
             reporter={"id": reporter_id},
-            project={"key": project_key},
+            project={"key": board.project},
             issuetype={"name": current_app.config["JIRA_TICKET_TYPE"]},
             labels=categories,
-            priority=priority,
+            **{"priority": priority} if priority else {},
         )
 
         # add watchers
