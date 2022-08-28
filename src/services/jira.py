@@ -1,6 +1,8 @@
 import base64
 import functools
+import io
 import re
+import tempfile
 import typing
 
 import jira.resources
@@ -240,7 +242,7 @@ class JiraSvc(ProxyJIRA):
         content = None
         if isinstance(attachment, werkzeug.datastructures.FileStorage):
             filename = filename or attachment.filename
-            content = attachment.stream
+            content = attachment.stream.read()
         elif isinstance(attachment, O365.message.MessageAttachment):
             filename = filename or attachment.name
             if not attachment.content:
@@ -253,8 +255,14 @@ class JiraSvc(ProxyJIRA):
 
         # no point on adding empty file
         if content:
+            file = tempfile.TemporaryFile()
+            file.write(content)
+            file.seek(0)
+            fi = io.FileIO(file.fileno())
             super().add_attachment(
-                issue=str(issue), attachment=content, filename=filename
+                issue=str(issue),
+                attachment=io.BufferedReader(fi),
+                filename=filename,
             )
 
     def add_watchers(
