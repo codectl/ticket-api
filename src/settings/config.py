@@ -11,7 +11,7 @@ class BaseConfig:
     TESTING = False
 
     # Application root context
-    APPLICATION_CONTEXT = env("APPLICATION_CONTEXT", "/")
+    APPLICATION_ROOT = env("APPLICATION_ROOT", "/")
 
     # Database settings
     SQLALCHEMY_DATABASE_URI = env("SQLALCHEMY_DATABASE_URI", None)
