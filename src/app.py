@@ -61,6 +61,8 @@ def setup_app(app):
         ],
         responses=[
             utils.http_response(code=400, serialize=False),
+            utils.http_response(code=404, serialize=False),
+            utils.http_response(code=415, serialize=False),
         ],
     )
 
