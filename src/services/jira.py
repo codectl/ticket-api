@@ -93,15 +93,6 @@ class ProxyJIRA(JIRA):
         url = self._get_url(f"board/{board_id}/configuration", base=self.AGILE_BASE_URL)
         return self._session.get(url).json()
 
-    def board_filter(self, board_id):
-        """Get the filter from a board's configuration
-
-        :param board_id: the Jira id of the board
-        :return: the board filter
-        """
-        configuration = self.board_configuration(board_id=board_id)
-        return self.filter(configuration["filter"]["id"])
-
     @staticmethod
     def create_jql_query(
         assignee: str = None,
@@ -231,8 +222,8 @@ class JiraSvc(ProxyJIRA):
             boards = [find_board(key=key) for key in board_keys]
 
             # translate boards into filters
-            filters = [self.board_filter(board_id=b.id) for b in boards]
-            kwargs["filters"] = (str(f.id) for f in filters)
+            configs = [self.board_configuration(board_id=b.id) for b in boards]
+            kwargs["filters"] = [config["filter"]["id"] for config in configs]
 
         return super().create_jql_query(**kwargs)
 

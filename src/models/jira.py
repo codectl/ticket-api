@@ -8,7 +8,8 @@ class Board:
 
     @property
     def filter(self):
-        # prevent import loop
         from src.services.jira import JiraSvc
 
-        return JiraSvc().board_filter(board_id=self.id)
+        svc = JiraSvc()
+        config = svc.board_configuration(board_id=self.id)
+        return svc.filter(id=config["permission"]["id"])
