@@ -80,7 +80,7 @@ class Tickets(Resource):
             201:
                 content:
                     application/json:
-                        schema: Issue
+                        schema: IssueSchema
 
             400:
                 $ref: "#/components/responses/BadRequest"
@@ -108,7 +108,7 @@ class Tickets(Resource):
             created = TicketSvc.create(**body, attachments=files)
             return Issue.IssueSchema().dump(created), 201
         except jira.exceptions.JIRAError as ex:
-            utils.abort_with(400, message=ex.text)
+            utils.abort_with(400, message=ex.response.text)
 
 
 @api.resource("/<key>", endpoint="ticket")
@@ -131,7 +131,7 @@ class Ticket(Resource):
                 description: Ok
                 content:
                     application/json:
-                        schema: Issue
+                        schema: IssueSchema
             404:
                 $ref: "#/components/responses/NotFound"
         """
@@ -210,7 +210,7 @@ class Comment(Resource):
             TicketSvc.create_comment(issue=key, **body, attachments=files)
             return None, 204
         except jira.exceptions.JIRAError as ex:
-            utils.abort_with(400, message=ex.text)
+            utils.abort_with(400, message=ex.response.text)
 
 
 @api.resource("/supported-boards", endpoint="supported-boards")
