@@ -55,8 +55,8 @@ def setup_app(app):
         servers=[oas.Server(url=url_prefix, description=app.config["ENV"])],
         tags=[
             oas.Tag(
-                name="health-checks",
-                description="All operations involving health-checks",
+                name="tickets",
+                description="All operations involving tickets",
             )
         ],
         responses=[
