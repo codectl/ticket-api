@@ -237,7 +237,7 @@ class JiraSvc(ProxyJIRA):
             werkzeug.datastructures.FileStorage, O365.message.MessageAttachment
         ],
         filename: str = None,
-    ):
+    ) -> typing.Optional[jira.resources.Attachment]:
         """Add attachment considering different types of files."""
         content = None
         if isinstance(attachment, werkzeug.datastructures.FileStorage):
@@ -259,7 +259,7 @@ class JiraSvc(ProxyJIRA):
             file.write(content)
             file.seek(0)
             fi = io.FileIO(file.fileno())
-            super().add_attachment(
+            return super().add_attachment(
                 issue=str(issue),
                 attachment=io.BufferedReader(fi),
                 filename=filename,
