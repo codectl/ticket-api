@@ -31,7 +31,7 @@ class ProxyJIRA(JIRA):
             basic_auth=(user, token),
             options={
                 "rest_path": "api",
-                "rest_api_version": 2,
+                "rest_api_version": 3,
                 "agile_rest_path": jira.resources.AgileResource.AGILE_BASE_REST_PATH,
                 "agile_rest_api_version": "latest",
             },
