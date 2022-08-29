@@ -1,6 +1,8 @@
 import io
+import tempfile
 
 import jira
+import O365
 import pytest
 import werkzeug.datastructures
 
@@ -50,12 +52,26 @@ class TestJiraSvc(JiraTestCase):
         assert "filter in" in query
 
     @pytest.mark.usefixtures("issue")
-    def test_add_attachment(self):
+    def test_add_attachment_file_storage(self):
         file = werkzeug.datastructures.FileStorage(
             stream=io.BytesIO(b"some dummy data"),
             filename="dummy.txt",
             content_type="text/plain",
         )
+        attachment = self.svc.add_attachment(issue=self.issue, attachment=file)
+        issue = self.svc.issue(id=self.issue.id)
+        assert len(issue.fields.attachment) == 1
+        assert issue.fields.attachment[0].id == attachment.id
+        assert self.svc.attachment(id=attachment.id).get() == b"some dummy data"
+        issue.delete()
+
+    @pytest.mark.usefixtures("issue")
+    def test_add_o365_attachment(self):
+        protocol = O365.MSGraphProtocol()  # dummy protocol
+        file = tempfile.NamedTemporaryFile()
+        file.write(b"some dummy data")
+        file.seek(0)
+        file = O365.message.MessageAttachment(protocol=protocol, attachment=file.name)
         attachment = self.svc.add_attachment(issue=self.issue, attachment=file)
         issue = self.svc.issue(id=self.issue.id)
         assert len(issue.fields.attachment) == 1
