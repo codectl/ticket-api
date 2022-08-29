@@ -48,4 +48,8 @@ def issue_type(app, svc, request):
 
 @pytest.mark.usefixtures("svc", "board", "issue_type")
 class JiraTestCase(unittest.TestCase):
-    pass
+
+    def setUp(self) -> None:
+        # add a guest user
+        self.svc.add_user(username="guest", email="guest@example.com")
+        self.guest_user = next(self.svc.search_users(query="guest"))

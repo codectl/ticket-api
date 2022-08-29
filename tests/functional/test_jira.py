@@ -63,7 +63,7 @@ class TestJiraSvc(JiraTestCase):
         assert len(issue.fields.attachment) == 1
         assert issue.fields.attachment[0].id == attachment.id
         assert self.svc.attachment(id=attachment.id).get() == b"some dummy data"
-        issue.delete()
+        self.issue.delete()
 
     @pytest.mark.usefixtures("issue")
     def test_add_o365_attachment(self):
@@ -77,4 +77,12 @@ class TestJiraSvc(JiraTestCase):
         assert len(issue.fields.attachment) == 1
         assert issue.fields.attachment[0].id == attachment.id
         assert self.svc.attachment(id=attachment.id).get() == b"some dummy data"
-        issue.delete()
+        self.issue.delete()
+
+    @pytest.mark.usefixtures("issue")
+    def test_add_watchers(self):
+        self.svc.add_watchers(issue=self.issue, watchers=[self.guest_user])
+        watchers = self.svc.watchers(issue=self.issue)
+        assert watchers.watchCount == 2
+        assert watchers.watchers[0].accountId == self.guest_user.accountId
+        self.issue.delete()
