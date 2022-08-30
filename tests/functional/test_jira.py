@@ -17,15 +17,21 @@ def issue(svc, board, issue_type, request):
         issuetype=issue_type,
     )
     request.cls.issue = issue
-    return issue
+    yield issue
+    issue.delete()
 
 
 class TestJiraSvc(JiraTestCase):
-    @pytest.mark.usefixtures("issue")
+    @pytest.mark.usefixtures("issue", "board", "issue_type")
     def test_exists_issue(self):
-        assert self.svc.exists_issue(self.issue.id) is True
-        self.issue.delete()
-        assert self.svc.exists_issue(self.issue.id) is False
+        issue = self.svc.create_issue(
+            summary="Yet another dummy issue",
+            project=self.board.project,
+            issuetype=self.issue_type,
+        )
+        assert self.svc.exists_issue(issue.id) is True
+        issue.delete()
+        assert self.svc.exists_issue(issue.id) is False
         assert self.svc.exists_issue("000") is False
 
     def test_has_permissions(self):
@@ -63,7 +69,6 @@ class TestJiraSvc(JiraTestCase):
         assert len(issue.fields.attachment) == 1
         assert issue.fields.attachment[0].id == attachment.id
         assert self.svc.attachment(id=attachment.id).get() == b"some dummy data"
-        self.issue.delete()
 
     @pytest.mark.usefixtures("issue")
     def test_add_o365_attachment(self):
@@ -77,7 +82,6 @@ class TestJiraSvc(JiraTestCase):
         assert len(issue.fields.attachment) == 1
         assert issue.fields.attachment[0].id == attachment.id
         assert self.svc.attachment(id=attachment.id).get() == b"some dummy data"
-        self.issue.delete()
 
     @pytest.mark.usefixtures("issue")
     def test_add_watchers(self):
@@ -85,4 +89,3 @@ class TestJiraSvc(JiraTestCase):
         watchers = self.svc.watchers(issue=self.issue)
         assert watchers.watchCount == 2
         assert watchers.watchers[0].accountId == self.guest_user.accountId
-        self.issue.delete()
