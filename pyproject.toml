@@ -3,7 +3,7 @@ name = "ticket-api"
 version = "0.1.0"
 description = "A service for managing emails coming in/out from/to a O365 mailbox and integrates them with Jira."
 authors = ["Renato Damas <rena2damas@gmail.com>"]
-license = "LICENSE"
+license = "MIT"
 readme = "README.rst"
 packages = [
     { include = "*", from = "src" }
