@@ -46,7 +46,6 @@ def project(app, svc, request):
             raise ex
         project = svc.project(id="UT")
     request.cls.project = project
-    pytest.fail()
     return project
 
 
