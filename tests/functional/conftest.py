@@ -1,3 +1,4 @@
+import jira
 import pytest
 import unittest
 
@@ -33,10 +34,20 @@ def svc(app, request):
 
 
 @pytest.fixture(scope="class")
-def board(app, svc, request):
-    board = next(iter(svc.boards()))
-    request.cls.board = board
-    return board
+def project(app, svc, request):
+    try:
+        project = svc.create_project(key="UT", name="UNITTESTS")
+    except jira.JIRAError as ex:
+        if ex.status_code == 400:
+            pass  # suppress project exists error
+        elif ex.status_code == 500:
+            pass  # suppress issue #1480 (pycontribs/jira)
+        else:
+            raise ex
+        project = svc.project(id="UT")
+    request.cls.project = project
+    pytest.fail()
+    return project
 
 
 @pytest.fixture(scope="class")
@@ -46,10 +57,15 @@ def issue_type(app, svc, request):
     return issue_type
 
 
-@pytest.mark.usefixtures("svc", "board", "issue_type")
+@pytest.mark.usefixtures("svc", "project", "issue_type")
 class JiraTestCase(unittest.TestCase):
 
-    def setUp(self) -> None:
+    def setUp(self):
+        self.board = next(self.svc.boards())
+
         # add a guest user
         self.svc.add_user(username="guest", email="guest@example.com")
         self.guest_user = next(self.svc.search_users(query="guest"))
+
+    def tearDown(self):
+        self.svc.delete_project(self.project)

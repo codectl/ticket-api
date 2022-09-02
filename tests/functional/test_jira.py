@@ -10,10 +10,10 @@ from tests.functional.conftest import JiraTestCase
 
 
 @pytest.fixture
-def issue(svc, board, issue_type, request):
+def issue(svc, project, issue_type, request):
     issue = svc.create_issue(
         summary="Some dummy issue",
-        project=board.project,
+        project=project.id,
         issuetype=issue_type,
     )
     request.cls.issue = issue
@@ -22,7 +22,7 @@ def issue(svc, board, issue_type, request):
 
 
 class TestJiraSvc(JiraTestCase):
-    @pytest.mark.usefixtures("issue", "board", "issue_type")
+    @pytest.mark.usefixtures("issue", "issue_type")
     def test_exists_issue(self):
         issue = self.svc.create_issue(
             summary="Yet another dummy issue",
