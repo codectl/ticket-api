@@ -400,7 +400,7 @@ setuptools = "*"
 
 [[package]]
 name = "o365"
-version = "2.0.20"
+version = "2.0.24"
 description = "Microsoft Graph and Office 365 API made easy"
 category = "main"
 optional = false
@@ -832,7 +832,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "73684743e23cc2d52b5806af34787ab6f09d244427805ed6a890271a2972d42a"
+content-hash = "8c4fa876f7e1123aeb9ba27e8d0ec99aa278afb59afc9adaa5b00f38041a72df"
 
 [metadata.files]
 aniso8601 = [
@@ -1102,8 +1102,8 @@ nodeenv = [
     {file = "nodeenv-1.7.0.tar.gz", hash = "sha256:e0e7f7dfb85fc5394c6fe1e8fa98131a2473e04311a45afb6508f7cf1836fa2b"},
 ]
 o365 = [
-    {file = "O365-2.0.20-py3-none-any.whl", hash = "sha256:38f54a71594038c17361c52e859af6ec7d4bd06ca192e7092ae28f07b05708c7"},
-    {file = "O365-2.0.20.tar.gz", hash = "sha256:1fa8ff3e73078c6ef69677a59a2e310c7abcacdf3a1ca7e8958ba36a54f8f47a"},
+    {file = "O365-2.0.24-py3-none-any.whl", hash = "sha256:fef144bbeec34d65b6a225cb3ecb11ca10f137f7a75985c4764ebeabbfabcaae"},
+    {file = "O365-2.0.24.tar.gz", hash = "sha256:b8ed98602e34f0646c9f18ebc1e3c956402e333e07c25a2ff2d91bd9cde56200"},
 ]
 o365-notifications = [
     {file = "O365-notifications-0.1.1.tar.gz", hash = "sha256:d5970decae24e659abafca64b0c18740303a298dce9ee99d31904b0c16d79200"},
