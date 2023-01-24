@@ -57,6 +57,9 @@ pytest = "^7.2.1"
 pytest-mock = "^3.10.0"
 requests-mock = "^1.10.0"
 
+[tool.poetry.urls]
+issues = "https://github.com/codectl/ticket-api/issues"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
