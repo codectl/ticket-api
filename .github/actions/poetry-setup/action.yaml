@@ -60,4 +60,4 @@ runs:
 
     - name: Install tox
       shell: bash
-      run: python -m pip install tox tox-poetry
+      run: python -m pip install tox
