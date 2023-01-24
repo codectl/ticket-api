@@ -9,7 +9,7 @@ packages = [
     { include = "*", from = "src" }
 ]
 homepage = ""
-repository = "https://github.com/rena2damas/ticket-api"
+repository = "https://github.com/codectl/ticket-api"
 documentation = ""
 keywords = [
     "ticket-api",
