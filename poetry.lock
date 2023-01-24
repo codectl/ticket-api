@@ -684,14 +684,14 @@ setuptools = "*"
 
 [[package]]
 name = "o365"
-version = "2.0.20"
+version = "2.0.25"
 description = "Microsoft Graph and Office 365 API made easy"
 category = "main"
 optional = false
 python-versions = ">=3.4"
 files = [
-    {file = "O365-2.0.20-py3-none-any.whl", hash = "sha256:38f54a71594038c17361c52e859af6ec7d4bd06ca192e7092ae28f07b05708c7"},
-    {file = "O365-2.0.20.tar.gz", hash = "sha256:1fa8ff3e73078c6ef69677a59a2e310c7abcacdf3a1ca7e8958ba36a54f8f47a"},
+    {file = "O365-2.0.25-py3-none-any.whl", hash = "sha256:1b0bfb0672c9ad905ab826e311cbb29595c303570c2a6f6e6d815e85f8e73056"},
+    {file = "O365-2.0.25.tar.gz", hash = "sha256:4285c7c0c431b4a119351ee8ba79b0cb47d2e644cc640b4c3466b1c627dc4293"},
 ]
 
 [package.dependencies]
@@ -1298,4 +1298,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "3384141d2d66971b6de69eb06df9ed77f0d0b4daf29d4057bf08b5e286348214"
+content-hash = "8feca743ea7b2453d09e4156cbbdcad545c6bf664b9dd2cfd23893ac6096aed2"
