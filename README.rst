@@ -2,11 +2,11 @@
 ticket-api
 **********
 
-.. image:: https://github.com/rena2damas/ticket-api/actions/workflows/ci.yaml/badge.svg
-    :target: https://github.com/rena2damas/ticket-api/actions/workflows/ci.yaml
+.. image:: https://github.com/codectl/ticket-api/actions/workflows/ci.yaml/badge.svg
+    :target: https://github.com/codectl/ticket-api/actions/workflows/ci.yaml
     :alt: CI
-.. image:: https://codecov.io/gh/rena2damas/ticket-api/branch/master/graph/badge.svg
-    :target: https://app.codecov.io/gh/rena2damas/ticket-api/branch/master
+.. image:: https://codecov.io/gh/codectl/ticket-api/branch/master/graph/badge.svg
+    :target: https://app.codecov.io/gh/codectl/ticket-api/branch/master
     :alt: codecov
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
