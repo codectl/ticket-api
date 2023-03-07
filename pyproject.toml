@@ -35,7 +35,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-apispec = { extras = ["marshmallow", "yaml"], version = "^6.1.0" }
+apispec = { extras = ["marshmallow", "yaml"], version = "^6.2.0" }
 apispec-plugins = "^0.2.0"
 apispec-ui = "^0.1.4"
 click = "^8.1.3"
