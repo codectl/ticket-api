@@ -17,14 +17,14 @@ dev = ["black", "coverage", "isort", "pre-commit", "pyenchant", "pylint"]
 
 [[package]]
 name = "apispec"
-version = "6.1.0"
+version = "6.3.0"
 description = "A pluggable API specification generator. Currently supports the OpenAPI Specification (f.k.a. the Swagger specification)."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "apispec-6.1.0-py3-none-any.whl", hash = "sha256:937d7f11be6e80cf6d0b66c12dbc29604435302b529b3a9bdb5e2dee192d2f17"},
-    {file = "apispec-6.1.0.tar.gz", hash = "sha256:881d3b90bfffded659bc0a4bf09eadeedfa256cd271726b1555d75af9e0a9a69"},
+    {file = "apispec-6.3.0-py3-none-any.whl", hash = "sha256:95a0b9355785df998bb0e9b939237a30ee4c7428fd6ef97305eae3da06b9b339"},
+    {file = "apispec-6.3.0.tar.gz", hash = "sha256:6cb08d92ce73ff0b3bf46cb2ea5c00d57289b0f279fb0256a3df468182ba5344"},
 ]
 
 [package.dependencies]
@@ -1367,4 +1367,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "d5cb10ffedb86aca6dd43bed90cb53161e97c7d7a11e194602f2276b7e7cbf01"
+content-hash = "0a478f1c34d9706ff72f6885df8fb7e0a43f4205dc2106b91ceafb1477270959"
