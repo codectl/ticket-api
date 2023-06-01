@@ -51,7 +51,7 @@ python = "^3.9"
 requests = "^2.31.0"
 
 [tool.poetry.dev-dependencies]
-coverage = "^7.2.6"
+coverage = "^7.2.7"
 pre-commit = "^3.3.2"
 pytest = "^7.3.1"
 pytest-mock = "^3.10.0"
