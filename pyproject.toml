@@ -55,7 +55,7 @@ coverage = "^7.2.7"
 pre-commit = "^3.3.2"
 pytest = "^7.3.1"
 pytest-mock = "^3.10.0"
-requests-mock = "^1.10.0"
+requests-mock = "^1.11.0"
 
 [tool.poetry.urls]
 issues = "https://github.com/codectl/ticket-api/issues"
