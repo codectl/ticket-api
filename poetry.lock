@@ -756,13 +756,13 @@ setuptools = "*"
 
 [[package]]
 name = "o365"
-version = "2.0.26"
+version = "2.0.27"
 description = "Microsoft Graph and Office 365 API made easy"
 optional = false
 python-versions = ">=3.4"
 files = [
-    {file = "O365-2.0.26-py3-none-any.whl", hash = "sha256:220899f2135e5f2de1db808df9858f5f7bd38910e2c870bb08b04d94bd450b3f"},
-    {file = "O365-2.0.26.tar.gz", hash = "sha256:b478522a652df112c298446aabefccaa446b14bf257b6694fed524c08b76de38"},
+    {file = "O365-2.0.27-py3-none-any.whl", hash = "sha256:2f6018097cbd37fd195fe588951206c54778bd15a958883c30bbab54cfe83c02"},
+    {file = "O365-2.0.27.tar.gz", hash = "sha256:4c1dc090edbb443b2bf0d5059affc47756471ca0004072909d7b5c8130d9679f"},
 ]
 
 [package.dependencies]
@@ -772,7 +772,7 @@ pytz = ">=2018.5"
 requests = ">=2.18.0"
 requests-oauthlib = ">=1.2.0"
 stringcase = ">=1.2.0"
-tzlocal = ">=4.0"
+tzlocal = ">=4.0,<5.0"
 
 [[package]]
 name = "o365-notifications"
@@ -1325,4 +1325,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "bc48c1cbc96508500120b2187930c1cd16d486b01da789be1c025dc80639f5a8"
+content-hash = "3d5cb0a9cb8813a92f7860a48aa6d6e491bdb9c79c322f22fa60e3de10041051"
