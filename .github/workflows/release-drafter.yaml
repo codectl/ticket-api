@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Use of release drafter action for adding semantic labels based on
       # either title, body or source branch name
@@ -42,7 +42,7 @@ jobs:
     needs: [ triage ]
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: update release notes if already merged
         id: update-release-notes
